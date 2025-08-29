@@ -1,0 +1,22 @@
+# Environment variables
+.env
+.env.local
+
+# Python artifacts (Backend)
+pycache/
+*.pyc
+venv/
+dist/
+build/
+*.egg-info/
+
+# Node.js artifacts (Frontend)
+node_modules/
+dist/
+build/
+.cache/
+.parcel-cache/
+
+# OS generated files
+.DS_Store
+Thumbs.db
