@@ -1,10 +1,11 @@
-import Home from './pages/Home/Home';
+// import Home from './pages/Home/Home';
+import Login from './pages/Login/Login';
 
 function App() {
   return (
     <div>
-      <Home />
-      {/* <Login /> Aong ja ma tum */}
+      {/*<Home /> เดี๋ยวมาเปิด*/}
+      <Login />
     </div>
   );
 }
