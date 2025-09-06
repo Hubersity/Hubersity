@@ -1,4 +1,7 @@
+import { useState } from "react";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"
 export default function Login() {
+    const [show, setShow] = useState(false);
     return (
       <div className="min-h-screen bg-[#f1f6ec] flex relative overflow-hidden">
 
@@ -39,12 +42,24 @@ export default function Login() {
                 placeholder="Email"
                 className="w-full text-[25px] border-black border-b-2"
               />
-  
-              <input
-                type="password"
-                placeholder="Password"
-                className="w-full text-[25px] border-black border-b-2"
-              />
+
+                {/* Password input with EyeSlashIcon */}
+                <div className="flex items-center border-b-2 border-black">
+                <input
+                    type={show ? "text" : "password"}
+                    placeholder="Password"
+                    className="w-full text-[25px] outline-none"
+                />
+                {show ? (
+                    <EyeIcon
+                    className="h-6 w-6 text-gray-500 cursor-pointer"
+                    onClick={() => setShow(false)}
+                    />) : (<EyeSlashIcon
+                    className="h-6 w-6 text-gray-500 cursor-pointer"
+                    onClick={() => setShow(true)}
+                    />)}
+                </div>
+
   
               <a
                 href="main.jsx"
