@@ -1,11 +1,65 @@
+import React, { useState } from "react";
+import Navbar from "./Navbar";
+import UniversitySelector from "./UniversitySelector";
+import { FiArrowUpRight } from "react-icons/fi";
+import AboutSection from "./AboutSection";
+import FeatureSection from "./FeatureSection";
+import TeamSection from "./TeamSection";
+
 
 function Home() {
+  const [backgroundImage, setBackgroundImage] = useState("/images/KU.jpg");
+
   return (
-    <div className="text-center mt-10">
-      <h1 className="text-4xl font-bold text-green-700">
-        Hello Hubersity!
-      </h1>
-      <p className="mt-4 text-gray-600">Tailwind CSS is working ✅</p>
+      <div className="min-h-screen bg-white">
+      <Navbar />
+      <div className="pt-20"></div>
+      {/* พื้นหลังเขียวแบบการ์ดเหมือนใน Canva */}
+      <section className="max-w-[1350px] mx-auto px-4 pt-12">
+        <div className="bg-[#eaf4e6] rounded-[36px] p-6 md:p-8 shadow-sm">
+          {/* กล่องรูปภาพ (วงรี) */}
+          <div className="rounded-[80px] overflow-hidden shadow-xl relative h-[600px] transition-all duration-500">
+            <img
+              src={backgroundImage}
+              alt="University"
+              className="w-full h-full object-cover transition-transform duration-500"
+            />
+
+            {/* Overlay ดำ ~30% ซ้าย */}
+            <div className="absolute inset-y-0 left-0 w-[33%] bg-black/50 backdrop-blur-[1px] flex flex-col justify-center pl-10 md:pl-12">
+              <h1 className="text-5xl md:text-6xl font-extrabold text-white drop-shadow-lg mb-3">
+                Hubersity
+              </h1>
+              <p className="text-xl md:text-2xl font-medium text-gray-200 drop-shadow-lg">
+                A Place to Talk About Anything
+              </p>
+            </div>
+
+            {/* ปุ่มด้านขวา พร้อมไอคอนวงกลม */}
+            <div className="absolute inset-y-0 right-0 flex items-center pr-10 md:pr-12">
+              <button
+                className="flex items-center gap-2 bg-green-700 hover:bg-green-800
+                           text-white px-6 py-3 rounded-full text-lg font-semibold shadow-md
+                           transition-all duration-300"
+              >
+                Join Now
+                <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white text-green-700">
+                  <FiArrowUpRight className="text-xl" />
+                </span>
+              </button>
+            </div>
+
+            {/* ปุ่มมหาวิทยาลัย - แถวเดียวทับครึ่งล่างของรูป */}
+            <div className="absolute bottom-[50px] left-1/2 -translate-x-1/2 z-20 w-full flex justify-center">
+              <UniversitySelector setBackgroundImage={setBackgroundImage} />
+            </div>
+          </div>
+        </div>
+      </section>
+      {/* About Section */}
+      <AboutSection />
+      <FeatureSection />
+      <TeamSection />
     </div>
   );
 }
