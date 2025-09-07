@@ -41,3 +41,9 @@ docker-compose up -d --build
 ```
 - The server will be available at http://localhost:8000/
 - To access pgadmin go to http://localhost:8080/
+
+## Video Presentation
+**Iteration1**
+- https://youtu.be/f15uXK-8IpA
+
+  
