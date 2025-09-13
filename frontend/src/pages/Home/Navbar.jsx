@@ -1,5 +1,5 @@
-// src/components/Navbar.jsx
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function Navbar() {
   return (
@@ -23,10 +23,18 @@ function Navbar() {
 
       {/* Auth Buttons */}
       <div className="space-x-8">
-        <button className="text-sm font-semibold hover:text-green-700">Sign Up</button>
-        <button className="bg-green-700 text-white px-8 py-1.5 rounded-full text-sm hover:bg-green-800 transition">
+        <Link
+          to="/signin"
+          className="text-sm font-semibold hover:text-green-700"
+        >
+          Sign In
+        </Link>
+        <Link
+          to="/login"
+          className="bg-green-700 text-white px-8 py-1.5 rounded-full text-sm hover:bg-green-800 transition"
+        >
           Login
-        </button>
+        </Link>
       </div>
     </nav>
   );

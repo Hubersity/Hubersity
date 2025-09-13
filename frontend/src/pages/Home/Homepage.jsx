@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { FiArrowUpRight } from "react-icons/fi";
 import UniversitySelector from "./UniversitySelector";
+import { Link } from "react-router-dom";
 
 export default function Homepage() {
   const [backgroundImage, setBackgroundImage] = useState("/images/KU.jpg");
@@ -28,13 +29,16 @@ export default function Homepage() {
 
           {/* ปุ่มด้านขวา */}
           <div className="absolute inset-y-0 right-0 flex items-center pr-10 md:pr-12">
-            <button className="flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-md transition-all duration-300">
+         <Link
+              to="/signin"
+              className="flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-md transition-all duration-300"
+          >
               Join Now
               <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white text-green-700">
-                <FiArrowUpRight className="text-xl" />
+              <FiArrowUpRight className="text-xl" />
               </span>
-            </button>
-          </div>
+         </Link>
+         </div>
 
           {/* ปุ่มเลือกมหาลัย */}
           <div className="absolute bottom-[50px] left-1/2 -translate-x-1/2 z-20 w-full flex justify-center">

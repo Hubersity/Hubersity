@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FiArrowUpRight } from "react-icons/fi";
+import { Link } from "react-router-dom";
 
 export default function AboutSection() {
   const sectionRef = useRef(null);
@@ -40,12 +41,15 @@ export default function AboutSection() {
               learn, and connect?
             </p>
 
-            <button className="group inline-flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-md transition-all duration-300">
-              Try Now
-              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white text-green-700 group-hover:translate-x-1 transition-transform">
+            <Link
+            to="/signin"
+            className="group inline-flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-md transition-all duration-300"
+            >
+            Try Now
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white text-green-700 group-hover:translate-x-1 transition-transform">
                 <FiArrowUpRight className="text-lg" />
-              </span>
-            </button>
+            </span>
+            </Link>
           </div>
 
           {/* RIGHT: chat column */}

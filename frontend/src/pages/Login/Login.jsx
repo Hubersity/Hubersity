@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"
+import { Link } from "react-router-dom";
+
 export default function Login() {
     const [show, setShow] = useState(false);
     return (
@@ -131,12 +133,12 @@ export default function Login() {
                 </a>
               </div>
   
-              <a
-                href="sigin"
-                className="rounded-full bg-[#8cab93] text-center py-3 px-12 text-lg md:text-2xl hover:opacity-90 transition block mx-auto w-fit"
-              >
-                Sign in
-              </a>
+            <Link
+            to="/signin"
+            className="rounded-full bg-[#8cab93] text-center py-3 px-12 text-lg md:text-2xl hover:opacity-90 transition block mx-auto w-fit"
+            >
+            Sign in
+            </Link>
             </form>
           </div>
         </div>
