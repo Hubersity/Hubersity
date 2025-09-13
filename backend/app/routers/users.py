@@ -17,10 +17,11 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email is already in use"
         )
+    
     hashed_pwd = utils.hash(user.password)
     user.password = hashed_pwd
 
-    new_user = models.User(**user.model_dump())
+    new_user = models.User(**user.model_dump(exclude={"confirm_password"}))
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
