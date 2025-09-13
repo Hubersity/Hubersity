@@ -1,11 +1,13 @@
-// import Home from './pages/Home/Home';
+import Home from './pages/Home/Home';
 import Login from './pages/Login/Login';
+import Sign_in from './pages/Sign_in/Sign_in';
 
 function App() {
   return (
     <div>
-      {/*<Home /> เดี๋ยวมาเปิด*/}
+      <Home />
       <Login />
+      <Sign_in />
     </div>
   );
 }
