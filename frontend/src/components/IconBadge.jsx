@@ -1,14 +1,8 @@
 // src/components/IconBadge.jsx
 import React from "react";
 
-/**
- * IconBadge — กล่องไอคอนพื้นเทาเข้ม + มุมโค้ง + เงา (สไตล์ Canva)
- * props:
- *  - type: "chat" | "clock" | "heart"
- *  - size: ขนาดกรอบทั้งหมด (px)
- */
 export default function IconBadge({ type = "chat", size = 176 }) {
-  // ขนาดไอคอนภายในให้พอดีกับกรอบ (~68%)
+
   const inner = Math.round(size * 0.68);
 
   return (
@@ -18,7 +12,6 @@ export default function IconBadge({ type = "chat", size = 176 }) {
         width: size,
         height: size,
         borderRadius: size * 0.22,
-        // เติม vignette เบาๆ ให้เหมือนแผ่นยาง
         background:
           "radial-gradient(120% 120% at 50% 20%, #5d5d5d 0%, #505050 60%, #4a4a4a 100%)",
       }}
@@ -87,7 +80,6 @@ function ClockSVG({ size = 120 }) {
 }
 
 function HeartCommentSVG({ size = 120 }) {
-  // ทำให้ใหญ่พอ ๆ กับเพื่อน (กินกรอบ ~84%)
   const s = size * 1.1;
 
   return (
@@ -103,7 +95,6 @@ function HeartCommentSVG({ size = 120 }) {
         </filter>
       </defs>
 
-      {/* HEART: ขยับขึ้น + ขยาย */}
       <path
         d="M130 160c68-40 94-78 70-108-17-22-52-20-70 6-18-26-53-28-70-6-24 30 2 68 70 108z"
         fill="#27B24A"
@@ -113,10 +104,8 @@ function HeartCommentSVG({ size = 120 }) {
         filter="url(#heartShadow)"
       />
 
-      {/* เงาปุ่มด้านล่าง */}
       <ellipse cx="130" cy="206" rx="82" ry="12" fill="black" opacity="0.12" />
 
-      {/* COMMENT BUTTON: ขยับลงให้ไม่ทับหัวใจ */}
       <g transform="translate(60,178)">
         <rect width="140" height="42" rx="21" fill="#176E36" />
         <rect x="6" y="6" width="128" height="30" rx="15" fill="#2EAC47" />
