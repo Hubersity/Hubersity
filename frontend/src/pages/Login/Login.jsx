@@ -6,33 +6,82 @@ export default function Login() {
       <div className="min-h-screen bg-[#f1f6ec] flex relative overflow-hidden">
 
         {/* เส้นๆ สีเขียว bottom*/}
-        <div className="absolute top-[-30px] left-[-200px] w-[900px] h-[900px]  border-[20px] border-[#3ab153] rounded-full 
-        border-b-transparent border-r-transparent border-l-transparent rotate-[135deg]"/>
+        <div
+          className="absolute border-[2vh] border-[#3ab153] rounded-full 
+          border-b-transparent border-r-transparent border-l-transparent rotate-[135deg]"
+          style={{
+            top: "-5vh",
+            left: "-15vw",
+            width: "65vw",
+            height: "65vw",
+          }}
+        />
+
 
         {/* เส้นเขียว top */}
-        <div className="absolute top-[-20px] left-[-20px] w-[800px] h-[800px] border-[20px] border-[#3ab153] rounded-full
-        border-l-transparent border-r-transparent border-t-transparent rotate-[135deg]" />
+        <div
+          className="absolute border-[2vh] border-[#3ab153] rounded-full
+          border-l-transparent border-r-transparent border-t-transparent rotate-[135deg]"
+          style={{
+            top: "-3vh",
+            left: "-2vw",
+            width: "55vw",
+            height: "55vw",
+          }}
+        />
 
         {/* ตกแต่งซ้ายล่าง */}
-        <div className="absolute top-[640px] right-[1250px] w-80 h-80 bg-[#2c9a43] rounded-full z-0 " />
-        <div className="absolute top-[740px] right-[1150px] w-40 h-40 bg-[#00bf63] rounded-full z-0" />
+        <div
+          className="absolute bg-[#2c9a43] rounded-full z-0"
+          style={{
+            top: "75vh",
+            right: "85vw",
+            width: "20vw",
+            height: "20vw",
+          }}
+        />
+        <div
+          className="absolute bg-[#00bf63] rounded-full z-0"
+          style={{
+            top: "90vh",
+            right: "80vw",
+            width: "10vw",
+            height: "10vw",
+          }}
+        />
 
         {/* ตกแต่งบนขวา */}
-        <div className="absolute top-[-90px] right-[760px] w-64 h-64 bg-[#30a148] rounded-full z-0"/>
-        <div className="absolute top-[-90px] right-[900px] w-44 h-44 bg-[#0a5f24] rounded-full z-0"/>
+        <div
+          className="absolute bg-[#30a148] rounded-full z-0"
+          style={{
+            top: "-5vh",
+            right: "55vw",
+            width: "15vw",
+            height: "15vw",
+          }}
+        />
+        <div
+          className="absolute bg-[#0a5f24] rounded-full z-0"
+          style={{
+            top: "-8vh",
+            right: "65vw",
+            width: "12vw",
+            height: "12vw",
+          }}
+/>
 
         {/* ฝั่งซ้าย: Logo */}
         <div className="w-1/2 flex justify-center items-center">
           <img
             src="/images/Vertical-logo.png"
-            className="max-w-[400px] h-auto"
+            className="max-w-[400px] md:max-w-[500px]h-auto"
           />
         </div>
   
         {/* ฝั่งขวา: กล่อง Login */}
         <div className="w-3/4 bg-white flex items-center justify-center rounded-l-[50px] shadow-lg z-10">
           <div className="w-full max-w-[700px] px-20 py-24">
-            <h1 className="text-7xl text-[#085e24] font-bold text-center">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl text-[#085e24] font-bold text-center">
               Login
             </h1>
   
@@ -40,7 +89,7 @@ export default function Login() {
               <input
                 type="email"
                 placeholder="Email"
-                className="w-full text-[25px] border-black border-b-2"
+                className="w-full text-[15px] md:text-[25px] lg:text-[30xl] border-black border-b-2 focus:outline-none"
               />
 
                 {/* Password input with EyeSlashIcon */}
@@ -48,7 +97,7 @@ export default function Login() {
                 <input
                     type={show ? "text" : "password"}
                     placeholder="Password"
-                    className="w-full text-[25px] outline-none"
+                    className="w-full text-[15px] md:text-[25px] lg:text-[30xl] outline-none"
                 />
                 {show ? (
                     <EyeIcon
