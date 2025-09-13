@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from . import models
 from .database import engine
-from .routers import users
+from .routers import users, auth
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -32,6 +32,7 @@ except Exception as e:
     print("Database connection failed:", e)
 
 app.include_router(users.router)
+app.include_router(auth.router)
 
 @app.get("/")
 def root():
