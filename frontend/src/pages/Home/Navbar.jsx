@@ -27,7 +27,7 @@ function Navbar() {
           to="/signin"
           className="text-sm font-semibold hover:text-green-700"
         >
-          Sign In
+          Sign up
         </Link>
         <Link
           to="/login"

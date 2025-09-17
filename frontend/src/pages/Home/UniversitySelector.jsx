@@ -1,7 +1,7 @@
 import React from "react";
 
 const universities = [
-  { name: "Kasersart", image: "/images/KU.jpg" },
+  { name: "Kasetsart", image: "/images/KU.jpg" },
   { name: "Thammasat", image: "/images/TU.jpg" },
   { name: "Mahidol", image: "/images/MU.jpg" },
   { name: "Chiang Mai", image: "/images/CMU.jpg" },
