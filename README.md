@@ -39,8 +39,29 @@ cd Hubersity
 ```
 docker-compose up -d --build
 ```
-- The server will be available at http://localhost:8000/
-- To access pgadmin go to http://localhost:8080/
+
+## Services
+
+- Frontend (Home Page):  
+  http://localhost:5173
+
+- Backend API Docs (FastAPI Swagger UI):  
+  http://localhost:8000/docs
+
+- pgAdmin (Database Management UI):  
+  http://localhost:8080  
+  - Email: admin@admin.com  
+  - Password: admin
+
+---
+
+## Stopping the Server
+To stop and remove all running containers:
+```bash
+docker compose down
+```
+
+---
 
 ## Video Presentation
 **Iteration1**

@@ -12,17 +12,18 @@ app = FastAPI()
 origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://your-frontend.com"
+    "http://localhost:5173",      
+    "http://127.0.0.1:5173",      
+    "https://your-frontend.com"  
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, 
+    allow_origins=origins,   
     allow_credentials=True,
-    allow_methods=["*"],        
-    allow_headers=["*"],     
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-
 
 try:
     with engine.connect() as conn:
@@ -31,6 +32,7 @@ try:
 except Exception as e:
     print("Database connection failed:", e)
 
+# routes
 app.include_router(users.router)
 app.include_router(auth.router)
 
