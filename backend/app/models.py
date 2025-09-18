@@ -1,4 +1,5 @@
-from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, JSONB
+from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -54,7 +55,7 @@ post_post_tags = Table(
     "post_post_tags",
     Base.metadata,
     Column("post_id", Integer, ForeignKey("post.pid"), primary_key=True),
-    Column("tag_id", Integer, ForeignKey("post_tags.tid"), primary_key=True)
+    Column("tag_id", Integer, ForeignKey("post_tags.ptid"), primary_key=True)
 )
 
 class Post(Base):
