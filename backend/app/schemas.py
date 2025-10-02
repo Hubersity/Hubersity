@@ -53,7 +53,7 @@ class PostImageCreate(BaseModel):
 class PostCreate(BaseModel):
     post_content: str
     forum_id: int
-    tags: Optional[List[int]] = []           # list of PostTag IDs
+    tags: Optional[List[int]] = []           
     images: Optional[List[PostImageCreate]] = []
 
 class PostImageResponse(BaseModel):
