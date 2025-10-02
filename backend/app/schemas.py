@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 class UserCreate(BaseModel):
     username: str
@@ -45,3 +45,39 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: Optional[int] = None
+
+class PostImageCreate(BaseModel):
+    url: str
+    caption: Optional[str] = None
+
+class PostCreate(BaseModel):
+    post_content: str
+    forum_id: int
+    tags: Optional[List[int]] = []           # list of PostTag IDs
+    images: Optional[List[PostImageCreate]] = []
+
+class PostImageResponse(BaseModel):
+    id: int
+    url: str
+    caption: Optional[str]
+
+    class Config:
+        orm_mode = True
+
+class PostTagResponse(BaseModel):
+    ptid: int
+    name: str
+
+    class Config:
+        orm_mode = True
+
+class PostResponse(BaseModel):
+    pid: int
+    post_content: str
+    forum_id: int
+    user_id: int
+    tags: List[PostTagResponse] = []
+    images: List[PostImageResponse] = []
+
+    class Config:
+        orm_mode = True

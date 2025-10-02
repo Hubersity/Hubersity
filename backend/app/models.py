@@ -15,6 +15,8 @@ class User(Base):
     profile_image = Column(String, nullable=True)
     description = Column(String, nullable=True)
 
+    posts = relationship("Post", back_populates="user")
+
 forum_tags = Table(
     "forum_tags",
     Base.metadata,
@@ -42,15 +44,6 @@ class Forum(Base):
         "Tag", secondary=forum_tags, back_populates="forums"
     )
 
-body = Column(Text, nullable=False)
-image_urls = Column(JSONB, nullable=True)
-
-class PostTag(Base):
-    __tablename__ = "post_tags"
-
-    ptid = Column(Integer, primary_key=True, nullable=False) # post tag id
-    name = Column(String, unique=True, nullable=False)
-
 post_post_tags = Table(
     "post_post_tags",
     Base.metadata,
@@ -58,18 +51,30 @@ post_post_tags = Table(
     Column("tag_id", Integer, ForeignKey("post_tags.ptid"), primary_key=True)
 )
 
+class PostTag(Base):
+    __tablename__ = "post_tags"
+
+    ptid = Column(Integer, primary_key=True, nullable=False) # post tag id
+    name = Column(String, unique=True, nullable=False)
+    posts = relationship("Post", secondary=post_post_tags, back_populates="tags")
+
+
 class Post(Base):
     __tablename__ = "post"
     
-    pid = Column(Integer, primary_key=True, nullable=False) # for post id
-    post_name = Column(String, nullable=False)
-    forum_id = Column(Integer, nullable=False)
-    
+    pid = Column(Integer, primary_key=True, nullable=False)
+    post_content = Column(String, nullable=False)
+    image_urls = Column(JSONB, nullable=True)        # moved here
+    forum_id = Column(Integer, ForeignKey("forum.fid"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)  # new column
+
+    user = relationship("User", back_populates="posts")
     tags = relationship(
         "PostTag",
         secondary=post_post_tags,
         back_populates="posts"
     )
+    images = relationship("PostImage", back_populates="post")
 
 class PostImage(Base):
     __tablename__ = "post_images"
@@ -77,3 +82,4 @@ class PostImage(Base):
     post_id = Column(Integer, ForeignKey("post.pid"), nullable=False)
     url = Column(String, nullable=False)
     caption = Column(String)
+    post = relationship("Post", back_populates="images")
