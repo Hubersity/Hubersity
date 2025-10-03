@@ -47,7 +47,7 @@ class TokenData(BaseModel):
     id: Optional[int] = None
 
 class PostImageCreate(BaseModel):
-    url: str
+    path: str
     caption: Optional[str] = None
 
 class PostCreate(BaseModel):
@@ -58,7 +58,7 @@ class PostCreate(BaseModel):
 
 class PostImageResponse(BaseModel):
     id: int
-    url: str
+    path: str
     caption: Optional[str]
 
     class Config:

@@ -64,10 +64,8 @@ class Post(Base):
     
     pid = Column(Integer, primary_key=True, nullable=False)
     post_content = Column(String, nullable=False)
-    image_urls = Column(JSONB, nullable=True)        # moved here
     forum_id = Column(Integer, ForeignKey("forum.fid"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)  # new column
-
     user = relationship("User", back_populates="posts")
     tags = relationship(
         "PostTag",
@@ -80,6 +78,6 @@ class PostImage(Base):
     __tablename__ = "post_images"
     id = Column(Integer, primary_key=True)
     post_id = Column(Integer, ForeignKey("post.pid"), nullable=False)
-    url = Column(String, nullable=False)
+    path = Column(String, nullable=False)
     caption = Column(String)
     post = relationship("Post", back_populates="images")

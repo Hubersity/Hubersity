@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Form, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List, Optional
-
+import os
+import shutil
 from .. import models, schemas, database, oauth2
 
 router = APIRouter(
@@ -11,22 +12,56 @@ router = APIRouter(
 
 get_db = database.get_db
 
+UPLOAD_DIR = "uploads/post"
+
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
 @router.post("/", response_model=schemas.PostResponse)
-def create_post(post: schemas.PostCreate, db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
+def create_post(
+    post_content: str = Form(...),
+    forum_id: int = Form(...),
+    tags: Optional[str] = Form(None),
+    files: List[UploadFile] = File([]),
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
     new_post = models.Post(
-        post_content=post.post_content,
-        forum_id=post.forum_id,
+        post_content=post_content,
+        forum_id=forum_id,
         user_id=current_user.uid
     )
-    if post.tags:
-            new_post.tags = db.query(models.PostTag).filter(models.PostTag.ptid.in_(post.tags)).all()
-
-    if post.images:
-        new_post.images = [models.PostImage(url=img.url, caption=img.caption) for img in post.images]
 
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
+
+    if tags:
+        try:
+            tag_ids = [int(t.strip()) for t in tags.split(",") if t.strip().isdigit()]
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid tag IDs")
+        tag_objects = db.query(models.PostTag).filter(models.PostTag.ptid.in_(tag_ids)).all()
+        print(tag_objects)
+        for tag in tag_objects:
+            new_post.tags.append(tag)
+            print(new_post.tags)
+        db.commit()
+        db.refresh(new_post)
+
+    for upload_file in files:
+        filename = f"{new_post.pid}_{upload_file.filename}"
+        file_path = os.path.join(UPLOAD_DIR, filename)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(upload_file.file, buffer)
+        db.add(models.PostImage(
+            post_id=new_post.pid,
+            path=f"/{UPLOAD_DIR}/{filename}",
+            caption=None
+        ))
+    if files:
+        db.commit()
+        db.refresh(new_post)
+
     return new_post
     
 
@@ -38,10 +73,9 @@ def get_my_posts(
     posts = db.query(models.Post).filter(models.Post.user_id == current_user.uid).all()
     return posts
 
-@router.put("/{post_id}", response_model=schemas.PostResponse)
-def update_post(
+@router.get("/{post_id}", response_model=List[schemas.PostResponse])
+def get_post(
     post_id: int,
-    updated_post: schemas.PostCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
@@ -49,15 +83,35 @@ def update_post(
     post = post_query.first()
     if post is None:
         raise HTTPException(status_code=404, detail="Post not found")
+    posts = db.query(models.Post).filter(models.Post.pid == post_id).all()
+    return posts
+
+
+@router.put("/{post_id}", response_model=schemas.PostResponse)
+def update_post(
+    post_id: int,
+    updated_post: schemas.PostCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    post = db.query(models.Post).filter(models.Post.pid == post_id).first()
+
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
     if post.user_id != current_user.uid:
         raise HTTPException(status_code=403, detail="Not authorized to edit this post")
 
-    post_query.update({
-        "post_content": updated_post.post_content,
-        "forum_id": updated_post.forum_id
-    }, synchronize_session=False)
+    post.post_content = updated_post.post_content
+    post.forum_id = updated_post.forum_id
+
+    # Update tags if provided
+    if updated_post.tags is not None:
+        tag_objects = db.query(models.PostTag).filter(models.PostTag.ptid.in_(updated_post.tags)).all()
+        post.tags = tag_objects 
+
     db.commit()
-    return post_query.first()
+    db.refresh(post)
+    return post
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(
@@ -73,6 +127,9 @@ def delete_post(
         raise HTTPException(status_code=403, detail="Not authorized to delete this post")
 
     db.query(models.PostImage).filter(models.PostImage.post_id == post_id).delete()
+
+    post.tags = []
+    db.commit()
     post_query.delete(synchronize_session=False)
     db.commit()
     return
