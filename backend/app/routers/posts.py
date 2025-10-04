@@ -133,3 +133,51 @@ def delete_post(
     post_query.delete(synchronize_session=False)
     db.commit()
     return
+
+@router.post("/{post_id}/comments", response_model=schemas.CommentResponse)
+def create_comment(
+    post_id: int,
+    comment: schemas.CommentCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    post = db.query(models.Post).filter(models.Post.pid == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    new_comment = models.Comment(
+        content=comment.content,
+        user_id=current_user.uid,
+        post_id=post_id,
+        username=current_user.username
+    )
+    db.add(new_comment)
+    db.commit()
+    db.refresh(new_comment)
+
+    return new_comment
+
+@router.get("/{post_id}/comments", response_model=List[schemas.CommentResponse])
+def get_comments_for_post(
+    post_id: int,
+    db: Session = Depends(get_db)
+):
+    post = db.query(models.Post).filter(models.Post.pid == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    comments = (
+        db.query(models.Comment)
+        .filter(models.Comment.post_id == post_id)
+        .order_by(models.Comment.created_at.asc())
+        .all()
+    )
+
+    response = []
+    for c in comments:
+        comment_data = schemas.CommentResponse.from_orm(c).dict()
+        user = db.query(models.User).filter(models.User.uid == c.user_id).first()
+        comment_data["username"] = user.username if user else None
+        response.append(comment_data)
+
+    return response

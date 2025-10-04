@@ -33,7 +33,7 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributese = True
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -62,14 +62,27 @@ class PostImageResponse(BaseModel):
     caption: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class PostTagResponse(BaseModel):
     ptid: int
     name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+class CommentCreate(BaseModel):
+    content: str
+
+class CommentResponse(BaseModel):
+    cid: int
+    content: str
+    user_id: int
+    username: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
 
 class PostResponse(BaseModel):
     pid: int
@@ -78,6 +91,8 @@ class PostResponse(BaseModel):
     user_id: int
     tags: List[PostTagResponse] = []
     images: List[PostImageResponse] = []
+    comments: List[CommentResponse] = []
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+

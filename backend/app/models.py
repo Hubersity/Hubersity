@@ -73,6 +73,7 @@ class Post(Base):
         back_populates="posts"
     )
     images = relationship("PostImage", back_populates="post")
+    comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
 
 class PostImage(Base):
     __tablename__ = "post_images"
@@ -81,3 +82,16 @@ class PostImage(Base):
     path = Column(String, nullable=False)
     caption = Column(String)
     post = relationship("Post", back_populates="images")
+
+class Comment(Base):
+    __tablename__ = "comments"
+
+    cid = Column(Integer, primary_key=True, nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
+    
+    user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
+    post_id = Column(Integer, ForeignKey("post.pid"), nullable=False)
+    username = Column(String, nullable=False)
+    user = relationship("User")
+    post = relationship("Post", back_populates="comments")
