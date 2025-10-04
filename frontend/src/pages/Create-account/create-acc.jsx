@@ -36,44 +36,50 @@ export default function CreateAcc() {
 
                 {/* ลตรงกลาง */}
                 <motion.div
-                    className="w-[50vh] h-[200vh] bg-[#338646] absolute"
-                    // เริ่มมุมซ้ายบน
-                    initial={{ x: 0, y: 0 }}
-                    // เคลื่อนที่ทแยงไปมุมขวาล่าง (ใช้ keyframes)
-                    animate={{ x: ["0%", "40vw"], y: ["0%", "40vh"], rotate: 50}}
-                    transition={{
+                className="w-[50vh] h-[200vh] bg-[#338646] absolute"
+                initial={{ x: 0, y: 0, opacity: 0.3 }}  // เริ่มจาง
+                animate={{ 
+                    x: ["0%", "40vw"], 
+                    y: ["0%", "40vh"], 
+                    rotate: 50, 
+                    opacity: 1  // ค่อยๆ เข้มขึ้น
+                }}
+                transition={{
                     duration: 3,
                     type: "spring",
-                    // repeat: Infinity,
-                    // repeatType: "reverse", // เด้งกลับ
-                    }}
+                }}
                 />
+
                 {/* ล่าง */}
                 <motion.div
-                    className="w-[200vh] h-[50vh] bg-[#8cab93] absolute"
-                    // เริ่มมุมซ้ายบน
-                    initial={{ x: 0, y: 100 }}
-                    // เคลื่อนที่ทแยงไปมุมขวาล่าง (ใช้ keyframes)
-                    animate={{ x: ["0%", "-25vw"], y: ["0%", "50vh"], rotate: 20}}
-                    transition={{
+                className="w-[200vh] h-[50vh] bg-[#8cab93] absolute"
+                initial={{ x: 0, y: 100, opacity: 0.3 }}
+                animate={{ 
+                    x: ["0%", "-25vw"], 
+                    y: ["0%", "50vh"], 
+                    rotate:  25, 
+                    opacity: 1
+                }}
+                transition={{
                     duration: 3,
                     type: "spring",
-                    }}
+                }}
                 />
 
                 {/* up */}
                 <motion.div
-                    className="w-[50vh] h-[200vh] bg-[#8cab93] absolute"
-                    // เริ่มมุมซ้ายบน
-                    initial={{ x: -100, y: 0 }}
-                    // เคลื่อนที่ทแยงไปมุมขวาล่าง (ใช้ keyframes)
-                    animate={{ x: ["0%", "45vw"], y: ["0%", "-30vh"], rotate: 135}}
-                    transition={{
+                className="w-[50vh] h-[200vh] bg-[#8cab93] absolute"
+                initial={{ x: -100, y: 0, opacity: 0.3 }}
+                animate={{ 
+                    x: ["0%", "45vw"], 
+                    y: ["0%", "-50vh"], 
+                    rotate: 135,
+                    opacity: 1
+                }}
+                transition={{
                     duration: 3,
                     type: "spring",
-                    // repeat: Infinity,
-                    // repeatType: "reverse", // เด้งกลับ
-                    }}
+                }}
                 />
 
                 {/* pictue */}
@@ -182,7 +188,7 @@ export default function CreateAcc() {
                         <span className="text-gray-800">Public</span>
                         </label>
                         {/* choose uni */}
-                        <div className="flex flex-col mt-4">
+                        <div className="flex flex-col mt-4 mb-8">
                             <select
                                 className="rounded-full bg-gray-200 text-black px-4 py-2 focus:outline-none focus:ring-2
                                 cursor-pointer">
@@ -197,7 +203,6 @@ export default function CreateAcc() {
                         </div>
                     </div>
                 </div>
-
             </motion.div>
         </motion.div>
     );
