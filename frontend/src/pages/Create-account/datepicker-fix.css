@@ -1,0 +1,16 @@
+.react-datepicker {
+  font-family: "Inter", sans-serif;
+  border-radius: 10px;
+  border: 1px solid #e0ebe2;
+}
+
+.react-datepicker__day--selected {
+  background-color: #8cab93 !important;
+  color: white !important;
+  border-radius: 50%;
+}
+
+.react-datepicker__header {
+  background-color: #eaf2ed !important;
+  border-bottom: 1px solid #e0ebe2;
+}
