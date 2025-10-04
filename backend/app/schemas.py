@@ -89,6 +89,8 @@ class PostResponse(BaseModel):
     post_content: str
     forum_id: int
     user_id: int
+    username: str
+    like_count: int
     tags: List[PostTagResponse] = []
     images: List[PostImageResponse] = []
     comments: List[CommentResponse] = []

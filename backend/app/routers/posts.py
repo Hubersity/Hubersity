@@ -28,7 +28,7 @@ def create_post(
     new_post = models.Post(
         post_content=post_content,
         forum_id=forum_id,
-        user_id=current_user.uid
+        user_id=current_user.uid,
     )
 
     db.add(new_post)
@@ -62,7 +62,17 @@ def create_post(
         db.commit()
         db.refresh(new_post)
 
-    return new_post
+    return schemas.PostResponse(
+        pid=new_post.pid,
+        post_content=new_post.post_content,
+        forum_id=new_post.forum_id,
+        user_id=new_post.user_id,
+        username=current_user.username,
+        like_count=0,
+        tags=new_post.tags,
+        images=new_post.images,
+        comments=new_post.comments
+)
     
 
 @router.get("/me", response_model=List[schemas.PostResponse])
@@ -71,20 +81,50 @@ def get_my_posts(
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
     posts = db.query(models.Post).filter(models.Post.user_id == current_user.uid).all()
-    return posts
+    response = []
 
-@router.get("/{post_id}", response_model=List[schemas.PostResponse])
+    for post in posts:
+        like_count = db.query(models.Like).filter(models.Like.post_id == post.pid).count()
+        response.append(
+            schemas.PostResponse(
+                pid=post.pid,
+                post_content=post.post_content,
+                forum_id=post.forum_id,
+                user_id=post.user_id,
+                username=post.user.username,
+                like_count=like_count,
+                tags=post.tags,
+                images=post.images,
+                comments=post.comments
+            )
+        )
+
+    return response
+
+@router.get("/{post_id}", response_model=schemas.PostResponse)
 def get_post(
     post_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    post_query = db.query(models.Post).filter(models.Post.pid == post_id)
-    post = post_query.first()
+    post = db.query(models.Post).filter(models.Post.pid == post_id).first()
+
     if post is None:
         raise HTTPException(status_code=404, detail="Post not found")
-    posts = db.query(models.Post).filter(models.Post.pid == post_id).all()
-    return posts
+
+    like_count = db.query(models.Like).filter(models.Like.post_id == post_id).count()
+
+    return schemas.PostResponse(
+        pid=post.pid,
+        post_content=post.post_content,
+        forum_id=post.forum_id,
+        user_id=post.user_id,
+        username=post.user.username,
+        like_count=like_count,
+        tags=post.tags,
+        images=post.images,
+        comments=post.comments
+    )
 
 
 @router.put("/{post_id}", response_model=schemas.PostResponse)
@@ -107,11 +147,24 @@ def update_post(
     # Update tags if provided
     if updated_post.tags is not None:
         tag_objects = db.query(models.PostTag).filter(models.PostTag.ptid.in_(updated_post.tags)).all()
-        post.tags = tag_objects 
+        post.tags = tag_objects
 
     db.commit()
     db.refresh(post)
-    return post
+
+    like_count = db.query(models.Like).filter(models.Like.post_id == post.pid).count()
+
+    return schemas.PostResponse(
+        pid=post.pid,
+        post_content=post.post_content,
+        forum_id=post.forum_id,
+        user_id=post.user_id,
+        username=post.user.username,  
+        like_count=like_count,        
+        tags=post.tags,
+        images=post.images,
+        comments=post.comments
+    )
 
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(
@@ -181,3 +234,36 @@ def get_comments_for_post(
         response.append(comment_data)
 
     return response
+
+@router.post("/{post_id}/like")
+def like_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    post = db.query(models.Post).filter(models.Post.pid == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    like = db.query(models.Like).filter_by(post_id=post_id, user_id=current_user.uid).first()
+    if like:
+        db.delete(like)
+        db.commit()
+        return {"message": "Like removed"}
+
+    new_like = models.Like(post_id=post_id, user_id=current_user.uid)
+    db.add(new_like)
+    db.commit()
+    return {"message": "Post liked successfully"}
+
+@router.delete("/{post_id}/like")
+def unlike_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    like = db.query(models.Like).filter_by(post_id=post_id, user_id=current_user.uid).first()
+    if not like:
+        raise HTTPException(status_code=404, detail="You haven’t liked this post yet")
+
+    

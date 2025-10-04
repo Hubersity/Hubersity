@@ -14,7 +14,7 @@ class User(Base):
                         nullable=False, server_default=text('now()'))
     profile_image = Column(String, nullable=True)
     description = Column(String, nullable=True)
-
+    likes = relationship("Like", back_populates="user")
     posts = relationship("Post", back_populates="user")
 
 forum_tags = Table(
@@ -73,7 +73,8 @@ class Post(Base):
         back_populates="posts"
     )
     images = relationship("PostImage", back_populates="post")
-    comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
+    likes = relationship("Like", back_populates="post")
+    comments = relationship("Comment", back_populates="post")
 
 class PostImage(Base):
     __tablename__ = "post_images"
@@ -82,6 +83,15 @@ class PostImage(Base):
     path = Column(String, nullable=False)
     caption = Column(String)
     post = relationship("Post", back_populates="images")
+
+class Like(Base):
+    __tablename__ = "likes"
+
+    user_id = Column(Integer, ForeignKey("users.uid"), primary_key=True)
+    post_id = Column(Integer, ForeignKey("post.pid"), primary_key=True)
+
+    user = relationship("User", back_populates="likes")
+    post = relationship("Post", back_populates="likes")
 
 class Comment(Base):
     __tablename__ = "comments"
