@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
-from .. import models
+from .. import models, database
 from ..database import get_db
 from calendar import monthrange
 
@@ -62,4 +62,29 @@ def get_calendar(user_id: int, year: int, month: int, db: Session = Depends(get_
     return {
         r.date.strftime("%Y-%m-%d"): {"total_minutes": r.total_minutes, "badge": r.badge_level}
         for r in records
+    }
+
+@router.get("/progress/{user_id}/{year}/{month}/{day}")
+def get_daily_progress(
+    user_id: int,
+    year: int,
+    month: int,
+    day: int,
+    db: Session = Depends(database.get_db)
+):
+    target_date = date(year, month, day)
+
+    progress = db.query(models.DailyProgress).filter(
+        models.DailyProgress.user_id == user_id,
+        models.DailyProgress.date.cast(Date) == target_date
+    ).first()
+
+    if not progress:
+        return {"date": target_date, "total_minutes": 0, "hours": 0, "badge_level": 0}
+
+    return {
+        "date": target_date,
+        "total_minutes": progress.total_minutes,
+        "hours": round(progress.total_minutes / 60, 2),
+        "badge_level": progress.badge_level
     }
