@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {PlayIcon, PauseIcon} from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
 
 // ฟังก์ชันคำนวณจำนวนวันในเดือนและปีที่ระบุ
 const getDaysInMonth = (month, year) => {
@@ -21,6 +22,7 @@ function CountTime() {
   // time ช่องเก็บค่าล่าสุด (state value), setTime ปุ่มรีโมทที่สั่ง React: “อัพเดตค่า + วาด UI ใหม่ด้วย”
   const [time, setTime] = useState(0); //เก้บเวลาที่นับ
   const [running, setrunning] = useState(false); // ดูว่าเล่นอยู่มั้ย
+  const [activeButton, setActiveButton] = useState(null); // ดูว่ากดปุ่มไร
   const timerRef = useRef(null);
 
   // 1 ชั่วโมง = 60 นาที = 3600 วินาที = 3,600,000 มิลลิวินาที
@@ -84,12 +86,41 @@ function CountTime() {
           <span className="text-4xl font-bold mt-14">{`${hours}:${minutes}:${seconds}`}</span>
           
           <div className="flex gap-[20vh] mt-14">
-            <button onClick={start_t}  className="bg-[#a0c4a8] hover:opacity-90 rounded-3xl px-8">
+            {/* start */}
+            <motion.button
+              type="button"
+              onClick={() => {
+                start_t();   // เรียกฟังก์ชันเริ่มนับเวลา
+                setActiveButton("play");  // ตั้ง state ว่าปุ่ม Play เป็นปุ่มที่ active ตอนนี้
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`rounded-3xl px-8 transition ${
+                activeButton === "play"
+                  ? "bg-[#6aa484]" // สีเข้มเมื่อ active ของ java กำหนดมาอยู่แล้ว
+                  : "bg-[#a0c4a8]" // สีปกติ
+              } hover:opacity-90`}
+            >
               <PlayIcon className="h-12 w-12 text-gray-700" />
-            </button>
-            <button onClick={pause_time} className="bg-[#a0c4a8] hover:opacity-90 rounded-3xl px-8">
-                <PauseIcon className="h-12 w-12 text-gray-700" />
-            </button>
+            </motion.button>
+            
+            {/* pause */}
+            <motion.button
+              type="button"
+              onClick={() => {
+                pause_time();
+                setActiveButton("pause");
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`rounded-3xl px-8 transition ${
+                activeButton === "pause"
+                  ? "bg-[#6aa484]"
+                  : "bg-[#a0c4a8]"
+              } hover:opacity-90`}
+            >
+              <PauseIcon className="h-12 w-12 text-gray-700" />
+            </motion.button>
           </div>
         </div>
     </div>
