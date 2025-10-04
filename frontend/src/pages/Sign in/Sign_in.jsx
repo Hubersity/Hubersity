@@ -7,33 +7,86 @@ import { useNavigate } from "react-router-dom";
 export default function Sign_in() {
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();            // กันรีโหลด
-    // go to careta acc page
-    navigate("/create-account"); 
+  // ✅ signup function เหมือน login pattern
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!username || !email || !password || !confirmPassword) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    const apiUrl = "http://localhost:8000/users/";
+    console.log("🔗 Sending signup request to:", apiUrl);
+
+    try {
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        // ✅ เพิ่ม confirm_password ให้ backend รับได้
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+          confirm_password: confirmPassword,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("❌ Signup failed:", errData);
+
+        if (res.status === 400 || errData?.detail?.includes("already")) {
+          setError("This username or email is already in use.");
+        } else if (res.status === 422) {
+          setError("Invalid form data.");
+        } else {
+          setError("Server error, please try again.");
+        }
+        return;
+      }
+
+      console.log("✅ Signup success! User created:", await res.json());
+      navigate("/create-account");
+    } catch (err) {
+      console.error("🚨 Connection error:", err);
+      setError("Cannot connect to server.");
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#f1f6ec] flex justify-center items-center relative overflow-hidden px-4">
+      {/* ✅ เส้นเขียว */}
+      <motion.div
+        initial={{ opacity: 0, x: 200 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, type: "spring", bounce: 0.3 }}
+        className="absolute border-[2vh] border-[#3ab153] rounded-full
+        border-l-transparent border-r-transparent border-b-transparent rotate-[135deg]"
+        style={{
+          top: "90vh",
+          right: "-10vw",
+          width: "60vw",
+          height: "60vw",
+        }}
+      />
 
-      {/* เส้นเขียว */}
-    <motion.div
-    initial={{ opacity: 0, x: 200 }}
-    animate={{ opacity: 1, x: 0 }}
-    transition={{ duration: 0.8, type: "spring", bounce: 0.3 }}
-    className="absolute border-[2vh] border-[#3ab153] rounded-full
-    border-l-transparent border-r-transparent border-b-transparent rotate-[135deg]"
-    style={{
-        top: "90vh",
-        right: "-10vw",
-        width: "60vw",
-        height: "60vw",
-    }}
-    />
-
-      {/* วงกลมซ้ายล่าง */}
+      {/* ✅ วงกลมซ้ายล่าง */}
       <motion.div
         initial={{ opacity: 0, x: -150, y: 150 }}
         animate={{ opacity: 1, x: 0, y: 0 }}
@@ -49,7 +102,7 @@ export default function Sign_in() {
         style={{ top: "90vh", right: "80vw", width: "10vw", height: "10vw" }}
       />
 
-      {/* วงกลมขวาบน */}
+      {/* ✅ วงกลมขวาบน */}
       <motion.div
         initial={{ opacity: 0, x: 200, y: -200 }}
         animate={{ opacity: 1, x: 0, y: 0 }}
@@ -65,7 +118,7 @@ export default function Sign_in() {
         style={{ top: "3vh", right: "-5vw", width: "12vw", height: "12vw" }}
       />
 
-      {/* วงกลม gradient */}
+      {/* ✅ วงกลม gradient */}
       <motion.div
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -74,7 +127,7 @@ export default function Sign_in() {
         style={{ top: "6vh", right: "8vw", width: "10vw", height: "10vw" }}
       />
 
-      {/* โลโก้ */}
+      {/* ✅ โลโก้ */}
       <motion.div
         className="absolute top-[-80px] left-4"
         initial={{ opacity: 0, y: -100 }}
@@ -88,7 +141,7 @@ export default function Sign_in() {
         />
       </motion.div>
 
-      {/* กล่อง Sign Up */}
+      {/* ✅ กล่อง Sign Up */}
       <motion.div
         className="w-full max-w-lg md:max-w-2xl bg-white rounded-[70px] shadow-lg z-10"
         initial={{ opacity: 0, scale: 0.9, y: 100 }}
@@ -101,33 +154,46 @@ export default function Sign_in() {
               Sign Up
             </h1>
 
+            {/* Username */}
             <input
               type="text"
-              placeholder="User name"
-              autoComplete="username"
-              className="w-full text-[15px] md:text-[25px] lg:text-[30xl] border-black border-b-2 focus:outline-none"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full text-[15px] md:text-[25px] border-black border-b-2 focus:outline-none"
+              required
             />
 
+            {/* Email */}
             <input
               type="email"
               placeholder="Email"
-              autoComplete="email"
-              className="w-full text-[15px] md:text-[25px] lg:text-[30xl] border-black border-b-2 focus:outline-none"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full text-[15px] md:text-[25px] border-black border-b-2 focus:outline-none"
+              required
             />
-
 
             {/* Password */}
             <div className="flex items-center border-b-2 border-black">
               <input
                 type={showPwd ? "text" : "password"}
                 placeholder="Password"
-                autoComplete="new-password"
-                className="w-full text-[15px] md:text-[25px] lg:text-[30xl] focus:outline-none"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full text-[15px] md:text-[25px] focus:outline-none"
+                required
               />
               {showPwd ? (
-                <EyeIcon className="h-6 w-6 text-gray-500 cursor-pointer" onClick={() => setShowPwd(false)} />
+                <EyeIcon
+                  className="h-6 w-6 text-gray-500 cursor-pointer"
+                  onClick={() => setShowPwd(false)}
+                />
               ) : (
-                <EyeSlashIcon className="h-6 w-6 text-gray-500 cursor-pointer" onClick={() => setShowPwd(true)} />
+                <EyeSlashIcon
+                  className="h-6 w-6 text-gray-500 cursor-pointer"
+                  onClick={() => setShowPwd(true)}
+                />
               )}
             </div>
 
@@ -136,17 +202,30 @@ export default function Sign_in() {
               <input
                 type={showConfirm ? "text" : "password"}
                 placeholder="Confirm Password"
-                autoComplete="new-password"
-                className="w-full text-[15px] md:text-[25px] lg:text-[30xl] focus:outline-none"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full text-[15px] md:text-[25px] focus:outline-none"
+                required
               />
               {showConfirm ? (
-                <EyeIcon className="h-6 w-6 text-gray-500 cursor-pointer" onClick={() => setShowConfirm(false)} />
+                <EyeIcon
+                  className="h-6 w-6 text-gray-500 cursor-pointer"
+                  onClick={() => setShowConfirm(false)}
+                />
               ) : (
-                <EyeSlashIcon className="h-6 w-6 text-gray-500 cursor-pointer" onClick={() => setShowConfirm(true)} />
+                <EyeSlashIcon
+                  className="h-6 w-6 text-gray-500 cursor-pointer"
+                  onClick={() => setShowConfirm(true)}
+                />
               )}
             </div>
 
-            {/* ปุ่ม Sign up */}
+            {/* ✅ Error */}
+            {error && (
+              <p className="text-red-500 text-center text-sm">{error}</p>
+            )}
+
+            {/* ✅ ปุ่ม Sign up */}
             <motion.button
               type="submit"
               whileHover={{ scale: 1.05 }}
@@ -156,13 +235,12 @@ export default function Sign_in() {
               Sign up
             </motion.button>
 
-            {/* Google button */}
+            {/* ✅ Google button */}
             <motion.button
               type="button"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="flex items-center gap-3 px-5 py-2 rounded-lg hover:text-[#4caf50] transition block mx-auto w-fit text-black"
-              onClick={() => {/* TODO: Google OAuth */}}
             >
               <FcGoogle className="text-2xl md:text-3xl" />
               <span className="text-lg md:text-2xl">Sign up with Google</span>

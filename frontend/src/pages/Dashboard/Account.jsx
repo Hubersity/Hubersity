@@ -8,7 +8,7 @@ export default function Account() {
   const [profilePic, setProfilePic] = useState("/images/Karnpon.jpg");
   const [name, setName] = useState("Killua");
   const [birthdate, setBirthdate] = useState(new Date("2005-01-01"));
-  const [bio, setBio] = useState("A all subject\nlove Aj. Piya 😍🙌");
+  const [bio, setBio] = useState("A all subject");
   const [university, setUniversity] = useState("Thammasat University");
   const [visibility, setVisibility] = useState("public");
 

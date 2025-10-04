@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import {PlayIcon, PauseIcon} from "@heroicons/react/24/outline";
+import { PlayIcon, PauseIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 
 // ฟังก์ชันคำนวณจำนวนวันในเดือนและปีที่ระบุ
@@ -17,128 +17,143 @@ const currentDate = new Date();
 const currentDayStr = `${currentDate.getFullYear()}-${currentDate.getMonth() + 1 < 10 ? `0${currentDate.getMonth() + 1}` : currentDate.getMonth() + 1}-${currentDate.getDate() < 10 ? `0${currentDate.getDate()}` : currentDate.getDate()}`;
 
 function CountTime() {
-
-  // xd9b useState(0) คืนค่า [0, function]
-  // time ช่องเก็บค่าล่าสุด (state value), setTime ปุ่มรีโมทที่สั่ง React: “อัพเดตค่า + วาด UI ใหม่ด้วย”
-  const [time, setTime] = useState(0); //เก้บเวลาที่นับ
-  const [running, setrunning] = useState(false); // ดูว่าเล่นอยู่มั้ย
-  const [activeButton, setActiveButton] = useState(null); // ดูว่ากดปุ่มไร
+  const [time, setTime] = useState(0); 
+  const [running, setrunning] = useState(false);
+  const [activeButton, setActiveButton] = useState(null);
   const timerRef = useRef(null);
+  const [sessionId, setSessionId] = useState(null);
 
-  // 1 ชั่วโมง = 60 นาที = 3600 วินาที = 3,600,000 มิลลิวินาที
-  // % 24 เอาเศษจากการหาร 24 เพื่อให้ค่าอยู่ในช่วง 0–23 ชั่วโมง
-  const hoursNum   = Math.floor(time / 3600) % 24;
+  const user = JSON.parse(localStorage.getItem("user"));
+  const token = localStorage.getItem("token");
 
-  // time (ปกติเก็บเป็น มิลลิวินาที) / 60000 (มิลลิวินาที ) get นาที (1 นาที = 60,000 ms) have % (modulo) เพื่อให้ค่า ไม่เกิน 59 นาที
-  //ex: (125 % 60) = 5 (ชั่วโมงจะถูกแยกไปอีกตัว)
-  const minutesNum = Math.floor(time / 60) % 60;
+  // === ฟังก์ชันเริ่ม session (start timer ใน backend) ===
+  const startSession = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/study/start?user_id=" + user?.uid, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      if (data.sid) setSessionId(data.sid);
+      console.log("Session started:", data);
+    } catch (err) {
+      console.error("Start session failed:", err);
+    }
+  };
 
-  // time / 1000 milliseconds → seconds (วินาที)
-  const secondsNum = time % 60;
+  // === ฟังก์ชันหยุด session (stop timer ใน backend) ===
+  const stopSession = async () => {
+    if (!sessionId) return;
+    try {
+      const res = await fetch(`http://localhost:8000/study/stop/${sessionId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await res.json();
+      console.log("Session stopped:", data);
+    } catch (err) {
+      console.error("Stop session failed:", err);
+    }
+  };
 
-  const hours   = String(hoursNum).padStart(2, "0");   // แปลงเป็น string ไว้โชว์ String(value).padStart(targetLength, padString)
-  const minutes = String(minutesNum).padStart(2, "0"); // targetLength → ความยาวของ string ที่เราต้องการ
-  const seconds = String(secondsNum).padStart(2, "0"); // padString → จะเติมอะไรที่ด้านหน้า (default คือ " " ช่องว่าง)
-
-  // strat time
-  const start_t = () => {
-    // running === false → !running === true → เข้าเงื่อนไข
+  // start time (frontend)
+  const start_t = async () => {
     if (!running) {
+      await startSession();
       setrunning(true);
       timerRef.current = setInterval(() => {
-        //สร้างการนับเวลา ทุก ๆ 1 วินาที เพิ่มค่า seconds +1
         setTime((sce) => sce + 1);
       }, 1000);
     }
-  }
+  };
 
-  //pause time
-  const pause_time = () => {
-    setrunning(false); //stop time
-    clearInterval(timerRef.current); // ไม่นังเวลาเพิ่ม ( ไม่ + 1 เพิ่ม )
-  }
+  // pause time (frontend)
+  const pause_time = async () => {
+    setrunning(false);
+    clearInterval(timerRef.current);
+    await stopSession();
+  };
 
-  //picture
+  // picture system
   const picture_f = [
-    "/images/ts_l0-rebg.png", // index 0
-    "/images/ts_l1-rebg.png", // index 1
-    "/images/ts_l2-rebg.png", // index 2
-    "/images/ts_l3-rebg.png", // index 3
-    "/images/ts_l4-rebg.png" //index 4
-  ]
+    "/images/ts_l0-rebg.png",
+    "/images/ts_l1-rebg.png",
+    "/images/ts_l2-rebg.png",
+    "/images/ts_l3-rebg.png",
+    "/images/ts_l4-rebg.png"
+  ];
 
-  let ShowPicture = picture_f[0] // default
+  const hoursNum = Math.floor(time / 3600) % 24;
+  const minutesNum = Math.floor(time / 60) % 60;
+  const secondsNum = time % 60;
+  const hours = String(hoursNum).padStart(2, "0");
+  const minutes = String(minutesNum).padStart(2, "0");
+  const seconds = String(secondsNum).padStart(2, "0");
+
+  let ShowPicture = picture_f[0];
   if (hoursNum === 0 && minutesNum === 0 && secondsNum === 0) ShowPicture = picture_f[0];
   else if (hoursNum <= 3) ShowPicture = picture_f[1];
   else if (hoursNum <= 6) ShowPicture = picture_f[2];
   else if (hoursNum <= 9) ShowPicture = picture_f[3];
   else ShowPicture = picture_f[4];
 
-  return(
+  return (
     <div>
       <h2 className="text-5xl font-bold self-end mb-8 mt-4">Today</h2>
-        <div className="flex flex-col items-center gap-2 mt-12">
-            <div className="flex gap-1 mt-4">
-              {/* แสดงภาพเดียวตามเงื่อนไข */}
-              <img src={ShowPicture} alt="study-status" className="w-full h-full object-contain" />
-            </div>
-
-          <span className="text-4xl font-bold mt-14">{`${hours}:${minutes}:${seconds}`}</span>
-          
-          <div className="flex gap-[20vh] mt-14">
-            {/* start */}
-            <motion.button
-              type="button"
-              onClick={() => {
-                start_t();   // เรียกฟังก์ชันเริ่มนับเวลา
-                setActiveButton("play");  // ตั้ง state ว่าปุ่ม Play เป็นปุ่มที่ active ตอนนี้
-              }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`rounded-3xl px-8 transition ${
-                activeButton === "play"
-                  ? "bg-[#6aa484]" // สีเข้มเมื่อ active ของ java กำหนดมาอยู่แล้ว
-                  : "bg-[#a0c4a8]" // สีปกติ
-              } hover:opacity-90`}
-            >
-              <PlayIcon className="h-12 w-12 text-gray-700" />
-            </motion.button>
-            
-            {/* pause */}
-            <motion.button
-              type="button"
-              onClick={() => {
-                pause_time();
-                setActiveButton("pause");
-              }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`rounded-3xl px-8 transition ${
-                activeButton === "pause"
-                  ? "bg-[#6aa484]"
-                  : "bg-[#a0c4a8]"
-              } hover:opacity-90`}
-            >
-              <PauseIcon className="h-12 w-12 text-gray-700" />
-            </motion.button>
-          </div>
+      <div className="flex flex-col items-center gap-2 mt-12">
+        <div className="flex gap-1 mt-4">
+          <img src={ShowPicture} alt="study-status" className="w-full h-full object-contain" />
         </div>
+
+        <span className="text-4xl font-bold mt-14">{`${hours}:${minutes}:${seconds}`}</span>
+
+        <div className="flex gap-[20vh] mt-14">
+          <motion.button
+            type="button"
+            onClick={() => {
+              start_t();
+              setActiveButton("play");
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`rounded-3xl px-8 transition ${activeButton === "play" ? "bg-[#6aa484]" : "bg-[#a0c4a8]"} hover:opacity-90`}
+          >
+            <PlayIcon className="h-12 w-12 text-gray-700" />
+          </motion.button>
+
+          <motion.button
+            type="button"
+            onClick={() => {
+              pause_time();
+              setActiveButton("pause");
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className={`rounded-3xl px-8 transition ${activeButton === "pause" ? "bg-[#6aa484]" : "bg-[#a0c4a8]"} hover:opacity-90`}
+          >
+            <PauseIcon className="h-12 w-12 text-gray-700" />
+          </motion.button>
+        </div>
+      </div>
     </div>
   );
 }
 
 function Text_InfoHour() {
   const items = [
-    {color: "bg-[#a6a6a6]", label: "Study 0 hour"},
-    {color: "bg-[#38b6ff]", label: "Study more than 0 seconds to 3 hours"},
-    {color: "bg-[#fe9031]", label: "study between 3 to 6 hours"},
-    {color: "bg-[#8c52ff]", label: "Study between 6 to 9 hours"},
-    {color: "bg-[#ea4128]", label: "Study more than 9 hours"}
+    { color: "bg-[#a6a6a6]", label: "Study 0 hour" },
+    { color: "bg-[#38b6ff]", label: "Study more than 0 seconds to 3 hours" },
+    { color: "bg-[#fe9031]", label: "study between 3 to 6 hours" },
+    { color: "bg-[#8c52ff]", label: "Study between 6 to 9 hours" },
+    { color: "bg-[#ea4128]", label: "Study more than 9 hours" },
   ];
 
-  return(
+  return (
     <div className="mt-4 ml-2 text-lg space-y-2">
-      {/* .map() = loop เพื่อแสดงแต่ละอัน (circle + label) */}
       {items.map((items, index) => (
         <div key={index} className="flex items-center gap-4">
           <span className={`w-4 h-4 rounded-full ${items.color}`} />
@@ -151,129 +166,95 @@ function Text_InfoHour() {
 
 function Calendar() {
   const currentDate = new Date();
-  const [month, setMonth] = useState(currentDate.getMonth() + 1); // เดือนปัจจุบัน (1-12)
-  const [year, setYear] = useState(currentDate.getFullYear()); // ปีปัจจุบัน
-  const [studyData, setStudyData] = useState({}); // ข้อมูลการศึกษาจาก backend
+  const [month, setMonth] = useState(currentDate.getMonth() + 1);
+  const [year, setYear] = useState(currentDate.getFullYear());
+  const [studyData, setStudyData] = useState({});
+  const user = JSON.parse(localStorage.getItem("user"));
+  const token = localStorage.getItem("token");
 
-  // อาร์เรย์ชื่อเดือน
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
 
-  // แปลงเดือนเป็นชื่อเดือนเต็ม month - 1 because array strat at 0
-  const monthName = monthNames[month - 1];
+  const fetchCalendar = async () => {
+    try {
+      const res = await fetch(`http://localhost:8000/study/calendar/${user?.uid}/${year}/${month}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setStudyData(data);
+    } catch (err) {
+      console.error("Fetch calendar failed:", err);
+    }
+  };
 
-  // ดึงข้อมูลการศึกษาจาก backend (ตัวอย่างข้อมูล)
   useEffect(() => {
-    fetch("/api/get-study-data")
-      .then((response) => response.json())
-      .then((data) => setStudyData(data));
+    fetchCalendar();
   }, [month, year]);
 
-  // คำนวณจำนวนวันในเดือนที่เลือก
   const daysInMonth = getDaysInMonth(month, year);
-  // คำนวณวันแรกของเดือน (0-6)
   const firstDay = getFirstDayOfMonth(month, year);
 
-  // ฟังก์ชันสำหรับเปลี่ยนสีตามชั่วโมงการศึกษา
   const getColorForDay = (day) => {
-
-    // สร้างวันที่แบบ 'yyyy-mm-dd' เพื่อใช้ในการเปรียบเทียบ
     const dayStr = `${year}-${month < 10 ? `0${month}` : month}-${day < 10 ? `0${day}` : day}`;
-
-      // หากเป็นวันที่ก่อนวันปัจจุบัน ให้ไม่ใส่สี (คืนค่าสีโปร่งใส)
-    if (dayStr > currentDayStr) 
-      { return "bg-transparent"}; // ไม่มีสี
-
-    // วงกลมสีเขียวถ้าเป็นวันนี้
-    if (dayStr == currentDayStr)
-      {return "bg-[#b7ddbf] rounded-full";}
-
-    const hours = studyData[dayStr] || 0;
-
-    if (hours === 0) {
-      // เช็กว่าจริง ๆ แล้วยังไม่เริ่มหรือยัง
-      const totalSeconds = (studyData[dayStr] || 0); 
-      if (totalSeconds === 0) {
-        return "bg-[#a6a6a6]"; // ยังไม่เริ่มเลย → เทา
-      } else {
-        return "bg-[#38b6ff]"; // เริ่มแล้วแต่ < 1 ชม. → ฟ้า
-      }
-    } else if (hours <= 3) {
-      return "bg-[#38b6ff]";
-    } else if (hours <= 6) {
-      return "bg-[#fe9031]";
-    } else if (hours <= 9) {
-      return "bg-[#8c52ff]";
-    } else {
-      return "bg-[#ea4128]";
-    }
+    if (dayStr > currentDayStr) return "bg-transparent";
+    if (dayStr === currentDayStr) return "bg-[#b7ddbf] rounded-full";
+    const dayData = studyData[dayStr];
+    if (!dayData) return "bg-[#a6a6a6]";
+    const hours = (dayData.total_minutes || 0) / 60;
+    if (hours <= 0) return "bg-[#a6a6a6]";
+    if (hours <= 3) return "bg-[#38b6ff]";
+    if (hours <= 6) return "bg-[#fe9031]";
+    if (hours <= 9) return "bg-[#8c52ff]";
+    return "bg-[#ea4128]";
   };
 
   const renderCalendar = () => {
     const days = [];
     let day = 1;
-
-    // สร้างช่องว่างสำหรับสัปดาห์แรกตามวันที่เริ่มต้นของเดือน
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} className="w-[5vh] h-[5vh]" />);
     }
-
-    // สร้างตัวเลขวันและวงกลมที่อยู่ใต้ตัวเลข
-      for (let i = 0; i < daysInMonth; i++) {
-
-        // สร้างวันที่ในรูปแบบ 'yyyy-mm-dd' เพื่อใช้ในการเปรียบเทียบ
-        const dayStr = `${year}-${month < 10 ? `0${month}` : month}-${day < 10 ? `0${day}` : day}`;
-
-        // เปรียบเทียบกับวันที่ปัจจุบัน
-        const isnotCurrentDay = dayStr !== currentDayStr;
-        const isCurrentDay = dayStr === currentDayStr;
-
-          days.push(
-            <div key={i} className="flex flex-col items-center justify-center p-2 w-[5vh] h-[5vh]">
-              {/* ตัวเลขวัน */}
-              <div className="font-bold">{day}</div>
-
-              {/* วงกลมที่แสดงสีตามชั่วโมงการเรียน */}
-              {/* <div className={`w-[5vh] h-[5vh] rounded-full ${getColorForDay(day)}`}></div> */}
-              {isnotCurrentDay && ( // use && แทน if
-                <div className={`w-[5vh] h-[5vh] rounded-full ${getColorForDay(day)}`}></div>
-              )}
-
-              {isCurrentDay && (
-               <div className={`w-[5vh] h-[5vh] rounded-full bg-[#b7ddbf]`}></div>
-              )}
-
-            </div>
-          );
-        day++;
-      }
+    for (let i = 0; i < daysInMonth; i++) {
+      const dayStr = `${year}-${month < 10 ? `0${month}` : month}-${day < 10 ? `0${day}` : day}`;
+      const isnotCurrentDay = dayStr !== currentDayStr;
+      const isCurrentDay = dayStr === currentDayStr;
+      days.push(
+        <div key={i} className="flex flex-col items-center justify-center p-2 w-[5vh] h-[5vh]">
+          <div className="font-bold">{day}</div>
+          {isnotCurrentDay && (
+            <div className={`w-[5vh] h-[5vh] rounded-full ${getColorForDay(day)}`}></div>
+          )}
+          {isCurrentDay && (
+            <div className={`w-[5vh] h-[5vh] rounded-full bg-[#b7ddbf]`}></div>
+          )}
+        </div>
+      );
+      day++;
+    }
     return days;
   };
 
-  // ฟังก์ชันไปยังเดือนถัดไป
   const nextMonth = () => {
     if (month === 12) {
       setMonth(1);
-      setYear(year + 1); // เพิ่มปีถ้าเดือนคือธันวาคม
+      setYear(year + 1);
     } else {
       setMonth(month + 1);
     }
   };
 
-  // ฟังก์ชันไปยังเดือนก่อนหน้า
   const prevMonth = () => {
     if (month === 1) {
       setMonth(12);
-      setYear(year - 1); // ลดปีถ้าหากเดือนคือมกราคม
+      setYear(year - 1);
     } else {
       setMonth(month - 1);
     }
   };
 
   return (
-    // <> when want to return many function</>
     <>
       <div className="flex gap-6 items-start">
         <div className="w-1/2 flex flex-col gap-6">
@@ -283,8 +264,14 @@ function Calendar() {
                 <span>{`${monthNames[month - 1]} ${year}`}</span>
               </div>
               <div className="text-3xl">
-                <button onClick={prevMonth} className="ml-4"> &lt; </button>
-                <button onClick={nextMonth} className="ml-4"> &gt; </button>
+                <button onClick={prevMonth} className="ml-4">
+                  {" "}
+                  &lt;{" "}
+                </button>
+                <button onClick={nextMonth} className="ml-4">
+                  {" "}
+                  &gt;{" "}
+                </button>
               </div>
             </div>
             <div className="grid grid-cols-7 gap-4">
@@ -297,17 +284,14 @@ function Calendar() {
             </div>
           </div>
           <div className="self-start">
-            {/* Legend อยู่ข้างนอก calendar box (info about color in each hour)*/}
             <Text_InfoHour />
           </div>
         </div>
-
-         {/* box of count time */}
-         <div className="w-1/2 h-[87vh] sticky top-0 bg-[#fffbf5] rounded-xl shadow-2xl p-4 overflow-auto">
-           <CountTime />
+        <div className="w-1/2 h-[87vh] sticky top-0 bg-[#fffbf5] rounded-xl shadow-2xl p-4 overflow-auto">
+          <CountTime />
         </div>
       </div>
     </>
-   );
+  );
 }
 export default Calendar;
