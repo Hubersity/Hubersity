@@ -4,6 +4,8 @@ import Login from './pages/Login/Login';
 import Sign_in from './pages/Sign in/Sign_in';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Board from './pages/Dashboard/Board';
+import TimeStudy from './pages/Dashboard/TimeStudy';
+import CreateAcc from "./pages/Create-account/create-acc.jsx";
 
 function App() {
   return (
@@ -17,7 +19,11 @@ function App() {
         {/* default → /app/board */}
         <Route index element={<Navigate to="board" replace />} />
         <Route path="board" element={<Board />} />
+        <Route path="time-study" element={<TimeStudy />} />
       </Route>
+
+      {/* creata account */}
+      <Route path="/create-account" element={<CreateAcc />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
