@@ -18,27 +18,21 @@ function App() {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signin" element={<Sign_in />} />
+      <Route path="/create-account" element={<CreateAcc />} />
 
       {/* 🧭 Dashboard Layout */}
       <Route path="/app" element={<Dashboard />}>
         {/* default → /app/board */}
         <Route index element={<Navigate to="board" replace />} />
-
         <Route path="board" element={<Board />} />
         <Route path="time-study" element={<TimeStudy />} />
-      </Route>
-
-      {/* creata account */}
-      <Route path="/create-account" element={<CreateAcc />} />
-
         <Route path="follow" element={<Follow />} />
         <Route path="chat" element={<Chat />} />
-        <Route path="notification" element={<Notifications />} /> {/* 🔔 เพิ่ม Notifications path */}
+        <Route path="notification" element={<Notifications />} />
         <Route path="account" element={<Account />} />
       </Route>
 
       {/* ❌ ถ้าเส้นทางไม่ถูก → กลับไปหน้าแรก */}
-
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
