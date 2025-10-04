@@ -4,6 +4,8 @@ import Login from './pages/Login/Login';
 import Sign_in from './pages/Sign in/Sign_in';
 import Dashboard from './pages/Dashboard/Dashboard';
 import Board from './pages/Dashboard/Board';
+import TimeStudy from './pages/Dashboard/TimeStudy';
+import CreateAcc from "./pages/Create-account/create-acc.jsx";
 import Account from './pages/Dashboard/Account';
 import Follow from './pages/Dashboard/Follow';
 import Chat from './pages/Dashboard/Chat';
@@ -23,6 +25,12 @@ function App() {
         <Route index element={<Navigate to="board" replace />} />
 
         <Route path="board" element={<Board />} />
+        <Route path="time-study" element={<TimeStudy />} />
+      </Route>
+
+      {/* creata account */}
+      <Route path="/create-account" element={<CreateAcc />} />
+
         <Route path="follow" element={<Follow />} />
         <Route path="chat" element={<Chat />} />
         <Route path="notification" element={<Notifications />} /> {/* 🔔 เพิ่ม Notifications path */}
@@ -30,6 +38,7 @@ function App() {
       </Route>
 
       {/* ❌ ถ้าเส้นทางไม่ถูก → กลับไปหน้าแรก */}
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

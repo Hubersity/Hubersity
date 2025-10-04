@@ -2,9 +2,18 @@ import React, { useState } from "react";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { FcGoogle } from "react-icons/fc";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 export default function Sign_in() {
-  const [show, setShow] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const navigate = useNavigate();
+
+  const handleSubmit = (e) => {
+    e.preventDefault();            // กันรีโหลด
+    // go to careta acc page
+    navigate("/create-account"); 
+  };
 
   return (
     <div className="min-h-screen bg-[#f1f6ec] flex justify-center items-center relative overflow-hidden px-4">
@@ -87,78 +96,73 @@ export default function Sign_in() {
         transition={{ duration: 0.9, type: "spring", bounce: 0.4, delay: 1.2 }}
       >
         <div className="px-6 md:px-12 py-10">
-          <form className="flex flex-col gap-10 p-12">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-10 p-12">
             <h1 className="text-7xl md:text-5xl lg:text-6xl text-[#085e24] font-bold text-center mb-10">
               Sign Up
             </h1>
 
             <input
-              type="name"
+              type="text"
               placeholder="User name"
+              autoComplete="username"
               className="w-full text-[15px] md:text-[25px] lg:text-[30xl] border-black border-b-2 focus:outline-none"
             />
 
             <input
               type="email"
               placeholder="Email"
+              autoComplete="email"
               className="w-full text-[15px] md:text-[25px] lg:text-[30xl] border-black border-b-2 focus:outline-none"
             />
+
 
             {/* Password */}
             <div className="flex items-center border-b-2 border-black">
               <input
-                type={show ? "text" : "password"}
+                type={showPwd ? "text" : "password"}
                 placeholder="Password"
+                autoComplete="new-password"
                 className="w-full text-[15px] md:text-[25px] lg:text-[30xl] focus:outline-none"
               />
-              {show ? (
-                <EyeIcon
-                  className="h-6 w-6 text-gray-500 cursor-pointer"
-                  onClick={() => setShow(false)}
-                />
+              {showPwd ? (
+                <EyeIcon className="h-6 w-6 text-gray-500 cursor-pointer" onClick={() => setShowPwd(false)} />
               ) : (
-                <EyeSlashIcon
-                  className="h-6 w-6 text-gray-500 cursor-pointer"
-                  onClick={() => setShow(true)}
-                />
+                <EyeSlashIcon className="h-6 w-6 text-gray-500 cursor-pointer" onClick={() => setShowPwd(true)} />
               )}
             </div>
 
             {/* Confirm Password */}
             <div className="flex items-center border-b-2 border-black">
               <input
-                type={show ? "text" : "password"}
+                type={showConfirm ? "text" : "password"}
                 placeholder="Confirm Password"
+                autoComplete="new-password"
                 className="w-full text-[15px] md:text-[25px] lg:text-[30xl] focus:outline-none"
               />
-              {show ? (
-                <EyeIcon
-                  className="h-6 w-6 text-gray-500 cursor-pointer"
-                  onClick={() => setShow(false)}
-                />
+              {showConfirm ? (
+                <EyeIcon className="h-6 w-6 text-gray-500 cursor-pointer" onClick={() => setShowConfirm(false)} />
               ) : (
-                <EyeSlashIcon
-                  className="h-6 w-6 text-gray-500 cursor-pointer"
-                  onClick={() => setShow(true)}
-                />
+                <EyeSlashIcon className="h-6 w-6 text-gray-500 cursor-pointer" onClick={() => setShowConfirm(true)} />
               )}
             </div>
 
             {/* ปุ่ม Sign up */}
-            <motion.a
-              href="sigin"
+            <motion.button
+              type="submit"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="rounded-full bg-[#8cab93] text-center py-3 px-12 text-lg md:text-2xl hover:opacity-90 transition block mx-auto w-fit"
             >
               Sign up
-            </motion.a>
+            </motion.button>
 
             {/* Google button */}
             <motion.button
+              type="button"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="flex items-center gap-3 px-5 py-2 rounded-lg hover:text-[#4caf50] transition block mx-auto w-fit text-black"
+              onClick={() => {/* TODO: Google OAuth */}}
             >
               <FcGoogle className="text-2xl md:text-3xl" />
               <span className="text-lg md:text-2xl">Sign up with Google</span>
