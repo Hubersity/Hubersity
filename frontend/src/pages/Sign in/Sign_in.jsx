@@ -7,8 +7,6 @@ export default function Sign_in() {
     const [show, setShow] = useState(false);
     return (
         <div className="min-h-screen bg-[#f1f6ec] flex justify-center items-center relative overflow-hidden px-4">
-            {/* vw และ vh แทน px → วงกลมและเส้นเขียวจะ ปรับตามขนาดจอ 
-            style={{ ... }} กำหนดตำแหน่งแบบยืดหยุ่น (แทนที่ค่า px)*/}
 
             {/* เส้นเขียว */}
             <div
@@ -87,7 +85,7 @@ export default function Sign_in() {
 
                     <form className="flex flex-col gap-10 p-12">
                         
-                        <h1 className="text-7xl md:text-5xl lg:text-6xl text-[#085e24] font-bold text-center mb-10">Sign In</h1>
+                        <h1 className="text-7xl md:text-5xl lg:text-6xl text-[#085e24] font-bold text-center mb-10">Sign Up</h1>
                         
                         <input
                         type="name"
@@ -138,12 +136,12 @@ export default function Sign_in() {
                         <a
                             href="sigin"
                             className="rounded-full bg-[#8cab93] text-center py-3 px-12 text-lg md:text-2xl hover:opacity-90 transition block mx-auto w-fit">
-                            Sign in
+                            Sign up
                         </a>
 
                         <button className="flex items-center gap-3 px-5 py-2 rounded-lg hover:text-[#4caf50] transition block mx-auto w-fit text-black">
                             <FcGoogle className="text-2xl md:text-3xl" />
-                            <span className="text-lg md:text-2xl">Sign in with Google</span>
+                            <span className="text-lg md:text-2xl">Sign up with Google</span>
                         </button>
 
                     </form>

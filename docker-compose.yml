@@ -1,18 +1,4 @@
-version: "3.9"
-
 services:
-  backend:
-    build: ./backend
-    volumes:
-      - ./backend:/app 
-    ports:
-      - "8000:8000"
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    environment:
-      DATABASE_URL: postgresql://postgres:password@db:5432/hubersity
-    depends_on:
-      - db
-  
   db:
     image: postgres:15
     environment:
@@ -23,7 +9,39 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
-      
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build: ./backend
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:password@db:5432/hubersity
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://backend:8000
+    depends_on:
+      - backend
+
   pgadmin:
     image: dpage/pgadmin4
     environment:
@@ -34,9 +52,10 @@ services:
     depends_on:
       - db
     volumes:
-      - pgadmin_data:/var/lib/pgadmin 
-      - ./servers.json:/pgadmin4/servers.json 
+      - pgadmin_data:/var/lib/pgadmin
+      - ./servers.json:/pgadmin4/servers.json
 
 volumes:
   db_data:
   pgadmin_data:
+

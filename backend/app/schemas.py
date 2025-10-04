@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 
 class UserCreate(BaseModel):
     username: str
@@ -33,7 +33,7 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributese = True
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -45,3 +45,56 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: Optional[int] = None
+
+class PostImageCreate(BaseModel):
+    path: str
+    caption: Optional[str] = None
+
+class PostCreate(BaseModel):
+    post_content: str
+    forum_id: int
+    tags: Optional[List[int]] = []           
+    images: Optional[List[PostImageCreate]] = []
+
+class PostImageResponse(BaseModel):
+    id: int
+    path: str
+    caption: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+class PostTagResponse(BaseModel):
+    ptid: int
+    name: str
+
+    class Config:
+        from_attributes = True
+
+class CommentCreate(BaseModel):
+    content: str
+
+class CommentResponse(BaseModel):
+    cid: int
+    content: str
+    user_id: int
+    username: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class PostResponse(BaseModel):
+    pid: int
+    post_content: str
+    forum_id: int
+    user_id: int
+    username: str
+    like_count: int
+    tags: List[PostTagResponse] = []
+    images: List[PostImageResponse] = []
+    comments: List[CommentResponse] = []
+
+    class Config:
+        from_attributes = True
+

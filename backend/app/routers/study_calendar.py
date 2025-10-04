@@ -1,9 +1,10 @@
 # app/routers/study_calendar.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone
 from .. import models
 from ..database import get_db
+from calendar import monthrange
 
 router = APIRouter(
     prefix="/study",
@@ -24,8 +25,9 @@ def stop_session(sid: int, db: Session = Depends(get_db)):
     if not session or session.end_time:
         return {"error": "Invalid session"}
 
-    session.end_time = datetime.utcnow()
+    session.end_time = datetime.now(timezone.utc)
     session.duration_minutes = int((session.end_time - session.start_time).total_seconds() // 60)
+    
     db.commit()
 
     study_date = session.start_time.date()
@@ -48,12 +50,15 @@ def stop_session(sid: int, db: Session = Depends(get_db)):
 
 @router.get("/calendar/{user_id}/{year}/{month}")
 def get_calendar(user_id: int, year: int, month: int, db: Session = Depends(get_db)):
+    last_day = monthrange(year, month)[1]
+
     records = (
         db.query(models.DailyProgress)
         .filter(models.DailyProgress.user_id == user_id)
-        .filter(models.DailyProgress.date.between(f"{year}-{month}-01", f"{year}-{month}-31"))
+        .filter(models.DailyProgress.date.between(f"{year}-{month:02d}-01", f"{year}-{month:02d}-{last_day}"))
         .all()
     )
+
     return {
         r.date.strftime("%Y-%m-%d"): {"total_minutes": r.total_minutes, "badge": r.badge_level}
         for r in records
