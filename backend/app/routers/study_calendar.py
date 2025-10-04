@@ -1,8 +1,9 @@
 # app/routers/study_calendar.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from .. import models, database
+from sqlalchemy import Date
 from ..database import get_db
 from calendar import monthrange
 
