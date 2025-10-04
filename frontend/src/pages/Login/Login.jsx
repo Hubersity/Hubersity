@@ -5,16 +5,56 @@ import { motion } from "framer-motion";
 
 export default function Login() {
   const [show, setShow] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    // TODO: ตรวจสอบ user/password จริงตรงนี้
-    navigate("/app/board"); // ✅ ไปที่ Dashboard Board
+  // ✅ ฟังก์ชัน login (ใช้ JSON)
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    const apiUrl = `${import.meta.env.VITE_API_URL}/login`;
+    console.log("🔗 Sending login request to:", apiUrl);
+
+    try {
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+
+      console.log("📡 Response status:", res.status);
+
+      if (!res.ok) {
+        const errMsg =
+          res.status === 403
+            ? "Invalid email or password"
+            : "Cannot connect to server";
+        setError(errMsg);
+        console.warn("❌ Login failed:", res.status, errMsg);
+        return;
+      }
+
+      const data = await res.json();
+      console.log("✅ Login success:", data);
+
+      localStorage.setItem("user", JSON.stringify(data));
+      navigate("/app/board");
+    } catch (err) {
+      console.error("🚨 Connection error:", err);
+      setError("Cannot connect to server");
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#f1f6ec] flex relative overflow-hidden">
-
       {/* เส้นตกแต่งด้านซ้าย */}
       <motion.div
         initial={{ opacity: 0, x: -100 }}
@@ -92,37 +132,47 @@ export default function Login() {
             Login
           </h1>
 
-          <form className="flex flex-col gap-8 p-6">
+          <form className="flex flex-col gap-8 p-6" onSubmit={handleLogin}>
             <input
               type="email"
               placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full text-[18px] md:text-[22px] border-black border-b-2 focus:outline-none"
+              required
             />
 
             {/* Password input */}
-            <div className="flex items-center border-b-2 border-black">
-              <input
-                type={show ? "text" : "password"}
-                placeholder="Password"
-                className="w-full text-[18px] md:text-[22px] outline-none"
-              />
-              {show ? (
-                <EyeIcon
-                  className="h-6 w-6 text-gray-500 cursor-pointer"
-                  onClick={() => setShow(false)}
+            <div className="flex flex-col">
+              <div className="flex items-center border-b-2 border-black">
+                <input
+                  type={show ? "text" : "password"}
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full text-[18px] md:text-[22px] outline-none"
+                  required
                 />
-              ) : (
-                <EyeSlashIcon
-                  className="h-6 w-6 text-gray-500 cursor-pointer"
-                  onClick={() => setShow(true)}
-                />
+                {show ? (
+                  <EyeIcon
+                    className="h-6 w-6 text-gray-500 cursor-pointer"
+                    onClick={() => setShow(false)}
+                  />
+                ) : (
+                  <EyeSlashIcon
+                    className="h-6 w-6 text-gray-500 cursor-pointer"
+                    onClick={() => setShow(true)}
+                  />
+                )}
+              </div>
+
+              {error && (
+                <p className="text-[#e74c3c] text-sm mt-2 text-left">{error}</p>
               )}
             </div>
 
-            {/* ปุ่ม Login */}
             <motion.button
-              type="button"
-              onClick={handleLogin}
+              type="submit"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="rounded-full bg-[#8cab93] text-center py-3 px-12 text-xl md:text-2xl hover:opacity-90 transition block w-full shadow-md"
@@ -130,23 +180,26 @@ export default function Login() {
               Login
             </motion.button>
 
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-sm mt-3">
               <label className="flex gap-2">
                 <input type="checkbox" className="accent-[#8cab93]" />
                 Remember me
               </label>
 
               <a href="forgot.jsx" className="hover:text-[#4caf50] transition">
-                Forgot Password?
+                Forgot password?
               </a>
             </div>
 
-            <motion.div whileHover={{ scale: 1.05, rotate: -2 }} whileTap={{ scale: 0.95 }}>
+            <motion.div
+              whileHover={{ scale: 1.05, rotate: -2 }}
+              whileTap={{ scale: 0.95 }}
+            >
               <Link
                 to="/signin"
                 className="rounded-full bg-[#8cab93] text-center py-3 px-12 text-lg md:text-xl hover:opacity-90 transition block mx-auto w-fit shadow-md"
               >
-                Sign in
+                Sign Up
               </Link>
             </motion.div>
           </form>
