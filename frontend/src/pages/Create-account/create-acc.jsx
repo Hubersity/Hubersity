@@ -29,10 +29,48 @@ export default function CreateAcc() {
     document.getElementById("profile-upload").click();
   };
 
-  const handleSave = () => {
-    // (สามารถเก็บข้อมูล user ไว้ใน localStorage หรือส่ง API ก็ได้)
-    console.log("Saved:", { name, birthdate, bio, privacy, university });
-    navigate("/app/board"); // ไปหน้า Dashboard
+  const handleSave = async () => {
+    try {
+      // จำลอง username และ email สำหรับทดสอบ
+      const username = name.toLowerCase().replace(/\s+/g, "_") || "new_user";
+      const email = `${username}@hubersity.com`;
+
+      // แปลงวันเกิดเป็น yyyy-mm-dd
+      const formattedDate = birthdate.toISOString().split("T")[0];
+
+      // เตรียมข้อมูลส่ง backend
+      const body = {
+        username,
+        name,
+        email,
+        password: "Test@1234", 
+        confirm_password: "Test@1234",
+        description: bio,
+        university,
+        privacy,
+        birthdate: formattedDate,
+        profile_image: image,
+      };
+
+      const res = await fetch("http://localhost:8000/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        console.log("✅ Account created:", data);
+        alert("Account created successfully!");
+        navigate("/app/board"); 
+      } else {
+        const err = await res.json();
+        alert(`❌ Error: ${err.detail || "Failed to create account"}`);
+      }
+    } catch (error) {
+      console.error("Error saving account:", error);
+      alert("❌ Something went wrong. Please try again.");
+    }
   };
 
   return (
