@@ -9,16 +9,25 @@ class User(Base):
     __tablename__ = "users"
 
     uid = Column(Integer, primary_key=True, nullable=False)
-    username = Column(String, nullable=False, unique=True)
+    username = Column(String, nullable=False, unique=True)  # ใช้ตอนสมัคร (login)
+    name = Column(String, nullable=True)                    # ชื่อโปรไฟล์ (แก้ได้)
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
-    created_at = Column(TIMESTAMP(timezone=True),
-                        nullable=False, server_default=text('now()'))
+
+    birthdate = Column(TIMESTAMP(timezone=False), nullable=True)  # วันเกิด
+    university = Column(String, nullable=True)                    # มหาวิทยาลัย
+    privacy = Column(String, default="private")                   # private/public
+
+    created_at = Column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=text('now()')
+    )
     profile_image = Column(String, nullable=True)
-    description = Column(String, nullable=True)
+    description = Column(String, nullable=True)  # bio
+
     likes = relationship("Like", back_populates="user")
     posts = relationship("Post", back_populates="user")
-
     sessions = relationship("StudySession", back_populates="user")
     progress = relationship("DailyProgress", back_populates="user")
 
