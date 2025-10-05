@@ -1,5 +1,7 @@
+import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { Home, Clock, Users, MessageSquare, Bell, User } from "lucide-react";
+import { getCurrentUser } from "../../api/user"; 
 
 const navItems = [
   { to: "/app/board", label: "Board", icon: Home },
@@ -10,8 +12,17 @@ const navItems = [
   { to: "/app/account", label: "Account", icon: User },
 ];
 
-// Topbar
 function Topbar() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    async function fetchUser() {
+      const data = await getCurrentUser();
+      if (data) setUser(data);
+    }
+    fetchUser();
+  }, []);
+
   return (
     <div className="fixed top-0 left-0 right-0 z-20 border-b bg-white shadow h-16 flex items-center justify-between px-6">
       {/* โลโก้ */}
@@ -42,17 +53,19 @@ function Topbar() {
           </div>
         </Link>
 
-        {/* โปรไฟล์ (กดแล้วไปหน้า Account) */}
+        {/* โปรไฟล์จริงจาก backend */}
         <Link
           to="/app/account"
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
         >
           <img
-            src="/images/Karnpon.jpg"
+            src={user?.profile_image || "/images/default-avatar.png"}
             alt="profile"
-            className="w-9 h-9 rounded-full object-cover"
+            className="w-9 h-9 rounded-full object-cover border border-gray-200"
           />
-          <span className="text-sm text-slate-700 font-medium">Name</span>
+          <span className="text-sm text-slate-700 font-medium">
+            {user?.username || "Loading..."}
+          </span>
         </Link>
       </div>
     </div>
@@ -91,13 +104,8 @@ function Sidebar() {
 export default function Dashboard() {
   return (
     <div className="flex">
-      {/* Topbar */}
       <Topbar />
-
-      {/* Sidebar */}
       <Sidebar />
-
-      {/* Content */}
       <main className="flex-1 p-6 bg-[#fafafa] overflow-y-auto ml-56 mt-16 h-[calc(100vh-64px)]">
         <Outlet />
       </main>

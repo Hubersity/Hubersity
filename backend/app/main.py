@@ -9,6 +9,7 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+
 # ✅ อนุญาตทุก origin (เฉพาะตอนพัฒนา)
 origins = [
     "http://localhost:5173",
@@ -18,11 +19,12 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 try:
     with engine.connect() as conn:
