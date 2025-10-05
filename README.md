@@ -14,10 +14,11 @@ Many students face confusion and repetitive issues due to scattered resources, l
 ## Key Features
 
 - University-specific forums and discussion areas
-- Login and user authentication system
-- University selector and filtering system
-- Modern UI with responsive components
-- Support for image-based content and resource sharing
+- nteractive discussion boards with searchable posts , users can choose to view content from followed users only or from the entire university community.
+- Study timer feature that tracks learning progress and updates visual states dynamically based on study duration.
+- Private chat system allowing direct messages between users.
+- Supports image, video, and file attachments within both posts and chat messages.
+- University-based feed filtering and selection system with a clean, modern, and responsive UI design.
 
 ## Tech Stack
 
@@ -69,6 +70,9 @@ docker compose down
 
 **Iteration2**
 - https://youtu.be/oUO4O0yiF3g
+
+**Iteration3**
+- https://youtu.be/tAIegs1dHJA
 
 ## Planning & Tracking
 - **Project Document** – https://docs.google.com/document/d/1shQYve-ymTHfc__mhLfEjZmU7iCq36rVfYSqH0JG084/edit?tab=t.0#heading=h.c508vnuhfzms
