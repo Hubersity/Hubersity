@@ -45,7 +45,19 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     return new_user
 
-
+# ดึงข้อมูลผู้ใช้ปัจจุบัน (ใช้ JWT token)
+@router.get("/me", response_model=schemas.UserResponse)
+def get_current_user_data(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    user = db.query(models.User).filter(models.User.uid == current_user.uid).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    return user
 
 # ดึงข้อมูลผู้ใช้ตาม id
 @router.get("/{id}", response_model=schemas.UserResponse)
@@ -89,18 +101,25 @@ def update_user(
     return user
 
 
-# ดึงข้อมูลผู้ใช้ปัจจุบัน (ใช้ JWT token)
-@router.get("/me", response_model=schemas.UserResponse)
-def get_current_user_data(
+
+@router.post("/upload-avatar")
+def upload_user_avatar(
+    file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    user = db.query(models.User).filter(models.User.uid == current_user.uid).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
-    return user
+    UPLOAD_DIR = "uploads/user"
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+    filename = f"{current_user.uid}_{file.filename}"
+    file_path = os.path.join(UPLOAD_DIR, filename)
 
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    # Save path to user model
+    current_user.profile_image = f"/{UPLOAD_DIR}/{filename}"
+    db.commit()
+    db.refresh(current_user)
+
+    return {"filename": current_user.profile_image}

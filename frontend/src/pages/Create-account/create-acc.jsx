@@ -15,16 +15,19 @@ export default function CreateAcc() {
   const [bio, setBio] = useState("");
   const [university, setUniversity] = useState("");
   const navigate = useNavigate();
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
-  const handleImageChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImage(URL.createObjectURL(file));
 
-    const fd = new FormData();
-    fd.append("file", file);
-    await fetch("/api/upload-avatar", { method: "POST", body: fd });
+  const handleImageChange = (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  setSelectedFile(file); // store for later upload
+  setPreviewUrl(URL.createObjectURL(file)); // preview only
   };
+
+
 
   const openFilePicker = () => {
     document.getElementById("profile-upload").click();
@@ -36,6 +39,30 @@ export default function CreateAcc() {
       return;
     }
 
+    let uploadedImagePath = null;
+
+    // ✅ Upload image only if selected
+    if (selectedFile) {
+      const fd = new FormData();
+      fd.append("file", selectedFile);
+
+      const uploadRes = await fetch("http://localhost:8000/users/upload-avatar", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${signupData.token}`,
+        },
+        body: fd,
+      });
+
+      if (!uploadRes.ok) {
+        alert("❌ Failed to upload image");
+        return;
+      }
+
+      const data = await uploadRes.json();
+      uploadedImagePath = data.filename; // e.g. "/uploads/user/123_avatar.jpg"
+    }
+
     const formattedDate = birthdate.toISOString().split("T")[0];
 
     const body = {
@@ -44,19 +71,22 @@ export default function CreateAcc() {
       university,
       privacy,
       description: bio,
-      profile_image: image,
+      profile_image: uploadedImagePath, // only if uploaded
     };
 
     const res = await fetch(`http://localhost:8000/users/${signupData.uid}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${signupData.token}`,
+        Authorization: `Bearer ${signupData.token}`,
       },
       body: JSON.stringify(body),
     });
 
     if (res.ok) {
+      localStorage.setItem("authData", JSON.stringify({
+        token: signupData.token,
+      }));
       localStorage.removeItem("signupData");
       alert("✅ Profile updated!");
       navigate("/app/board");
@@ -119,8 +149,8 @@ export default function CreateAcc() {
         {/* --- ซ้าย: รูปโปรไฟล์ --- */}
         <div className="flex flex-col items-center justify-center w-full md:w-1/2 gap-4">
           <div className="w-40 h-40 rounded-full border-2 border-gray-300 overflow-hidden flex items-center justify-center bg-white">
-            {image ? (
-              <img src={image} alt="Profile preview" className="object-cover w-full h-full" />
+            {previewUrl ? (
+              <img src={previewUrl} alt="Profile preview" className="object-cover w-full h-full" />
             ) : (
               <span className="text-gray-500">No Photo</span>
             )}
