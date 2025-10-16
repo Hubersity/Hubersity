@@ -1,7 +1,11 @@
-from fastapi import status, HTTPException, Depends, APIRouter
+from fastapi import status, HTTPException, Depends, APIRouter, UploadFile, File
 from sqlalchemy.orm import Session
 from .. import models, schemas, utils, oauth2
 from ..database import get_db
+import datetime
+import shutil
+import os
+
 
 router = APIRouter(
     prefix="/users",
@@ -36,8 +40,11 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    access_token = oauth2.create_access_token(data={"user_id": new_user.uid})
+
 
     return new_user
+
 
 
 # ดึงข้อมูลผู้ใช้ตาม id
@@ -95,3 +102,5 @@ def get_current_user_data(
             detail="User not found"
         )
     return user
+
+

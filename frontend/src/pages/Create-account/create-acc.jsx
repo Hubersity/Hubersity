@@ -7,6 +7,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker-fix.css";
 
 export default function CreateAcc() {
+  const signupData = JSON.parse(localStorage.getItem("signupData") || "{}");
   const [image, setImage] = useState(null);
   const [privacy, setPrivacy] = useState("private");
   const [birthdate, setBirthdate] = useState(new Date());
@@ -30,48 +31,41 @@ export default function CreateAcc() {
   };
 
   const handleSave = async () => {
-    try {
-      // จำลอง username และ email สำหรับทดสอบ
-      const username = name.toLowerCase().replace(/\s+/g, "_") || "new_user";
-      const email = `${username}@hubersity.com`;
+    if (!signupData.uid || !signupData.token) {
+      alert("Missing signup info. Please sign up again.");
+      return;
+    }
 
-      // แปลงวันเกิดเป็น yyyy-mm-dd
-      const formattedDate = birthdate.toISOString().split("T")[0];
+    const formattedDate = birthdate.toISOString().split("T")[0];
 
-      // เตรียมข้อมูลส่ง backend
-      const body = {
-        username,
-        name,
-        email,
-        password: "Test@1234", 
-        confirm_password: "Test@1234",
-        description: bio,
-        university,
-        privacy,
-        birthdate: formattedDate,
-        profile_image: image,
-      };
+    const body = {
+      name,
+      birthdate: formattedDate,
+      university,
+      privacy,
+      description: bio,
+      profile_image: image,
+    };
 
-      const res = await fetch("http://localhost:8000/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
+    const res = await fetch(`http://localhost:8000/users/${signupData.uid}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${signupData.token}`,
+      },
+      body: JSON.stringify(body),
+    });
 
-      if (res.ok) {
-        const data = await res.json();
-        console.log("✅ Account created:", data);
-        alert("Account created successfully!");
-        navigate("/app/board"); 
-      } else {
-        const err = await res.json();
-        alert(`❌ Error: ${err.detail || "Failed to create account"}`);
-      }
-    } catch (error) {
-      console.error("Error saving account:", error);
-      alert("❌ Something went wrong. Please try again.");
+    if (res.ok) {
+      localStorage.removeItem("signupData");
+      alert("✅ Profile updated!");
+      navigate("/app/board");
+    } else {
+      const err = await res.json();
+      alert(`❌ Error: ${err.detail || "Failed to update profile"}`);
     }
   };
+
 
   return (
     <motion.div
