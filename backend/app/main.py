@@ -9,22 +9,21 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-
-# ✅ อนุญาตทุก origin (เฉพาะตอนพัฒนา)
 origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "*",  
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",      
+    "http://127.0.0.1:5173",      
+    "https://your-frontend.com"  
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  
+    allow_origins=origins,   
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 try:
     with engine.connect() as conn:
@@ -38,6 +37,7 @@ app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(study_calendar.router)
 app.include_router(posts.router)
+
 
 @app.get("/")
 def root():
