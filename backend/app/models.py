@@ -2,6 +2,7 @@ from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIME
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 from .database import Base
 
 
@@ -30,6 +31,16 @@ class User(Base):
     posts = relationship("Post", back_populates="user")
     sessions = relationship("StudySession", back_populates="user")
     progress = relationship("DailyProgress", back_populates="user")
+    following = relationship("Follow", foreign_keys="[Follow.follower_id]", backref="follower")
+    followers = relationship("Follow", foreign_keys="[Follow.following_id]", backref="following")
+
+    @hybrid_property
+    def follower_count(self):
+        return len(self.followers)
+
+    @hybrid_property
+    def following_count(self):
+        return len(self.following)
 
 
 forum_tags = Table(
@@ -38,6 +49,16 @@ forum_tags = Table(
     Column("forum_id", Integer, ForeignKey("forum.fid"), primary_key=True),
     Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True)
 )
+
+class Follow(Base):
+    __tablename__ = "follows"
+    follower_id = Column(Integer, ForeignKey("users.uid"), primary_key=True)
+    following_id = Column(Integer, ForeignKey("users.uid"), primary_key=True)
+    created_at = Column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=text('now()')
+    )
 
 
 class Tag(Base):

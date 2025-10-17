@@ -50,6 +50,9 @@ class UserResponse(BaseModel):
     description: Optional[str] = None
     profile_image: Optional[str] = None
     created_at: datetime
+    follower_count: int
+    following_count: int
+
 
     class Config:
         from_attributes = True
@@ -67,6 +70,16 @@ class UserUpdate(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+class UserBriefResponse(BaseModel):
+    uid: int
+    username: str
+    name: Optional[str]
+    profile_image: Optional[str]
+
+    class Config:
+        from_attributes = True
+
 
 class Token(BaseModel):
     access_token: str
