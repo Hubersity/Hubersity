@@ -121,6 +121,7 @@ class CommentResponse(BaseModel):
     content: str
     user_id: int
     username: str
+    profile_image: Optional[str]
     created_at: datetime
 
     class Config:
@@ -133,6 +134,8 @@ class PostResponse(BaseModel):
     user_id: int
     username: str
     like_count: int
+    profile_image: Optional[str]
+    liked: bool
     tags: List[PostTagResponse] = []
     images: List[PostImageResponse] = []
     comments: List[CommentResponse] = []

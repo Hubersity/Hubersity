@@ -79,6 +79,7 @@ def create_post(
         user_id=new_post.user_id,
         username=current_user.username,
         like_count=0,
+        profile_image=current_user.profile_image,
         tags=new_post.tags,
         images=new_post.images,
         comments=new_post.comments
@@ -92,24 +93,30 @@ def upload_post_files(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
+    # ✅ Validate post ownership
     post = db.query(models.Post).filter(models.Post.pid == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
     if post.user_id != current_user.uid:
         raise HTTPException(status_code=403, detail="Not authorized to upload files to this post")
 
+    # ✅ Prepare upload directory
     UPLOAD_DIR = "uploads/post"
     os.makedirs(UPLOAD_DIR, exist_ok=True)
 
     saved_files = []
 
     for upload_file in files:
-        filename = f"{post_id}_{upload_file.filename}"
+        # ✅ Sanitize filename
+        original_name = os.path.basename(upload_file.filename)
+        filename = f"{post_id}_{original_name}"
         file_path = os.path.join(UPLOAD_DIR, filename)
 
+        # ✅ Save file to disk
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(upload_file.file, buffer)
 
+        # ✅ Create DB record
         image_record = models.PostImage(
             post_id=post_id,
             path=f"/{UPLOAD_DIR}/{filename}",
@@ -145,6 +152,7 @@ def get_my_posts(
                 forum_id=post.forum_id,
                 user_id=post.user_id,
                 username=post.user.username,
+                profile_image=post.user.profile_image,
                 like_count=like_count,
                 tags=post.tags,
                 images=post.images,
@@ -160,10 +168,28 @@ def get_all_posts(
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
     posts = db.query(models.Post).order_by(models.Post.pid.desc()).all()
+    
     response = []
+
 
     for post in posts:
         like_count = db.query(models.Like).filter(models.Like.post_id == post.pid).count()
+        is_liked_by_me = db.query(models.Like).filter_by(post_id=post.pid, user_id=current_user.uid).first() is not None
+        enriched_comments = []
+        for c in post.comments:
+            user = db.query(models.User).filter(models.User.uid == c.user_id).first()
+            enriched_comments.append(
+                schemas.CommentResponse(
+                    cid=c.cid,
+                    content=c.content,
+                    user_id=c.user_id,
+                    post_id=c.post_id,
+                    username=user.username if user else None,
+                    profile_image=user.profile_image if user else None,
+                    created_at=c.created_at
+                )
+            )
+
         response.append(
             schemas.PostResponse(
                 pid=post.pid,
@@ -171,12 +197,15 @@ def get_all_posts(
                 forum_id=post.forum_id,
                 user_id=post.user_id,
                 username=post.user.username,
+                profile_image=post.user.profile_image,
+                liked=is_liked_by_me,
                 like_count=like_count,
                 tags=post.tags,
                 images=post.images,
-                comments=post.comments
+                comments=enriched_comments
             )
         )
+
     return response
 
 @router.get("/forum/{forum_id}", response_model=List[schemas.PostResponse])
@@ -197,6 +226,7 @@ def get_posts_by_forum(
                 forum_id=post.forum_id,
                 user_id=post.user_id,
                 username=post.user.username,
+                profile_image=post.user.profile_image,
                 like_count=like_count,
                 tags=post.tags,
                 images=post.images,
@@ -224,6 +254,7 @@ def get_post(
         forum_id=post.forum_id,
         user_id=post.user_id,
         username=post.user.username,
+        profile_image=post.user.profile_image,
         like_count=like_count,
         tags=post.tags,
         images=post.images,
@@ -264,6 +295,7 @@ def update_post(
         forum_id=post.forum_id,
         user_id=post.user_id,
         username=post.user.username,  
+        profile_image=post.user.profile_image,
         like_count=like_count,        
         tags=post.tags,
         images=post.images,
@@ -312,7 +344,16 @@ def create_comment(
     db.commit()
     db.refresh(new_comment)
 
-    return new_comment
+    return schemas.CommentResponse(
+        cid=new_comment.cid,
+        content=new_comment.content,
+        user_id=new_comment.user_id,
+        post_id=new_comment.post_id,
+        username=current_user.username,
+        profile_image=current_user.profile_image,
+        created_at=new_comment.created_at
+    )
+
 
 @router.get("/{post_id}/comments", response_model=List[schemas.CommentResponse])
 def get_comments_for_post(
@@ -335,6 +376,7 @@ def get_comments_for_post(
         comment_data = schemas.CommentResponse.from_orm(c).dict()
         user = db.query(models.User).filter(models.User.uid == c.user_id).first()
         comment_data["username"] = user.username if user else None
+        comment_data["profile_image"] = user.profile_image if user else None
         response.append(comment_data)
 
     return response
