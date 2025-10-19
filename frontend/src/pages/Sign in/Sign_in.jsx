@@ -78,7 +78,7 @@ export default function Sign_in() {
       }
       const loginData = await loginRes.json();
       
-      localStorage.setItem("signupData", JSON.stringify({
+      localStorage.setItem("authData", JSON.stringify({
       uid: user.uid,
       token: loginData.access_token,
     }));

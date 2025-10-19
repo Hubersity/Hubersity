@@ -7,41 +7,42 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker-fix.css";
 
 export default function CreateAcc() {
-  const signupData = JSON.parse(localStorage.getItem("signupData") || "{}");
+  // ✅ ดึงข้อมูลจาก authData (統一 key)
+  const authData = JSON.parse(localStorage.getItem("authData") || "{}");
+
   const [image, setImage] = useState(null);
   const [privacy, setPrivacy] = useState("private");
   const [birthdate, setBirthdate] = useState(new Date());
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [university, setUniversity] = useState("");
-  const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
+  const navigate = useNavigate();
 
+  // 📸 เมื่อเลือกรูปใหม่
   const handleImageChange = (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-
-  setSelectedFile(file); // store for later upload
-  setPreviewUrl(URL.createObjectURL(file)); // preview only
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
-
-
 
   const openFilePicker = () => {
     document.getElementById("profile-upload").click();
   };
 
+  // 💾 ฟังก์ชันบันทึกข้อมูลโปรไฟล์
   const handleSave = async () => {
-    if (!signupData.uid || !signupData.token) {
+    if (!authData.uid || !authData.token) {
       alert("Missing signup info. Please sign up again.");
       return;
     }
 
     let uploadedImagePath = null;
 
-    // ✅ Upload image only if selected
+    // ✅ อัปโหลดรูปก่อน ถ้ามี
     if (selectedFile) {
       const fd = new FormData();
       fd.append("file", selectedFile);
@@ -49,7 +50,7 @@ export default function CreateAcc() {
       const uploadRes = await fetch("http://localhost:8000/users/upload-avatar", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${signupData.token}`,
+          Authorization: `Bearer ${authData.token}`,
         },
         body: fd,
       });
@@ -60,7 +61,7 @@ export default function CreateAcc() {
       }
 
       const data = await uploadRes.json();
-      uploadedImagePath = data.filename; // e.g. "/uploads/user/123_avatar.jpg"
+      uploadedImagePath = data.filename;
     }
 
     const formattedDate = birthdate.toISOString().split("T")[0];
@@ -71,31 +72,35 @@ export default function CreateAcc() {
       university,
       privacy,
       description: bio,
-      profile_image: uploadedImagePath, // only if uploaded
+      profile_image: uploadedImagePath,
     };
 
-    const res = await fetch(`http://localhost:8000/users/${signupData.uid}`, {
+    const res = await fetch(`http://localhost:8000/users/${authData.uid}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${signupData.token}`,
+        Authorization: `Bearer ${authData.token}`,
       },
       body: JSON.stringify(body),
     });
 
     if (res.ok) {
-      localStorage.setItem("authData", JSON.stringify({
-        token: signupData.token,
-      }));
-      localStorage.removeItem("signupData");
-      alert("✅ Profile updated!");
+      // ✅ เก็บ token กลับเข้า authData (ใช้ต่อที่ Board)
+      localStorage.setItem(
+        "authData",
+        JSON.stringify({
+          uid: authData.uid,
+          token: authData.token,
+        })
+      );
+
+      alert("✅ Profile updated successfully!");
       navigate("/app/board");
     } else {
-      const err = await res.json();
+      const err = await res.json().catch(() => ({}));
       alert(`❌ Error: ${err.detail || "Failed to update profile"}`);
     }
   };
-
 
   return (
     <motion.div
