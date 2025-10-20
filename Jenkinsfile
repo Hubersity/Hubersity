@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.11'
+            args '-u'
+        }
+    }
 
     environment {
         VENV_DIR = 'venv'
@@ -11,7 +16,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'backend/add_testing', url: 'https://github.com/Hubersity/Hubersity.git'
+                git branch: 'backend/add_testing', url: 'https://github.com/myproject.git'
             }
         }
 
@@ -45,7 +50,6 @@ pipeline {
     post {
         always {
             junit 'test-results.xml'
-
             cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'coverage.xml'
         }
 
