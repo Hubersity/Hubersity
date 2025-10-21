@@ -17,12 +17,18 @@ function Topbar() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    async function fetchUser() {
+  async function fetchUser() {
+    try {
       const data = await getCurrentUser();
       if (data) setUser(data);
+      else navigate("/login"); // optional redirect if token is invalid
+    } catch (err) {
+      console.error("User fetch failed:", err);
     }
+  }
     fetchUser();
   }, []);
+
 
   return (
     <div className="fixed top-0 left-0 right-0 z-20 border-b bg-white shadow h-16 flex items-center justify-between px-6">
@@ -60,7 +66,7 @@ function Topbar() {
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
         >
           <img
-            src={user?.profile_image || "/images/default-avatar.png"}
+            src={user?.profile_image ? `http://localhost:8000${user.profile_image}` : "/images/default-avatar.png"}
             alt="profile"
             className="w-9 h-9 rounded-full object-cover border border-gray-200"
           />

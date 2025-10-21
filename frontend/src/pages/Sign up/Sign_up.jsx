@@ -30,6 +30,8 @@ export default function Sign_up() {
     }
 
     const apiUrl = "http://localhost:8000/users/";
+    const loginUrl = "http://localhost:8000/login";
+
     console.log("🔗 Sending signup request to:", apiUrl);
 
     try {
@@ -61,8 +63,32 @@ export default function Sign_up() {
         return;
       }
 
-      console.log("✅ Signup success! User created:", await res.json());
+      const user = await res.json();
+
+      // ✅ Login immediately after signup
+      const loginRes = await fetch(loginUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!loginRes.ok) {
+        setError("Signup succeeded but login failed.");
+        return;
+      }
+      const loginData = await loginRes.json();
+      
+      localStorage.setItem("signupData", JSON.stringify({
+      uid: user.uid,
+      token: loginData.access_token,
+    }));
+
+      
+
+
       navigate("/create-account");
+
+
     } catch (err) {
       console.error("🚨 Connection error:", err);
       setError("Cannot connect to server.");
