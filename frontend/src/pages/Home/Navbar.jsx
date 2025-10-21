@@ -24,7 +24,7 @@ function Navbar() {
       {/* Auth Buttons */}
       <div className="space-x-8">
         <Link
-          to="/signin"
+          to="/signup"
           className="text-sm font-semibold hover:text-green-700"
         >
           Sign up

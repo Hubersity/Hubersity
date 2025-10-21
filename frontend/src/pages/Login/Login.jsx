@@ -196,7 +196,7 @@ export default function Login() {
               whileTap={{ scale: 0.95 }}
             >
               <Link
-                to="/signin"
+                to="/signup"
                 className="rounded-full bg-[#8cab93] text-center py-3 px-12 text-lg md:text-xl hover:opacity-90 transition block mx-auto w-fit shadow-md"
               >
                 Sign Up
