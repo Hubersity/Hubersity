@@ -1,37 +1,38 @@
 pipeline {
     agent {
         docker {
-            [cite_start]image 'python:3.11' [cite: 1]
-            [cite_start]args '-u' [cite: 1]
+            image 'python:3.11'
+            args '-u'
         }
     }
 
     environment {
-        [cite_start]VENV_DIR = 'venv' [cite: 1]
-        [cite_start]PYTHON = "${VENV_DIR}/bin/python" [cite: 1]
-        [cite_start]PIP = "${VENV_DIR}/bin/pip" [cite: 1]
-        [cite_start]ACTIVATE = ". ${VENV_DIR}/bin/activate" [cite: 1]
-    [cite_start]} [cite: 2]
+        VENV_DIR = 'venv'
+        PYTHON = "${VENV_DIR}/bin/python"
+        PIP = "${VENV_DIR}/bin/pip"
+        ACTIVATE = ". ${VENV_DIR}/bin/activate"
+    }
 
     stages {
-        [cite_start]stage('Checkout') { [cite: 2]
+        stage('Checkout') {
             steps {
-                [cite_start]git branch: 'backend/add_testing', url: 'https://github.com/Hubersity/Hubersity.git' [cite: 2]
+                git([branch: 'backend/add_testing', url: 'https://github.com/Hubersity/Hubersity.git'])
             }
         }
 
-        [cite_start]stage('Setup Python Environment') { [cite: 2]
+        stage('Setup Python Environment') {
             steps {
                 sh '''
+                # This line is fixed to use 'python' instead of 'python3'
                 python -m venv ${VENV_DIR}
                 ${ACTIVATE}
                 ${PIP} install --upgrade pip setuptools wheel
                 ${PIP} install -r backend/requirements.txt
-                [cite_start]''' [cite: 3, 4]
+                '''
             }
         }
 
-        [cite_start]stage('Run Tests') { [cite: 4]
+        stage('Run Tests') {
             steps {
                 sh '''
                 ${ACTIVATE}
@@ -42,23 +43,23 @@ pipeline {
                     --cov=backend/app \
                     --cov-report=xml \
                     --junitxml=test-results.xml
-                [cite_start]''' [cite: 4, 5, 6]
+                '''
             }
         }
     }
 
     post {
         always {
-            [cite_start]junit 'test-results.xml' [cite: 6]
-            [cite_start]cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'coverage.xml' [cite: 7]
+            junit 'test-results.xml'
+            cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'coverage.xml'
         }
 
         failure {
-            echo '❌ Tests failed! [cite_start]Check the console and test-results.xml for details.' [cite: 7, 8]
+            echo '❌ Tests failed! Check the console and test-results.xml for details.'
         }
 
         success {
-            [cite_start]echo '✅ All tests passed successfully!' [cite: 8, 9]
+            echo '✅ All tests passed successfully!'
         }
     }
 }
