@@ -16,7 +16,7 @@ pipeline {
     stages {
         [cite_start]stage('Checkout') { [cite: 2]
             steps {
-                [cite_start]git branch: 'backend/add_testing', url: 'https://github.com/myproject.git' [cite: 2]
+                [cite_start]git branch: 'backend/add_testing', url: 'https://github.com/Hubersity/hubersity.git' [cite: 2]
             }
         }
 
