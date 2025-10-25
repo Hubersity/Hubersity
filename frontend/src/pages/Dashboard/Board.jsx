@@ -336,7 +336,10 @@ export default function Board() {
   const [pendingFiles, setPendingFiles] = useState([]);
   const [menuOpen, setMenuOpen] = useState(null);
   const [selectedUni, setSelectedUni] = useState(null);
-  const authData = JSON.parse(localStorage.getItem("authData"));
+  const currentKey = localStorage.getItem("currentUserKey");
+  const authData = currentKey
+    ? JSON.parse(localStorage.getItem(currentKey) || "{}")
+    : {};
   const [currentUser] = useState({
     username: authData?.username || "You",
     name: authData?.name || authData?.username || "You",
@@ -364,7 +367,10 @@ export default function Board() {
   // โหลดโพสต์จริง
   useEffect(() => {
     const fetchPosts = async () => {
-      const token = JSON.parse(localStorage.getItem("authData"))?.token;
+      const currentKey = localStorage.getItem("currentUserKey");
+      const token = currentKey
+        ? JSON.parse(localStorage.getItem(currentKey) || "{}")?.token
+        : null;
       if (!token) return;
       try {
         const res = await fetch(`${API_URL}/posts/all`, {
@@ -410,7 +416,10 @@ const handlePost = async () => {
   if (newPost.trim() === "") return;
 
   try {
-    const authData = JSON.parse(localStorage.getItem("authData"));
+    const currentKey = localStorage.getItem("currentUserKey");
+    const authData = currentKey
+      ? JSON.parse(localStorage.getItem(currentKey) || "{}")
+      : {};
     const token = authData?.token;
     const uid = authData?.uid;
 
@@ -480,7 +489,11 @@ const handlePost = async () => {
       )
     );
     try {
-      const token = JSON.parse(localStorage.getItem("authData"))?.token;
+      const currentKey = localStorage.getItem("currentUserKey");
+      const token = currentKey
+        ? JSON.parse(localStorage.getItem(currentKey) || "{}")?.token
+        : null;
+        
       if (!token) return;
       await fetch(`${API_URL}/posts/${id}/like`, {
         method: "POST",
@@ -503,9 +516,12 @@ const handlePost = async () => {
     setCommentInputs({ ...commentInputs, [postId]: "" });
 
     try {
-      const token = JSON.parse(localStorage.getItem("authData"))?.token;
-      if (!token) return;
+      const currentKey = localStorage.getItem("currentUserKey");
+      const token = currentKey
+        ? JSON.parse(localStorage.getItem(currentKey) || "{}")?.token
+        : null;
 
+      if (!token) return;
       const res = await fetch(`${API_URL}/posts/${postId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -553,9 +569,12 @@ const handlePost = async () => {
   const handleEditSubmit = async () => {
     if (!editText.trim()) return;
     try {
-      const token = JSON.parse(localStorage.getItem("authData"))?.token;
-      if (!token) return;
+      const currentKey = localStorage.getItem("currentUserKey");
+      const token = currentKey
+        ? JSON.parse(localStorage.getItem(currentKey) || "{}")?.token
+        : null;
 
+      if (!token) return;
       const res = await fetch(`${API_URL}/posts/${editPostId}`, {
         method: "PUT",
         headers: {
@@ -590,7 +609,11 @@ const handlePost = async () => {
   // ฟังก์ชันลบจริง (เรียกจากปุ่ม Delete ใน modal)
 const confirmDelete = async () => {
   try {
-    const token = JSON.parse(localStorage.getItem("authData"))?.token;
+    const currentKey = localStorage.getItem("currentUserKey");
+    const token = currentKey
+      ? JSON.parse(localStorage.getItem(currentKey) || "{}")?.token
+      : null;
+
     if (!token) return;
 
     await fetch(`${API_URL}/posts/${deletePostId}`, {
@@ -598,10 +621,7 @@ const confirmDelete = async () => {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    // ลบออกจาก state
     setPosts((prev) => prev.filter((p) => p.id !== deletePostId));
-
-    // ปิด modal
     setDeleteOpen(false);
     setDeletePostId(null);
   } catch (err) {
@@ -634,9 +654,12 @@ const confirmDelete = async () => {
   // ส่งรีพอร์ตไป backend
   const submitReport = async ({ postId, reason, details, evidence }) => {
     try {
-      const token = JSON.parse(localStorage.getItem("authData"))?.token;
-      if (!token) return;
+      const currentKey = localStorage.getItem("currentUserKey");
+      const token = currentKey
+        ? JSON.parse(localStorage.getItem(currentKey) || "{}")?.token
+        : null;
 
+      if (!token) return;
       // รองรับไฟล์แนบด้วย FormData
       const form = new FormData();
       form.append("reason", reason);

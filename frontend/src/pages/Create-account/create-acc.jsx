@@ -7,8 +7,11 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker-fix.css";
 
 export default function CreateAcc() {
-  // ✅ ดึงข้อมูลจาก authData (統一 key)
-  const authData = JSON.parse(localStorage.getItem("authData") || "{}");
+  // ✅ ดึงข้อมูลจาก current user (ระบบ session แยก user)
+  const currentKey = localStorage.getItem("currentUserKey");
+  const authData = currentKey
+    ? JSON.parse(localStorage.getItem(currentKey) || "{}")
+    : {};
 
   const [image, setImage] = useState(null);
   const [privacy, setPrivacy] = useState("private");
@@ -85,17 +88,19 @@ export default function CreateAcc() {
     });
 
     if (res.ok) {
-      // ✅ เก็บ token กลับเข้า authData (ใช้ต่อที่ Board)
+      // ✅ เก็บข้อมูลโปรไฟล์กลับเข้าคีย์ปัจจุบัน
       localStorage.setItem(
-        "authData",
+        currentKey,
         JSON.stringify({
-          uid: authData.uid,
-          token: authData.token,
+          ...authData,
+          name,
+          university,
+          profile_image: uploadedImagePath,
         })
       );
 
       alert("✅ Profile updated successfully!");
-      navigate("/app/board");
+      window.location.href = "/app/board";
     } else {
       const err = await res.json().catch(() => ({}));
       alert(`❌ Error: ${err.detail || "Failed to update profile"}`);

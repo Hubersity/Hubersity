@@ -1,19 +1,71 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Camera, GraduationCap, Lock, Globe, Calendar } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker-fix.css";
 
-export default function Account() {
-  const [profilePic, setProfilePic] = useState("/images/Karnpon.jpg");
-  const [name, setName] = useState("Killua");
-  const [birthdate, setBirthdate] = useState(new Date("2005-01-01"));
-  const [bio, setBio] = useState("A all subject");
-  const [university, setUniversity] = useState("Thammasat University");
-  const [visibility, setVisibility] = useState("public");
+const API_URL = "http://localhost:8000";
 
-  // ฟังก์ชันคำนวณอายุ
+export default function Account() {
+  const [profilePic, setProfilePic] = useState("/images/default-avatar.png");
+  const [name, setName] = useState("");
+  const [birthdate, setBirthdate] = useState(null);
+  const [bio, setBio] = useState("");
+  const [university, setUniversity] = useState("");
+  const [visibility, setVisibility] = useState("public");
+  const [username, setUsername] = useState("");
+  const [followers, setFollowers] = useState(0);
+  const [following, setFollowing] = useState(0);
+
+  const [file, setFile] = useState(null);
+
+  // 🧠 ดึงข้อมูลผู้ใช้จาก backend
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const currentKey = localStorage.getItem("currentUserKey");
+        const authData = currentKey
+          ? JSON.parse(localStorage.getItem(currentKey) || "{}")
+          : {};
+
+        if (!authData?.token) {
+          console.warn("No token found. Please log in again.");
+          return;
+        }
+
+        const res = await fetch(`${API_URL}/users/me`, {
+          headers: { Authorization: `Bearer ${authData.token}` },
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch user data");
+
+        const data = await res.json();
+        console.log("Loaded user:", data);
+
+        setUsername(data.username);
+        setName(data.name || "");
+        setBio(data.bio || "");
+        setUniversity(data.university || "");
+        setVisibility(data.visibility || "public");
+        setBirthdate(data.birthdate ? new Date(data.birthdate) : null);
+        setFollowers(data.followers_count || 0);
+        setFollowing(data.following_count || 0);
+        setProfilePic(
+          data.profile_image
+            ? `${API_URL}${data.profile_image}`
+            : "/images/default-avatar.png"
+        );
+      } catch (err) {
+        console.error("Error loading profile:", err);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  // 🧮 คำนวณอายุ
   const calculateAge = (birth) => {
+    if (!birth) return "";
     const b = new Date(birth);
     const t = new Date();
     let age = t.getFullYear() - b.getFullYear();
@@ -22,20 +74,97 @@ export default function Account() {
     return isNaN(age) ? "" : age;
   };
 
-  // เปลี่ยนรูปโปรไฟล์
+  // 📸 เปลี่ยนรูปโปรไฟล์ (preview ก่อน)
   const handleImageChange = (e) => {
     const f = e.target.files?.[0];
-    if (f) setProfilePic(URL.createObjectURL(f));
+    if (f) {
+      setFile(f);
+      setProfilePic(URL.createObjectURL(f));
+    }
+  };
+
+  // ✅ อัปเดตโปรไฟล์
+  const handleSave = async () => {
+    try {
+      const currentKey = localStorage.getItem("currentUserKey");
+      const authData = currentKey
+        ? JSON.parse(localStorage.getItem(currentKey) || "{}")
+        : {};
+
+      if (!authData?.token || !authData?.uid) {
+        alert("Please log in again.");
+        return;
+      }
+
+      let uploadedImagePath = null;
+
+      // 🔹 ถ้ามีอัปโหลดรูปใหม่
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const uploadRes = await fetch(`${API_URL}/users/upload-avatar`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${authData.token}` },
+          body: formData,
+        });
+
+        if (!uploadRes.ok)
+          throw new Error("Image upload failed. Please try again.");
+
+        const uploadData = await uploadRes.json();
+        uploadedImagePath = uploadData.file_path;
+        console.log("Uploaded image:", uploadedImagePath);
+      }
+
+      // 🔹 ส่งข้อมูลอัปเดตทั่วไป
+      const res = await fetch(`${API_URL}/users/${authData.uid}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authData.token}`,
+        },
+        body: JSON.stringify({
+          name,
+          bio,
+          university,
+          visibility,
+          birthdate: birthdate ? birthdate.toISOString().split("T")[0] : null,
+          profile_image: uploadedImagePath || undefined,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update profile");
+
+      // ✅ อัปเดตใน localStorage
+      const updatedUser = {
+        ...authData,
+        name,
+        university,
+        profile_image: uploadedImagePath || authData.profile_image,
+      };
+
+      localStorage.setItem(currentKey, JSON.stringify(updatedUser));
+
+      alert("✅ Profile updated successfully!");
+      window.location.reload();
+    } catch (err) {
+      console.error("Error updating profile:", err);
+      alert("❌ Failed to update profile.");
+    }
   };
 
   return (
     <div className="w-full h-[calc(100vh-64px)] flex justify-center items-center bg-[#fff9ef] overflow-hidden">
       <div className="bg-[#fff3e6] w-[80%] max-w-5xl rounded-2xl shadow-lg p-10 flex flex-row gap-10 items-center justify-center relative">
-        
         {/* โปรไฟล์ */}
         <div className="flex flex-col items-center justify-center w-[40%] relative">
           <div className="w-44 h-44 rounded-full overflow-hidden border-4 border-[#d1d1d1] bg-white relative">
-            <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+            <img
+              src={profilePic}
+              alt="Profile"
+              className="w-full h-full object-cover"
+            />
           </div>
 
           <label
@@ -45,18 +174,29 @@ export default function Account() {
           >
             <Camera className="w-5 h-5 text-gray-700" />
           </label>
-          <input id="avatarUpload" type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+          <input
+            id="avatarUpload"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleImageChange}
+          />
 
-          <p className="mt-6 text-lg font-semibold">User Name : monchhichi</p>
+          <p className="mt-6 text-lg font-semibold">
+            User Name : {username || "Loading..."}
+          </p>
           <p className="text-sm text-gray-600 mt-1">
-            Following : <span className="font-medium text-black">21</span> | Follower :{" "}
-            <span className="font-medium text-black">17</span>
+            Following :{" "}
+            <span className="font-medium text-black">{following}</span> | Follower :{" "}
+            <span className="font-medium text-black">{followers}</span>
           </p>
         </div>
 
         {/* ข้อมูลบัญชี */}
         <div className="flex-1 space-y-5">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Account Information</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            Account Information
+          </h2>
 
           {/* Name */}
           <div>
@@ -72,38 +212,27 @@ export default function Account() {
           {/* Birthdate */}
           <div className="flex items-end gap-1">
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">Birthdate :</label>
+              <label className="block text-sm font-medium mb-1">
+                Birthdate :
+              </label>
               <div className="relative">
                 <DatePicker
                   selected={birthdate}
                   onChange={(date) => setBirthdate(date)}
                   dateFormat="dd/MM/yyyy"
                   showMonthDropdown
-                  maxDate={new Date()}           
-                  minDate={new Date("1900-01-01")} 
-                  renderCustomHeader={({ date, decreaseMonth, increaseMonth }) => (
-                    <div className="flex justify-between items-center px-2 py-1 bg-[#eaf2ed] rounded-t-lg">
-                      <button onClick={decreaseMonth} className="text-gray-600 hover:text-black">
-                        {"<"}
-                      </button>
-                      <span className="text-gray-800 font-medium">
-                        {date.toLocaleString("default", { month: "long" })} {date.getFullYear()}
-                      </span>
-                      <button onClick={increaseMonth} className="text-gray-600 hover:text-black">
-                        {">"}
-                      </button>
-                    </div>
-                  )}
+                  maxDate={new Date()}
+                  minDate={new Date("1900-01-01")}
                   className="w-full border rounded-md px-3 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-[#e0ebe2]"
-                  calendarClassName="rounded-lg border border-[#e0ebe2] shadow-md bg-white"
-                  popperClassName="z-50"
                 />
                 <Calendar className="absolute right-3 top-3 text-gray-400" size={18} />
               </div>
             </div>
 
             <div className="flex flex-col w-[80px] ml-[-6px]">
-              <label className="block text-sm font-medium mb-1 text-center">Age :</label>
+              <label className="block text-sm font-medium mb-1 text-center">
+                Age :
+              </label>
               <input
                 type="text"
                 value={calculateAge(birthdate)}
@@ -128,12 +257,16 @@ export default function Account() {
           <div>
             <label className="block text-sm font-medium mb-2">University :</label>
             <div className="relative">
-              <GraduationCap className="absolute left-3 top-2.5 text-[#6d8c75]" size={18} />
+              <GraduationCap
+                className="absolute left-3 top-2.5 text-[#6d8c75]"
+                size={18}
+              />
               <select
                 value={university}
                 onChange={(e) => setUniversity(e.target.value)}
                 className="w-full border rounded-full pl-10 pr-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-[#e0ebe2] appearance-none hover:bg-[#f6faf7]"
               >
+                <option value="">Select University</option>
                 <option value="Kasetsart University">Kasetsart University</option>
                 <option value="Chulalongkorn University">Chulalongkorn University</option>
                 <option value="Thammasat University">Thammasat University</option>
@@ -165,6 +298,16 @@ export default function Account() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Save Button */}
+          <div className="pt-4">
+            <button
+              onClick={handleSave}
+              className="bg-[#3ab153] hover:bg-[#2f9246] text-white px-6 py-2 rounded-full font-medium transition"
+            >
+              Save Changes
+            </button>
           </div>
         </div>
       </div>
