@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   Paperclip,
   Image,
@@ -381,6 +382,7 @@ export default function Board() {
 
         const loaded = data.map((p) => ({
           id: p.pid,
+          user_id: p.user_id,
           username: p.username,
           displayName: p.name || p.username,
           text: p.post_content,
@@ -803,23 +805,32 @@ const confirmDelete = async () => {
         {filteredPosts.map((p) => (
           <div key={`${p.id}-${p.username}`} className="flex gap-3 items-start">
             {/* profile */}
-            <div className="flex flex-col items-center justify-start w-20">
-              <span className="text-xs font-medium mb-2">{p.displayName}</span>
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
-                <img
-                  src={
-                    p.profile_image
-                      ? p.profile_image.startsWith("http") ||
-                        p.profile_image.includes("/uploads/")
-                        ? `${API_URL}${p.profile_image.replace(API_URL, "")}`
-                        : `${API_URL}/uploads/user/${p.profile_image}`
-                      : userProfiles[p.username] || "/images/default.jpg"
-                  }
-                  alt={p.displayName}
-                  className="w-full h-full object-cover"
-                />
+              <div className="flex flex-col items-center justify-start w-20">
+                <Link
+                  to={`/app/user/${p.user_id || p.id || p.username}`} // ถ้ามี user_id ใช้อันนั้น
+                  className="text-xs font-medium mb-2 text-emerald-700 hover:underline"
+                >
+                  {p.displayName}
+                </Link>
+
+                <Link
+                  to={`/app/user/${p.user_id || p.id || p.username}`}
+                  className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 hover:opacity-80 transition"
+                >
+                  <img
+                    src={
+                      p.profile_image
+                        ? p.profile_image.startsWith("http") ||
+                          p.profile_image.includes("/uploads/")
+                          ? `${API_URL}${p.profile_image.replace(API_URL, "")}`
+                          : `${API_URL}/uploads/user/${p.profile_image}`
+                        : userProfiles[p.username] || "/images/default.jpg"
+                    }
+                    alt={p.displayName}
+                    className="w-full h-full object-cover"
+                  />
+                </Link>
               </div>
-            </div>
 
             {/* card */}
             <div className="flex-1 rounded-lg shadow p-4 bg-[#fdfaf6] relative">

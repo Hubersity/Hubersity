@@ -44,9 +44,9 @@ export default function Account() {
 
         setUsername(data.username);
         setName(data.name || "");
-        setBio(data.bio || "");
+        setBio(data.description || "");
         setUniversity(data.university || "");
-        setVisibility(data.visibility || "public");
+        setVisibility(data.privacy || "public");
         setBirthdate(data.birthdate ? new Date(data.birthdate) : null);
         setFollowers(data.followers_count || 0);
         setFollowing(data.following_count || 0);
@@ -126,9 +126,9 @@ export default function Account() {
         },
         body: JSON.stringify({
           name,
-          bio,
+          description: bio,
           university,
-          visibility,
+          privacy: visibility,
           birthdate: birthdate ? birthdate.toISOString().split("T")[0] : null,
           profile_image: uploadedImagePath || undefined,
         }),

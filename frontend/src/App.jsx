@@ -10,6 +10,7 @@ import Account from './pages/Dashboard/Account';
 import Follow from './pages/Dashboard/Follow';
 import Chat from './pages/Dashboard/Chat';
 import Notifications from './pages/Dashboard/Notifications'; // ✅ เพิ่ม import หน้าแจ้งเตือน
+import UserProfile from './pages/Dashboard/UserProfile';
 
 function App() {
   return (
@@ -30,7 +31,9 @@ function App() {
         <Route path="chat" element={<Chat />} />
         <Route path="notification" element={<Notifications />} />
         <Route path="account" element={<Account />} />
+        <Route path="user/:userId" element={<UserProfile />} />
       </Route>
+
 
       {/* ❌ ถ้าเส้นทางไม่ถูก → กลับไปหน้าแรก */}
       <Route path="*" element={<Navigate to="/" replace />} />
