@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.11'
-            args '-u'
-        }
-    }
+    agent any
 
     environment {
         VENV_DIR = 'venv'
@@ -23,8 +18,7 @@ pipeline {
         stage('Setup Python Environment') {
             steps {
                 sh '''
-                # This line is fixed to use 'python' instead of 'python3'
-                python -m venv ${VENV_DIR}
+                python3 -m venv ${VENV_DIR}  // <-- 2. CHANGED: Use "python3"
                 ${ACTIVATE}
                 ${PIP} install --upgrade pip setuptools wheel
                 ${PIP} install -r backend/requirements.txt
