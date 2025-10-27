@@ -30,6 +30,7 @@ pipeline {
             steps {
                 sh '''
                 ${ACTIVATE}
+                export PYTHONPATH=backend
                 pytest backend/tests \
                     -v \
                     --maxfail=1 \
