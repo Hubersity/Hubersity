@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from . import models
 from .database import engine
-from .routers import users, auth, study_calendar, posts
+from .routers import users, auth, study_calendar, posts, admin
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -44,6 +44,7 @@ app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(study_calendar.router)
 app.include_router(posts.router)
+app.include_router(admin.router)
 
 @app.get("/")
 def root():

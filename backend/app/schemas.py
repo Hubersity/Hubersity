@@ -121,7 +121,7 @@ class CommentResponse(BaseModel):
     content: str
     user_id: int
     username: str
-    profile_image: Optional[str]
+    profile_image: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -135,10 +135,16 @@ class PostResponse(BaseModel):
     username: str
     like_count: int
     profile_image: Optional[str]
-    liked: bool
+    liked: Optional[bool] = None
     tags: List[PostTagResponse] = []
     images: List[PostImageResponse] = []
     comments: List[CommentResponse] = []
 
     class Config:
         from_attributes = True
+
+class BanRequest(BaseModel):
+    duration: str
+
+class ReportRequest(BaseModel):
+    reason: str

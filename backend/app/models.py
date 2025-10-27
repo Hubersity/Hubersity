@@ -1,4 +1,4 @@
-from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text
+from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, DateTime
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -26,6 +26,9 @@ class User(Base):
     )
     profile_image = Column(String, nullable=True)
     description = Column(String, nullable=True)  # bio
+    is_admin = Column(Boolean, nullable=False, default=False)
+    is_banned = Column(Boolean, default=False)
+    ban_until = Column(DateTime, nullable=True)
 
     likes = relationship("Like", back_populates="user")
     posts = relationship("Post", back_populates="user")
@@ -41,7 +44,6 @@ class User(Base):
     @hybrid_property
     def following_count(self):
         return len(self.following)
-
 
 forum_tags = Table(
     "forum_tags",
@@ -167,3 +169,17 @@ class Comment(Base):
     username = Column(String, nullable=False)
     user = relationship("User")
     post = relationship("Post", back_populates="comments")
+
+class Report(Base):
+    __tablename__ = "reports"
+
+    rid = Column(Integer, primary_key=True, index=True)
+    post_id = Column(Integer, ForeignKey("post.pid"))
+    reporter_id = Column(Integer, ForeignKey("users.uid"))
+    reason = Column(String)
+    created_at = Column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=text('now()')
+    )
+    status = Column(String, default="pending")

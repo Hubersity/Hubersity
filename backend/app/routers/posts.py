@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import os
 import shutil
-from .. import models, schemas, database, oauth2
+from .. import models, schemas, database, oauth2, utils
 
 router = APIRouter(
     prefix="/posts",
@@ -23,7 +23,7 @@ def create_post(
     tags: Optional[str] = Form(None),
     files: List[UploadFile] = File([]),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
+    current_user: models.User = Depends(utils.check_ban_status)
 ):
     # ✅ Validate forum existence
     forum = db.query(models.Forum).filter(models.Forum.fid == forum_id).first()
@@ -79,6 +79,7 @@ def create_post(
         user_id=new_post.user_id,
         username=current_user.username,
         like_count=0,
+        liked=False,
         profile_image=current_user.profile_image,
         tags=new_post.tags,
         images=new_post.images,
@@ -248,6 +249,19 @@ def get_post(
 
     like_count = db.query(models.Like).filter(models.Like.post_id == post_id).count()
 
+    # ✅ Serialize comments
+    serialized_comments = [
+    schemas.CommentResponse(
+        cid=comment.cid,
+        user_id=comment.user_id,
+        username=comment.user.username if comment.user else "Unknown",
+        profile_image=comment.user.profile_image if comment.user else None,
+        content=comment.content,
+        created_at=comment.created_at
+    )
+    for comment in post.comments
+]
+
     return schemas.PostResponse(
         pid=post.pid,
         post_content=post.post_content,
@@ -258,7 +272,7 @@ def get_post(
         like_count=like_count,
         tags=post.tags,
         images=post.images,
-        comments=post.comments
+        comments=serialized_comments
     )
 
 
@@ -267,7 +281,7 @@ def update_post(
     post_id: int,
     updated_post: schemas.PostCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
+    current_user: models.User = Depends(utils.check_ban_status)
 ):
     post = db.query(models.Post).filter(models.Post.pid == post_id).first()
 
@@ -328,7 +342,7 @@ def create_comment(
     post_id: int,
     comment: schemas.CommentCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
+    current_user: models.User = Depends(utils.check_ban_status)
 ):
     post = db.query(models.Post).filter(models.Post.pid == post_id).first()
     if not post:
@@ -412,4 +426,25 @@ def unlike_post(
     if not like:
         raise HTTPException(status_code=404, detail="You haven’t liked this post yet")
 
-    
+@router.post("/{post_id}/report", status_code=status.HTTP_201_CREATED)
+def report_post(
+    post_id: int,
+    report_data: schemas.ReportRequest,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    post = db.query(models.Post).filter(models.Post.pid == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    report = models.Report(
+        post_id=post_id,
+        reporter_id=current_user.uid,
+        reason=report_data.reason
+    )
+    db.add(report)
+    db.commit()
+
+    return {"message": "Report submitted"}
+
+
