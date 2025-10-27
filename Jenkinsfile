@@ -18,7 +18,7 @@ pipeline {
         stage('Setup Python Environment') {
             steps {
                 sh '''
-                python3 -m venv ${VENV_DIR}  // <-- 2. CHANGED: Use "python3"
+                python3 -m venv ${VENV_DIR}
                 ${ACTIVATE}
                 ${PIP} install --upgrade pip setuptools wheel
                 ${PIP} install -r backend/requirements.txt
