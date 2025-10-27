@@ -107,6 +107,11 @@ class Post(Base):
         secondary=post_post_tags,
         back_populates="posts"
     )
+    created_at = Column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=text('now()')
+    )
     images = relationship("PostImage", back_populates="post")
     likes = relationship("Like", back_populates="post")
     comments = relationship("Comment", back_populates="post")

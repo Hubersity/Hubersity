@@ -3,6 +3,8 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { ChartNoAxesColumn, Flag, Hash, Bell, User } from "lucide-react";
 import { getCurrentUser } from "../../api/user"; 
 
+const API_URL = `http://localhost:8000`; 
+
 const navItems = [
   { to: "/app_admin/overview", label: "Overview", icon: ChartNoAxesColumn },
   { to: "/app_admin/acc-admin", label: "Account", icon: User },
@@ -50,7 +52,7 @@ function Topbar() {
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
         >
           <img
-            src={user?.profile_image || "/images/default-avatar.png"}
+            src={user?.profile_image ? `${API_URL}${user.profile_image}` : "/images/default-avatar.png"}
             alt="profile"
             className="w-9 h-9 rounded-full object-cover border border-gray-200"
           />

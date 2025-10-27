@@ -2,7 +2,7 @@ import React, { useState, useEffect} from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 // useNavigate go back to before page, useParamsอ่านค่าพารามิเตอร์จาก URL
-
+const API_URL = `http://localhost:8000`; 
 const MOCK_POSTS = [
     {
         id: "203",
@@ -87,19 +87,46 @@ export default function PostDetail() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+    async function fetchPostDetail() {
         setLoading(true);
         setError(null);
-    
-        // ปกติจะ fetch(`/api/admin/report/${id}`)
-        const found = MOCK_POSTS.find((p) => p.id === String(id));
-        if (!found) {
-          setError("Post not found");
-          setPost(null);
-        } else {
-          setPost(found);
+
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/admin/reports/${id}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
+
+        const found = await response.json();
+
+        const formatted = {
+            id: String(found.id),
+            author: found.username || "-",
+            avatar: found.avatar || "/images/default-avatar.png",
+            content: found.content || "-",
+            createdAt: found.createdAt || new Date().toISOString(),
+            lastReportDate: found.lastReportDate || "-",
+            numberOfReports: found.numberOfReports || 0,
+            reportCategories: found.reportCategories || {},
+            status: found.status
+            ? found.status.charAt(0).toUpperCase() + found.status.slice(1).toLowerCase()
+            : "Pending",
+            action: found.action || ""
+        };
+
+        setPost(formatted);
+        } catch (err) {
+        console.error("Error fetching post detail:", err);
+        setError("Failed to load post data.");
+        } finally {
         setLoading(false);
+        }
+    }
+
+    fetchPostDetail();
     }, [id]);
+
+
 
     async function handleUpdate() {
         // when update it will send the action and the message to backend
@@ -160,7 +187,7 @@ export default function PostDetail() {
                 <div className="flex flex-col items-center justify-start w-20">
                 <span className="text-xs font-medium mb-2">{post.author}</span>
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
-                    <img src={post.avatar} alt={post.author} className="w-full h-full object-cover" />
+                    <img src={post?.avatar ? `${API_URL}${post.avatar}` : "/images/default-avatar.png"} alt={post.author} className="w-full h-full object-cover" />
                 </div>
                 </div>
 
