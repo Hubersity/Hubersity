@@ -25,17 +25,14 @@ pipeline {
                 '''
             }
         }
-
         stage('Run Tests') {
             steps {
                 sh '''
                 ${ACTIVATE}
                 export PYTHONPATH=backend
-                export DATABASE_URL="postgresql://test_user:password@localhost/test_db"
                 
-                # Start the PostgreSQL service
-                sudo service postgresql start
-                sleep 2 
+                # FIX: Use a simple in-memory database for the tests
+                export DATABASE_URL="sqlite:///:memory:"
                 
                 pytest backend/tests \
                     -v \
