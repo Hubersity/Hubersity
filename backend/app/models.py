@@ -30,12 +30,15 @@ class User(Base):
     is_banned = Column(Boolean, default=False)
     ban_until = Column(DateTime, nullable=True)
 
-    likes = relationship("Like", back_populates="user")
-    posts = relationship("Post", back_populates="user")
-    sessions = relationship("StudySession", back_populates="user")
-    progress = relationship("DailyProgress", back_populates="user")
-    following = relationship("Follow", foreign_keys="[Follow.follower_id]", backref="follower")
-    followers = relationship("Follow", foreign_keys="[Follow.following_id]", backref="following")
+    likes = relationship("Like", back_populates="user", cascade="all, delete-orphan")
+    posts = relationship("Post", back_populates="user", cascade="all, delete-orphan")
+    sessions = relationship("StudySession", back_populates="user", cascade="all, delete-orphan")
+    progress = relationship("DailyProgress", back_populates="user", cascade="all, delete-orphan")
+    following = relationship("Follow", foreign_keys="[Follow.follower_id]", backref="follower", cascade="all, delete-orphan")
+    followers = relationship("Follow", foreign_keys="[Follow.following_id]", backref="following", cascade="all, delete-orphan")
+    reports = relationship("Report", back_populates="reporter", cascade="all, delete-orphan")
+    comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
+
 
     @hybrid_property
     def follower_count(self):
@@ -112,9 +115,11 @@ class Post(Base):
         nullable=False,
         server_default=text('now()')
     )
-    images = relationship("PostImage", back_populates="post")
-    likes = relationship("Like", back_populates="post")
-    comments = relationship("Comment", back_populates="post")
+    images = relationship("PostImage", back_populates="post", cascade="all, delete-orphan")
+    likes = relationship("Like", back_populates="post", cascade="all, delete-orphan")
+    comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
+    reports = relationship("Report", back_populates="post", cascade="all, delete-orphan")
+
 
 class PostImage(Base):
     __tablename__ = "post_images"
@@ -172,15 +177,16 @@ class Comment(Base):
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
     post_id = Column(Integer, ForeignKey("post.pid"), nullable=False)
     username = Column(String, nullable=False)
-    user = relationship("User")
+    user = relationship("User", back_populates="comments")
     post = relationship("Post", back_populates="comments")
+    
 
 class Report(Base):
     __tablename__ = "reports"
 
     rid = Column(Integer, primary_key=True, index=True)
     post_id = Column(Integer, ForeignKey("post.pid"))
-    reporter_id = Column(Integer, ForeignKey("users.uid"))
+    reporter_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
     reason = Column(String)
     created_at = Column(
         TIMESTAMP(timezone=True),
@@ -188,3 +194,6 @@ class Report(Base):
         server_default=text('now()')
     )
     status = Column(String, default="pending")
+    post = relationship("Post", back_populates="reports")
+    reporter = relationship("User", back_populates="reports")
+

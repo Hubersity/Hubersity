@@ -137,7 +137,7 @@ export default function App() {
         <Route path="acc-admin" element={<Suspense fallback={null}><Account_admin /></Suspense>} />
         <Route path="report" element={<Suspense fallback={null}><Report /></Suspense>} />
         <Route path="report/:id" element={<Suspense fallback={null}><PostDetail /></Suspense>} />
-        <Route path="report/user/:name" element={<Suspense fallback={null}><UserDetail /></Suspense>} />
+        <Route path="report/user/:username" element={<Suspense fallback={null}><UserDetail /></Suspense>} />
         {/* <Route path="tags-admin" element={<Suspense fallback={null}><Tags /></Suspense>} /> */}
         <Route path="noti-admin" element={<Suspense fallback={null}><Notification_admin /></Suspense>} />
       </Route>

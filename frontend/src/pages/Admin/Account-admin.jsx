@@ -102,7 +102,7 @@ export default function SearchAccount() {
         <span className="w-[10vh] font-medium">{user.name}</span>
         <span className="w-[15vh]">{user.email}</span>
         <span className="w-[10vh] ml-[2vw]">{user.university}</span>
-        <span className="w-[8vh] ml-[2vw]">{user.joinDate}</span>
+        <span className="w-[8vh] ml-[2vw] whitespace-nowrap">{user.joinDate}</span>
         <span
             className={`w-[8vh] ml-[4vw] flex items-center justify-center text-sm px-2 py-1 rounded-full ${
             user.status === "Public"
@@ -131,10 +131,10 @@ export default function SearchAccount() {
             </div>
             <div className="flex flex-row gap-x-[17vh]">
                 <span className="text-xl font-bold ml-[23vh]">Name</span>
-                <span className="text-xl font-bold">Gmail</span>
+                <span className="text-xl font-bold ml-[4vh]">Gmail</span>
                 <span className="text-xl font-bold">University</span>
                 <span className="text-xl font-bold">Join date</span>
-                <span className="text-xl font-bold">Status</span>
+                <span className="text-xl font-bold ml-[4vh]">Status</span>
             </div>
             {/* ส่วนแสดงรายการผู้ใช้ */}
             <div className="bg-white rounded-lg shadow">

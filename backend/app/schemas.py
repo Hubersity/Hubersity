@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime, date
-from typing import List, Optional
+from typing import List, Optional, Dict
 import re
 
 # สร้างบัญชีใหม่ (Sign Up)
@@ -148,3 +148,21 @@ class BanRequest(BaseModel):
 
 class ReportRequest(BaseModel):
     reason: str
+
+class AdminPost(BaseModel):
+    id: str
+    content: str
+    createdAt: str
+    likes: int
+    comments: int
+    status: str
+
+class AdminUserDetailResponse(BaseModel):
+    username: str
+    fullName: str
+    avatar: str
+    bio: str
+    numberOfReports: int
+    reportCategories: Dict[str, int]
+    status: str
+    posts: List[AdminPost]

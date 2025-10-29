@@ -6,6 +6,8 @@ from .. import models, schemas, utils, oauth2
 from ..database import get_db
 from typing import List
 import datetime, shutil, os
+from ..models import User, Post, Report
+from ..schemas import AdminUserDetailResponse
 
 
 router = APIRouter(
@@ -33,6 +35,52 @@ def get_user(
             detail=f"User id:{id} was not found"
         )
     return user
+
+
+@router.get("/reports/users/{username}", response_model=AdminUserDetailResponse)
+def get_reported_user_detail(username: str, db: Session = Depends(get_db)):
+    # Step 1: Get the user by username
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Step 2: Get all post IDs by this user
+    user_post_ids = db.query(Post.pid).filter(Post.user_id == user.uid).subquery()
+
+    # Step 3: Get all reports where the post belongs to this user
+    reports = db.query(Report).filter(Report.post_id.in_(user_post_ids)).all()
+
+    # Step 4: Count report reasons
+    report_categories = {}
+    for r in reports:
+        reason = r.reason or "Unspecified"
+        report_categories[reason] = report_categories.get(reason, 0) + 1
+
+    # Step 5: Get all posts by this user
+    posts = db.query(Post).filter(Post.user_id == user.uid).order_by(Post.created_at.desc()).all()
+
+    # Step 6: Build response
+    return {
+        "username": user.username,
+        "fullName": user.name,
+        "avatar": user.profile_image,
+        "bio": user.description,
+        "numberOfReports": len(reports),
+        "reportCategories": report_categories,
+        "status": "Banned" if user.is_banned else ("Pending Ban" if user.ban_until else "Active"),
+        "action": "",
+        "posts": [
+            {
+                "id": str(post.pid),
+                "content": post.post_content,
+                "createdAt": post.created_at.isoformat(),
+                "likes": len(post.likes),
+                "comments": len(post.comments),
+                "status": "Reported" if any(r.post_id == post.pid for r in reports) else "Normal",
+            }
+            for post in posts
+        ],
+    }
 
 @router.get("/stats")
 def get_admin_stats(
@@ -104,6 +152,22 @@ def unban_user(user_id: int, db: Session = Depends(get_db)):
 
     return {"message": f"User {user.username} has been unbanned"}
 
+@router.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+):
+    post = db.query(models.Post).filter(models.Post.pid == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    db.query(models.PostImage).filter(models.PostImage.post_id == post_id).delete()
+
+    post.tags.clear()
+    db.delete(post)
+    db.commit()
+    return
+
 @router.get("/reports")
 def get_reported_data(
     db: Session = Depends(get_db),
@@ -149,13 +213,17 @@ def get_reported_data(
             models.User.username.label("username"),
             func.count(models.Report.rid).label("report_count"),
             func.max(models.Report.created_at).label("last_date"),
+            models.User.is_banned.label("is_banned"),
             func.max(models.Report.status).label("status")
         )
-        .join(models.Post, models.Post.pid == models.Report.post_id)
-        .join(models.User, models.User.uid == models.Post.user_id)
-        .group_by(models.User.uid)
+        .join(models.Post, models.Post.user_id == models.User.uid)
+        .join(models.Report, models.Report.post_id == models.Post.pid)
+        .group_by(models.User.uid, models.User.username)
         .all()
     )
+
+
+
 
     user_details = []
     for user in reported_users:
@@ -174,9 +242,10 @@ def get_reported_data(
             "NumberOfReports": user.report_count,
             "PopularReasons": top_reason or "-",
             "LastDate": user.last_date.strftime("%Y-%m-%d"),
-            "Action": "", 
-            "status": user.status or "Pending"
+            "Action": "",
+            "status": "Banned" if user.is_banned else "Active"
         })
+
 
     return {
         "reported_posts": post_details,

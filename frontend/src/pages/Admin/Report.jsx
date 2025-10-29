@@ -27,8 +27,8 @@ const InfoPost = ({ post }) => {
         </Link>
         <span className="w-[15vh] ml-[6vw]">{post.NumberOfReports ?? "-"}</span>
         <span className="w-[10vh] ml-[6vw]">{post.PopularReasons ?? "-"}</span>
-        <span className="w-[8vh] ml-[11vw]">{post.LastDate ?? "-"}</span>
-        <span className="w-[8vh] ml-[10vw]">{post.Action ? post.Action : "-"}</span>
+        <span className="w-[8vh] ml-[11vw] whitespace-nowrap">{post.LastDate ?? "-"}</span>
+        <span className="w-[8vh] ml-[11.5vw]">{post.Action ? post.Action : "-"}</span>
         <span className={`w-[8vh] ml-[6vw] flex items-center justify-center text-sm px-2 py-1 rounded-full ${post.status === "Pending" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
           {post.status ?? "Pending"}
         </span>
@@ -45,11 +45,11 @@ const InfoUser = ({ user }) => {
         <Link to={`/app_admin/report/user/${encodeURIComponent(user.UserName || "")}`} className="text-green-700 hover:underline w-[10vw] ml-[2vw]">
           {user.UserName || "-"}
         </Link>
-        <span className="w-[15vh] ml-[4vw]">{user.NumberOfReports ?? "-"}</span>
+        <span className="w-[15vh] ml-[6vw]">{user.NumberOfReports ?? "-"}</span>
         <span className="w-[10vh] ml-[6vw]">{user.PopularReasons ?? "-"}</span>
-        <span className="w-[8vh] ml-[12vw]">{user.LastDate ?? "-"}</span>
-        <span className="w-[8vh] ml-[12vw]">{user.Action ? user.Action : "-"}</span>
-        <span className={`w-[8vh] ml-[5vw] flex items-center justify-center text-sm px-2 py-1 rounded-full ${user.status === "Pending" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+        <span className="w-[8vh] ml-[11vw] whitespace-nowrap">{user.LastDate ?? "-"}</span>
+        <span className="w-[8vh] ml-[11vw]">{user.Action ? user.Action : "-"}</span>
+        <span className={`w-[8vh] ml-[6vw] flex items-center justify-center text-sm px-2 py-1 rounded-full ${user.status === "Banned" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
           {user.status ?? "Pending"}
         </span>
       </div>
@@ -200,13 +200,13 @@ export default function Report() {
             </div>
 
             {/* topic */}
-            <div className="flex flex-row gap-x-[13vh] mt-12 mb-6">
+            <div className="flex flex-row gap-x-[20vh] mt-12 mb-6">
                 <span className="font-bold ml-[2vw]">
                     {lookNow === 'post' ? "Post ID":"Name"}
                 </span>
                 <span className="font-bold">Number of reports</span>
                 <span className="font-bold">Popular reasons</span>
-                <span className="font-bold">last date of report</span>
+                <span className="font-bold whitespace-nowrap">last date of report</span>
                 <span className="font-bold">Action</span>
                 <span className="font-bold">Status</span>
             </div>
