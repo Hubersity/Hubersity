@@ -31,9 +31,10 @@ pipeline {
                 sh '''
                 ${ACTIVATE}
                 export PYTHONPATH=backend
-                
-                # THIS IS THE LINE YOU ARE MISSING:
                 export DATABASE_URL="postgresql://test_user:password@localhost/test_db"
+                
+                sudo service postgresql start
+                sleep 2 
                 
                 pytest backend/tests \
                     -v \
@@ -45,7 +46,6 @@ pipeline {
                 '''
             }
         }
-    }
 
     post {
         always {
