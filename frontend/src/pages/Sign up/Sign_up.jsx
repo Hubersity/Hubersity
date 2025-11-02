@@ -14,7 +14,7 @@ export default function Sign_up() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // ✅ signup function เหมือน login pattern
+  // signup function (พร้อมระบบ session แยก user)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -32,15 +32,15 @@ export default function Sign_up() {
     const apiUrl = "http://localhost:8000/users/";
     const loginUrl = "http://localhost:8000/login";
 
-    console.log("🔗 Sending signup request to:", apiUrl);
+    console.log("Sending signup request to:", apiUrl);
 
     try {
+      // สร้าง user ใหม่
       const res = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        // ✅ เพิ่ม confirm_password ให้ backend รับได้
         body: JSON.stringify({
           username,
           email,
@@ -51,7 +51,7 @@ export default function Sign_up() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        console.error("❌ Signup failed:", errData);
+        console.error("Signup failed:", errData);
 
         if (res.status === 400 || errData?.detail?.includes("already")) {
           setError("This username or email is already in use.");
@@ -64,8 +64,9 @@ export default function Sign_up() {
       }
 
       const user = await res.json();
+      console.log("Signup success:", user);
 
-      // ✅ Login immediately after signup
+      // Login หลัง signup ทันที
       const loginRes = await fetch(loginUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,28 +77,37 @@ export default function Sign_up() {
         setError("Signup succeeded but login failed.");
         return;
       }
+
       const loginData = await loginRes.json();
-      
-      localStorage.setItem("signupData", JSON.stringify({
-      uid: user.uid,
-      token: loginData.access_token,
-    }));
+      console.log("Auto-login success:", loginData);
 
-      
+      // เก็บ session แยกตาม user เหมือน Login.jsx
+      const usernameKey = username || email.split("@")[0] || "guest";
 
+      localStorage.setItem(
+        `authData_${usernameKey}`,
+        JSON.stringify({
+          uid: user.uid,
+          username: usernameKey,
+          token: loginData.access_token,
+        })
+      );
 
+      localStorage.setItem("currentUserKey", `authData_${usernameKey}`);
+
+      console.log("💾 Signed up & saved session for:", usernameKey);
+
+      // ไปหน้า create account
       navigate("/create-account");
-
-
     } catch (err) {
-      console.error("🚨 Connection error:", err);
+      console.error("Connection error:", err);
       setError("Cannot connect to server.");
     }
   };
 
   return (
     <div className="min-h-screen bg-[#f1f6ec] flex justify-center items-center relative overflow-hidden px-4">
-      {/* ✅ เส้นเขียว */}
+      {/* เส้นเขียว */}
       <motion.div
         initial={{ opacity: 0, x: 200 }}
         animate={{ opacity: 1, x: 0 }}
@@ -112,7 +122,7 @@ export default function Sign_up() {
         }}
       />
 
-      {/* ✅ วงกลมซ้ายล่าง */}
+      {/* วงกลมซ้ายล่าง */}
       <motion.div
         initial={{ opacity: 0, x: -150, y: 150 }}
         animate={{ opacity: 1, x: 0, y: 0 }}
@@ -128,7 +138,7 @@ export default function Sign_up() {
         style={{ top: "90vh", right: "80vw", width: "10vw", height: "10vw" }}
       />
 
-      {/* ✅ วงกลมขวาบน */}
+      {/* วงกลมขวาบน */}
       <motion.div
         initial={{ opacity: 0, x: 200, y: -200 }}
         animate={{ opacity: 1, x: 0, y: 0 }}
@@ -144,7 +154,7 @@ export default function Sign_up() {
         style={{ top: "3vh", right: "-5vw", width: "12vw", height: "12vw" }}
       />
 
-      {/* ✅ วงกลม gradient */}
+      {/* วงกลม gradient */}
       <motion.div
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -153,7 +163,7 @@ export default function Sign_up() {
         style={{ top: "6vh", right: "8vw", width: "10vw", height: "10vw" }}
       />
 
-      {/* ✅ โลโก้ */}
+      {/* โลโก้ */}
       <motion.div
         className="absolute top-[-80px] left-4"
         initial={{ opacity: 0, y: -100 }}
@@ -167,7 +177,7 @@ export default function Sign_up() {
         />
       </motion.div>
 
-      {/* ✅ กล่อง Sign Up */}
+      {/* กล่อง Sign Up */}
       <motion.div
         className="w-full max-w-lg md:max-w-2xl bg-white rounded-[70px] shadow-lg z-10"
         initial={{ opacity: 0, scale: 0.9, y: 100 }}
@@ -246,12 +256,12 @@ export default function Sign_up() {
               )}
             </div>
 
-            {/* ✅ Error */}
+            {/* Error */}
             {error && (
               <p className="text-red-500 text-center text-sm">{error}</p>
             )}
 
-            {/* ✅ ปุ่ม Sign up */}
+            {/* ปุ่ม Sign up */}
             <motion.button
               type="submit"
               whileHover={{ scale: 1.05 }}
@@ -261,7 +271,7 @@ export default function Sign_up() {
               Sign up
             </motion.button>
 
-            {/* ✅ Google button */}
+            {/* ปุ่ม Google */}
             <motion.button
               type="button"
               whileHover={{ scale: 1.05 }}
