@@ -4,7 +4,7 @@ import { FcGoogle } from "react-icons/fc";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
-export default function Sign_in() {
+export default function Sign_up() {
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [username, setUsername] = useState("");

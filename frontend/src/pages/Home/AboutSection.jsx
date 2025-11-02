@@ -42,7 +42,7 @@ export default function AboutSection() {
             </p>
 
             <Link
-            to="/signin"
+            to="/signup"
             className="group inline-flex items-center gap-2 bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-full text-lg font-semibold shadow-md transition-all duration-300"
             >
             Try Now
