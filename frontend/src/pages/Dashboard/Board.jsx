@@ -338,6 +338,7 @@ export default function Board() {
   const [menuOpen, setMenuOpen] = useState(null);
   const [selectedUni, setSelectedUni] = useState(null);
   const currentKey = localStorage.getItem("currentUserKey");
+  const [previewImage, setPreviewImage] = useState(null);
   const authData = currentKey
     ? JSON.parse(localStorage.getItem(currentKey) || "{}")
     : {};
@@ -356,7 +357,9 @@ export default function Board() {
     return () => console.log("🧹 Board unmounted");
   }, []);
 
-  // 🆕 state สำหรับหน้าต่าง Report
+
+
+  // state สำหรับหน้าต่าง Report
   const [reportOpen, setReportOpen] = useState(false);
   const [reportPostId, setReportPostId] = useState(null);
 
@@ -438,10 +441,15 @@ const handlePost = async () => {
     formData.append("forum_id", forum_id);
     formData.append("user_id", uid);
 
+    // เพิ่มส่วนนี้ (แนบไฟล์ทั้งหมดใน pendingFiles)
+    pendingFiles.forEach((file) => {
+      formData.append("files", file); // "files" ต้องตรงกับ backend
+    });
+
     const res = await fetch(`${API_URL}/posts/`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
-      body: formData,
+      body: formData, // อย่าลืม! ห้ามใส่ Content-Type เอง (browser จัดการ)
     });
 
     if (!res.ok) {
@@ -453,6 +461,7 @@ const handlePost = async () => {
     const created = await res.json();
     console.log("Post created:", created);
 
+    // เคลียร์ state หลังโพสต์เสร็จ
     setPosts((prev) => [
       {
         id: created.pid || Date.now(),
@@ -465,11 +474,13 @@ const handlePost = async () => {
         liked: false,
         comments: [],
         category: activeTab,
+        images: created.images || [],
       },
       ...prev,
     ]);
 
     setNewPost("");
+    setPendingFiles([]); // ล้างไฟล์ที่เลือกไว้
   } catch (err) {
     console.error("Error posting:", err);
     alert("Post failed — check console for details.");
@@ -800,6 +811,28 @@ const confirmDelete = async () => {
         </button>
       </div>
 
+      {pendingFiles.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {pendingFiles.map((file, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-2 px-2 py-1 bg-emerald-50 rounded-md text-xs text-emerald-700 border border-emerald-200"
+            >
+              <span className="truncate max-w-[100px]">{file.name}</span>
+              <button
+                onClick={() =>
+                  setPendingFiles((prev) => prev.filter((_, i) => i !== index))
+                }
+                className="text-red-500 hover:text-red-700"
+                title="Remove file"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* posts */}
       <div className="space-y-6">
         {filteredPosts.map((p) => (
@@ -808,7 +841,7 @@ const confirmDelete = async () => {
               <div className="flex flex-col items-center justify-start w-20">
                 <Link
                   to={`/app/user/${p.user_id || p.id || p.username}`} // ถ้ามี user_id ใช้อันนั้น
-                  className="text-xs font-medium mb-2 text-emerald-700 hover:underline"
+                  className="text-xs font-medium mb-2 text-black hover:text-emerald-600 hover:underline"
                 >
                   {p.displayName}
                 </Link>
@@ -880,6 +913,46 @@ const confirmDelete = async () => {
               </div>
 
               <p className="text-slate-800">{p.text}</p>
+              {/* แสดงรูป/ไฟล์ที่แนบ */}
+              {p.images && p.images.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {p.images.map((img, i) => {
+                    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(img.path);
+                    const isPdf = /\.pdf$/i.test(img.path);
+
+                    return (
+                      <div key={i} className="border rounded-lg p-2 bg-white shadow-sm">
+                        {isImage ? (
+                          <img
+                            src={`${API_URL}${img.path}`}
+                            alt={`attachment-${i}`}
+                            className="w-40 h-40 object-cover rounded-md cursor-pointer hover:opacity-80 transition"
+                            onClick={() => setPreviewImage(`${API_URL}${img.path}`)}
+                          />
+                        ) : isPdf ? (
+                          <a
+                            href={`${API_URL}${img.path}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline flex items-center gap-2"
+                          >
+                            📄 {img.path.split("/").pop()}
+                          </a>
+                        ) : (
+                          <a
+                            href={`${API_URL}${img.path}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            Download file
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
               <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
                 <div className="flex items-center gap-4">
@@ -975,6 +1048,21 @@ const confirmDelete = async () => {
           <p className="text-center text-gray-500">No posts found.</p>
         )}
       </div>
+
+      {/* 🔹 Image Preview Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setPreviewImage(null)}
+        >
+          <img
+            src={previewImage}
+            alt="preview"
+            className="max-w-[90%] max-h-[90%] rounded-xl shadow-2xl border border-white/30"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       {/* Modals */}
       {reportOpen && (

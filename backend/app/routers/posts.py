@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from sqlalchemy.orm import joinedload
 import os
 import shutil
 from .. import models, schemas, database, oauth2
@@ -25,12 +26,10 @@ def create_post(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    # ✅ Validate forum existence
     forum = db.query(models.Forum).filter(models.Forum.fid == forum_id).first()
     if not forum:
         raise HTTPException(status_code=400, detail="Invalid forum_id")
 
-    # ✅ Create post
     new_post = models.Post(
         post_content=post_content,
         forum_id=forum_id,
@@ -40,49 +39,54 @@ def create_post(
     db.commit()
     db.refresh(new_post)
 
-    # ✅ Attach tags
     if tags:
         try:
             tag_ids = [int(t.strip()) for t in tags.split(",") if t.strip().isdigit()]
             tag_objects = db.query(models.PostTag).filter(models.PostTag.ptid.in_(tag_ids)).all()
             new_post.tags.extend(tag_objects)
             db.commit()
-            db.refresh(new_post)
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid tag IDs")
 
-    # ✅ Save uploaded files
+    # ✅ บันทึกไฟล์แนบ
     for upload_file in files:
         filename = f"{new_post.pid}_{upload_file.filename}"
         file_path = os.path.join(UPLOAD_DIR, filename)
-
-        # Save file to disk
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(upload_file.file, buffer)
-
-        # Save file record to DB
         db.add(models.PostImage(
             post_id=new_post.pid,
             path=f"/{UPLOAD_DIR}/{filename}",
             caption=None
         ))
+    db.commit()
 
-    if files:
-        db.commit()
-        db.refresh(new_post)
+    # ✅ ดึงโพสต์ใหม่อีกครั้ง พร้อม images
+    refreshed_post = (
+        db.query(models.Post)
+        .options(
+                joinedload(models.Post.images),
+                joinedload(models.Post.tags),
+                joinedload(models.Post.comments),
+                joinedload(models.Post.user),
+            )
+        .filter(models.Post.pid == new_post.pid)
+        .first()
+    )
+    db.refresh(refreshed_post)
 
-    # ✅ Return full post response
+    # ✅ คืนข้อมูลใหม่ที่มี images ด้วย
     return schemas.PostResponse(
-        pid=new_post.pid,
-        post_content=new_post.post_content,
-        forum_id=new_post.forum_id,
-        user_id=new_post.user_id,
+        pid=refreshed_post.pid,
+        post_content=refreshed_post.post_content,
+        forum_id=refreshed_post.forum_id,
+        user_id=refreshed_post.user_id,
         username=current_user.username,
-        like_count=0,
         profile_image=current_user.profile_image,
-        tags=new_post.tags,
-        images=new_post.images,
-        comments=new_post.comments
+        like_count=0,
+        tags=refreshed_post.tags,
+        images=refreshed_post.images,  # 🎯 ตรงนี้จะไม่ว่างอีกต่อไป
+        comments=refreshed_post.comments
     )
 
 
