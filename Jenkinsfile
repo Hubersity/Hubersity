@@ -18,20 +18,23 @@ pipeline {
             }
             steps {
                 sh '''
-                # We are now inside the container.
-                # The Dockerfile SHOULD have already run 'pip install'.
-                # We don't need a venv.
+                # We are now inside the container, and our
+                # WORKDIR is /app (as set by your Dockerfile).
                 
-                # These variables are still needed for the test session
-                export PYTHONPATH=backend
+                # The 'app' and 'tests' folders are right here.
+                # We set PYTHONPATH to '.' (the current dir)
+                # so Python can find your 'app' module.
+                
+                export PYTHONPATH=.
                 export DATABASE_URL="sqlite:///:memory:"
                 
-                # Run tests (paths are relative to the workspace root)
-                pytest backend/tests \
+                # Run tests on the 'tests' folder, and tell
+                # coverage to watch the 'app' folder.
+                pytest tests \
                     -v \
                     --maxfail=1 \
                     --disable-warnings \
-                    --cov=backend/app \
+                    --cov=app \
                     --cov-report=xml \
                     --junitxml=test-results.xml
                 '''
