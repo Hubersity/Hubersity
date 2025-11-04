@@ -30,26 +30,16 @@ pipeline {
                     --junitxml=test-results.xml
                 '''
             }
-        }
-    }
-
-    post {
-        always {
-            agent any
-            steps {
-                junit 'test-results.xml'
-            }
-        }
-        failure {
-            agent any
-            steps {
-                echo '❌ Tests failed! Check the console and test-results.xml for details.'
-            }
-        }
-        success {
-            agent any
-            steps {
-                echo '✅ All tests passed successfully!'
+            post {
+                always {
+                    junit 'test-results.xml'
+                }
+                failure {
+                    echo '❌ Tests failed! Check the console and test-results.xml for details.'
+                }
+                success {
+                    echo '✅ All tests passed successfully!'
+                }
             }
         }
     }
