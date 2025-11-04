@@ -2,13 +2,13 @@ name: Backend CI Tests
 
 on:
   push:
-    # FIX LATER
+    # Fix this later
     branches:
       - "backend/add_testing"
+      # If you want this to ALSO run on your main branch,
+      # add a line here like:
+      # - "main"
       
-    branches-ignore:
-      - 'main' # Remove this line if you want it to run on main too
-
     paths:
       - 'backend/**'
       - '.github/workflows/ci.yml'
