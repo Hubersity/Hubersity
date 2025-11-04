@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.main import app
 from app.database import get_db, Base
+from app import models
 
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 engine = create_engine(
@@ -24,23 +25,19 @@ def override_get_db():
     finally:
         db.close()
 
-
 @pytest.fixture(scope="function")
 def client():
     """
     A fixture that sets up the database, applies the override,
     yields a client, and then tears it all down.
-    
-    'scope="function"' means this runs fresh for EACH test.
     """
+    app.dependency_override_get_db = override_get_db
     
     Base.metadata.create_all(bind=engine)
-    
-    app.dependency_overrides[get_db] = override_get_db
     
     with TestClient(app) as test_client:
         yield test_client
     
-    app.dependency_overrides.pop(get_db, None)
-    
     Base.metadata.drop_all(bind=engine)
+    
+    app.dependency_override_get_db = None
