@@ -1,39 +1,32 @@
 pipeline {
-    agent any
-
-    environment {
-        VENV_DIR = 'venv'
-        PYTHON = "${VENV_DIR}/bin/python"
-        PIP = "${VENV_DIR}/bin/pip"
-        ACTIVATE = ". ${VENV_DIR}/bin/activate"
-    }
+    agent none
 
     stages {
         stage('Checkout') {
+            agent any
             steps {
+                cleanWs() 
                 git([branch: 'backend/add_testing', url: 'https://github.com/Hubersity/Hubersity.git'])
             }
         }
 
-        stage('Setup Python Environment') {
-            steps {
-                sh '''
-                python3 -m venv ${VENV_DIR}
-                ${ACTIVATE}
-                ${PIP} install --upgrade pip setuptools wheel
-                ${PIP} install -r backend/requirements.txt
-                '''
-            }
-        }
         stage('Run Tests') {
+            agent {
+                dockerfile {
+                    dir 'backend'
+                }
+            }
             steps {
                 sh '''
-                ${ACTIVATE}
-                export PYTHONPATH=backend
+                # We are now inside the container.
+                # The Dockerfile SHOULD have already run 'pip install'.
+                # We don't need a venv.
                 
-                # FIX: Use a simple in-memory database for the tests
+                # These variables are still needed for the test session
+                export PYTHONPATH=backend
                 export DATABASE_URL="sqlite:///:memory:"
                 
+                # Run tests (paths are relative to the workspace root)
                 pytest backend/tests \
                     -v \
                     --maxfail=1 \
@@ -49,14 +42,10 @@ pipeline {
     post {
         always {
             junit 'test-results.xml'
-            // I'm leaving Cobertura commented out, as it was failing before
-            // cobertura autoUpdateHealth: false, autoUpdateStability: false, coberturaReportFile: 'coverage.xml'
         }
-
         failure {
             echo '❌ Tests failed! Check the console and test-results.xml for details.'
         }
-
         success {
             echo '✅ All tests passed successfully!'
         }

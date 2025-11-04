@@ -3,7 +3,7 @@
 .env.local
 
 # Python artifacts (Backend)
-pycache/
+__pycache__/
 *.pyc
 venv/
 dist/
