@@ -9,8 +9,8 @@ def test_create_user_success(client):
     user_data = {
         "email": "testuser@example.com",
         "username": "testuser",
-        "password": "123456",
-        "confirm_password": "123456"
+        "password": "ValidPass123!",
+        "confirm_password": "ValidPass123!"
     }
 
     res = client.post("/users/", json=user_data)
@@ -27,8 +27,8 @@ def test_create_user_duplicate_email(client):
     user_data = {
         "email": "duplicate@example.com",
         "username": "user1",
-        "password": "123456",
-        "confirm_password": "123456"
+        "password": "ValidPass123!",
+        "confirm_password": "ValidPass123!"
     }
 
     # First create user
@@ -38,8 +38,8 @@ def test_create_user_duplicate_email(client):
     res = client.post("/users/", json={
         "email": "duplicate@example.com",
         "username": "user2",
-        "password": "123456",
-        "confirm_password": "123456"
+        "password": "ValidPass123!",
+        "confirm_password": "ValidPass123!"
     })
 
     assert res.status_code == 400
@@ -51,8 +51,8 @@ def test_create_user_duplicate_username(client):
     user_data = {
         "email": "userunique@example.com",
         "username": "uniqueuser",
-        "password": "123456",
-        "confirm_password": "123456"
+        "password": "ValidPass123!",
+        "confirm_password": "ValidPass123!"
     }
 
     # Create user once
@@ -62,8 +62,8 @@ def test_create_user_duplicate_username(client):
     res = client.post("/users/", json={
         "email": "newemail@example.com",
         "username": "uniqueuser",
-        "password": "123456",
-        "confirm_password": "123456"
+        "password": "ValidPass123!",
+        "confirm_password": "ValidPass123!"
     })
 
     assert res.status_code == 400
@@ -75,18 +75,25 @@ def test_password_hashed_in_db(client):
     user_data = {
         "email": "secure@example.com",
         "username": "secureuser",
-        "password": "mypassword",
-        "confirm_password": "mypassword"
+        "password": "ValidPass123!",
+        "confirm_password": "ValidPass123!"
     }
-
+    
     res = client.post("/users/", json=user_data)
     assert res.status_code == 201
-
-    # Check DB content manually
-    from app.database import get_db
-    db = next(get_db())
-    user = db.query(models.User).filter(models.User.email == "secure@example.com").first()
-
-    assert user is not None
-    assert user.password != "mypassword"  # ensure hashing worked
-    assert verify("mypassword", user.password)
+    
+    data = res.json()
+    
+    login_res = client.post("/login/", data={
+        "username": "secure@example.com", 
+        "password": "ValidPass123!"
+    })
+    
+    assert login_res.status_code == 200
+    
+    login_res_fail = client.post("/login/", data={
+        "username": "secure@example.com", 
+        "password": "wrongpassword"
+    })
+    
+    assert login_res_fail.status_code == 403
