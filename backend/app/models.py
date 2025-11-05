@@ -13,7 +13,7 @@ class User(Base):
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True),
-                        nullable=False, server_default=text('now()'))
+                        nullable=False, server_default=text('CURRENT_TIMESTAMP')) # <-- FIX 1
     profile_image = Column(String, nullable=True)
     description = Column(String, nullable=True)
     likes = relationship("Like", back_populates="user")
@@ -34,67 +34,47 @@ forum_tags = Table(
 class Tag(Base):
     __tablename__ = "tags"
 
-    id = Column(Integer, primary_key=True, nullable=False)
-    name = Column(String, unique=True, nullable=False)
-
-    forums = relationship("Forum", secondary=forum_tags, back_populates="tags")
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False, unique=True)
+    forums = relationship(
+        "Forum", secondary=forum_tags, back_populates="tags")
 
 
 class Forum(Base):
     __tablename__ = "forum"
 
     fid = Column(Integer, primary_key=True, nullable=False)
-    forum_name = Column(String, nullable=False)
-    tags = relationship("Tag", secondary=forum_tags, back_populates="forums")
-
-post_post_tags = Table(
-    "post_post_tags",
-    Base.metadata,
-    Column("post_id", Integer, ForeignKey("post.pid"), primary_key=True),
-    Column("tag_id", Integer, ForeignKey("post_tags.ptid"), primary_key=True)
-)
-
-class PostTag(Base):
-    __tablename__ = "post_tags"
-
-    ptid = Column(Integer, primary_key=True, nullable=False) # post tag id
-    name = Column(String, unique=True, nullable=False)
-    posts = relationship("Post", secondary=post_post_tags, back_populates="tags")
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=False)
+    tags = relationship("Tag", secondary=forum_tags,
+                        back_populates="forums")
+    posts = relationship("Post", back_populates="forum")
 
 
 class Post(Base):
     __tablename__ = "post"
-    
+
     pid = Column(Integer, primary_key=True, nullable=False)
-    post_content = Column(String, nullable=False)
-    forum_id = Column(Integer, ForeignKey("forum.fid"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)  # new column
+    post_content = Column(Text, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True),
+                        nullable=False, server_default=text('CURRENT_TIMESTAMP'))
+    user_id = Column(Integer, ForeignKey(
+        "users.uid", ondelete="CASCADE"), nullable=False)
+    forum_id = Column(Integer, ForeignKey(
+        "forum.fid", ondelete="CASCADE"), nullable=False)
+    
     user = relationship("User", back_populates="posts")
-    tags = relationship(
-        "PostTag",
-        secondary=post_post_tags,
-        back_populates="posts"
-    )
-    images = relationship("PostImage", back_populates="post")
+    forum = relationship("Forum", back_populates="posts")
     likes = relationship("Like", back_populates="post")
     comments = relationship("Comment", back_populates="post")
-
-class PostImage(Base):
-    __tablename__ = "post_images"
-
-    id = Column(Integer, primary_key=True)
-    post_id = Column(Integer, ForeignKey("post.pid"), nullable=False)
-    path = Column(String, nullable=False)
-    caption = Column(String)
-    post = relationship("Post", back_populates="images")
 
 
 class StudySession(Base):
     __tablename__ = "study_sessions"
 
-    sid = Column(Integer, primary_key=True)
+    id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
-    start_time = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
+    start_time = Column(TIMESTAMP(timezone=True), nullable=False)
     end_time = Column(TIMESTAMP(timezone=True))
     duration_minutes = Column(Integer)
 
@@ -130,10 +110,10 @@ class Comment(Base):
 
     cid = Column(Integer, primary_key=True, nullable=False)
     content = Column(Text, nullable=False)
-    created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
-    
+    created_at = Column(TIMESTAMP(timezone=True),
+                        nullable=False, server_default=text('CURRENT_TIMESTAMP'))
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
     post_id = Column(Integer, ForeignKey("post.pid"), nullable=False)
-    username = Column(String, nullable=False)
+
     user = relationship("User")
     post = relationship("Post", back_populates="comments")
