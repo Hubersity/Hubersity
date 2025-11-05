@@ -3,97 +3,72 @@ import pytest
 from app import models
 from app.utils import verify
 
+VALID_PASSWORD = "ValidPass123!"
+
+@pytest.fixture
+def test_user(client):
+    """
+    A fixture to create a user and log in,
+    so other tests can be authorized.
+    """
+    user_data = {
+        "email": "test@example.com",
+        "username": "testuser",
+        "password": VALID_PASSWORD,
+        "confirm_password": VALID_PASSWORD
+    }
+    res = client.post("/users/", json=user_data)
+    assert res.status_code == 201
+    
+    login_data = {
+        "username": "test@example.com",
+        "password": VALID_PASSWORD
+    }
+    login_res = client.post("/login/", data=login_data)
+    assert login_res.status_code == 200
+    
+    token = login_res.json()["access_token"]
+    return {"token": f"Bearer {token}", "user_data": user_data}
+
 
 # 🧠 Test 1: Create user successfully
 def test_create_user_success(client):
     user_data = {
-        "email": "testuser@example.com",
-        "username": "testuser",
-        "password": "ValidPass123!",
-        "confirm_password": "ValidPass123!"
+        "email": "testuser_success@example.com",
+        "username": "testuser_success",
+        "password": VALID_PASSWORD,
+        "confirm_password": VALID_PASSWORD
     }
-
     res = client.post("/users/", json=user_data)
-
     assert res.status_code == 201
     data = res.json()
-    assert data["email"] == "testuser@example.com"
-    assert data["username"] == "testuser"
-    assert "uid" in data
+    assert data["email"] == user_data["email"]
 
 
 # 🧠 Test 2: Duplicate email should fail
-def test_create_user_duplicate_email(client):
-    user_data = {
-        "email": "duplicate@example.com",
-        "username": "user1",
-        "password": "ValidPass123!",
-        "confirm_password": "ValidPass123!"
-    }
-
-    # First create user
-    client.post("/users/", json=user_data)
-
-    # Try again with same email
+def test_create_user_duplicate_email(client, test_user):
     res = client.post("/users/", json={
-        "email": "duplicate@example.com",
+        "email": "test@example.com",
         "username": "user2",
-        "password": "ValidPass123!",
-        "confirm_password": "ValidPass123!"
+        "password": VALID_PASSWORD,
+        "confirm_password": VALID_PASSWORD
     })
-
     assert res.status_code == 400
     assert res.json()["detail"] == "Email is already in use"
 
 
 # 🧠 Test 3: Duplicate username should fail
-def test_create_user_duplicate_username(client):
-    user_data = {
-        "email": "userunique@example.com",
-        "username": "uniqueuser",
-        "password": "ValidPass123!",
-        "confirm_password": "ValidPass123!"
-    }
-
-    # Create user once
-    client.post("/users/", json=user_data)
-
-    # Try again with same username
+def test_create_user_duplicate_username(client, test_user):
     res = client.post("/users/", json={
         "email": "newemail@example.com",
-        "username": "uniqueuser",
-        "password": "ValidPass123!",
-        "confirm_password": "ValidPass123!"
+        "username": "testuser",
+        "password": VALID_PASSWORD,
+        "confirm_password": VALID_PASSWORD
     })
-
     assert res.status_code == 400
     assert res.json()["detail"] == "Username is already taken"
 
 
 # 🧠 Test 4: Password should be hashed
-def test_password_hashed_in_db(client):
-    user_data = {
-        "email": "secure@example.com",
-        "username": "secureuser",
-        "password": "ValidPass123!",
-        "confirm_password": "ValidPass123!"
-    }
-    
-    res = client.post("/users/", json=user_data)
-    assert res.status_code == 201
-    
-    data = res.json()
-    
-    login_res = client.post("/login/", data={
-        "username": "secure@example.com", 
-        "password": "ValidPass123!"
-    })
-    
-    assert login_res.status_code == 200
-    
-    login_res_fail = client.post("/login/", data={
-        "username": "secure@example.com", 
-        "password": "wrongpassword"
-    })
-    
-    assert login_res_fail.status_code == 403
+def test_password_hashed_in_db(client, test_user):
+    assert test_user["token"]

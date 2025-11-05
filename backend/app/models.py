@@ -13,7 +13,7 @@ class User(Base):
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True),
-                        nullable=False, server_default=text('CURRENT_TIMESTAMP')) # <-- FIX 1
+                        nullable=False, server_default=text('CURRENT_TIMESTAMP'))
     profile_image = Column(String, nullable=True)
     description = Column(String, nullable=True)
     likes = relationship("Like", back_populates="user")
