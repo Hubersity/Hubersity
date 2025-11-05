@@ -3,8 +3,8 @@ import pytest
 
 def test_login_success(client, test_user):
     login_data = {
-        "username": test_user["user_data"]["email"],
-        "password": test_user["user_data"]["password"]
+        "username": test_user["user"]["email"],
+        "password": VALID_PASSWORD
     }
     res = client.post("/login/", data=login_data)
     
@@ -14,7 +14,7 @@ def test_login_success(client, test_user):
 
 def test_login_wrong_password(client, test_user):
     login_data = {
-        "username": test_user["user_data"]["email"],
+        "username": test_user["user"]["email"],
         "password": "wrongpassword"
     }
     res = client.post("/login/", data=login_data)

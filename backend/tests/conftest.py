@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.main import app
+from app.main import app as fastapi_app
 from app.database import Base, get_db
 import app.database
 from app import models
@@ -30,13 +30,13 @@ def client(monkeypatch):
     monkeypatch.setattr(app.database, 'engine', engine)
     monkeypatch.setattr(app.database, 'SessionLocal', TestingSessionLocal)
     
-    app.dependency_overrides[get_db] = override_get_db
+    fastapi_app.dependency_overrides[get_db] = override_get_db
 
     Base.metadata.create_all(bind=engine)
     
-    with TestClient(app) as test_client:
+    with TestClient(fastapi_app) as test_client:
         yield test_client
     
     Base.metadata.drop_all(bind=engine)
     
-    app.dependency_overrides.pop(get_db, None)
+    fastapi_app.dependency_overrides.pop(get_db, None)
