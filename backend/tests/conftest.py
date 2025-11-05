@@ -31,13 +31,13 @@ def client():
     A fixture that sets up the database, applies the override,
     yields a client, and then tears it all down.
     """
-    app.dependency_override_get_db = override_get_db
-    
     Base.metadata.create_all(bind=engine)
+    
+    app.dependency_overrides[get_db] = override_get_db
     
     with TestClient(app) as test_client:
         yield test_client
-
+    
     Base.metadata.drop_all(bind=engine)
     
-    app.dependency_override_get_db = None
+    app.dependency_overrides.pop(get_db, None)
