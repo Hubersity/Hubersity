@@ -1,24 +1,16 @@
 # tests/conftest.py
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from app.main import app
-from app.database import get_db, Base
+from app.database import get_db, Base, engine
 from app import models
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def override_get_db():
-    """
-    A dependency override for tests to use the in-memory SQLite database.
-    """
     db = TestingSessionLocal()
     try:
         yield db
@@ -28,8 +20,8 @@ def override_get_db():
 @pytest.fixture(scope="function")
 def client():
     """
-    A fixture that sets up the database, applies the override,
-    yields a client, and then tears it all down.
+    A fixture that creates all tables, applies the DB override,
+    yields a client, and then drops all tables.
     """
     Base.metadata.create_all(bind=engine)
     
