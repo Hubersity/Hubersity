@@ -1,6 +1,8 @@
 # tests/test_auth.py
 import pytest
 
+VALID_PASSWORD = "ValidPass123!"
+
 def test_login_success(client, test_user):
     login_data = {
         "username": test_user["user"]["email"],
