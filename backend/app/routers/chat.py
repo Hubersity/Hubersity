@@ -1,0 +1,267 @@
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+from .. import models, database
+from fastapi import File, UploadFile, Form
+from fastapi.responses import JSONResponse
+import os, uuid, mimetypes
+from fastapi import status
+from typing import List
+import os, uuid
+from fastapi import HTTPException
+from starlette.status import HTTP_404_NOT_FOUND
+from sqlalchemy.orm import selectinload
+
+router = APIRouter(prefix="/chats", tags=["Chat"])
+UPLOAD_ROOT = "uploads"  # มี mount /uploads แล้วใน main.py
+UPLOAD_DIR = "/app/uploads"  # โฟลเดอร์เก็บไฟล์ในคอนเทนเนอร์
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# ---------- Helper functions ----------
+
+def is_friends(db: Session, a: int, b: int) -> bool:
+    """เช็กว่า a และ b เป็นเพื่อนกัน (follow กันสองทางหรือไม่)"""
+    return (
+        db.query(models.Follow).filter_by(follower_id=a, following_id=b).first() is not None
+        and
+        db.query(models.Follow).filter_by(follower_id=b, following_id=a).first() is not None
+    )
+
+# db: Session = ขอ connection ไปยังฐานข้อมูล ผ่านระบบ dependency ของ FastAPI
+
+def ensure_chat_if_friends(db: Session, uid1: int, uid2: int):
+    """สร้างห้องแชตอัตโนมัติ ถ้า 2 คนนี้เป็นเพื่อนกันแล้ว"""
+    if not is_friends(db, uid1, uid2):
+        return None
+    u1, u2 = (uid1, uid2) if uid1 < uid2 else (uid2, uid1)
+    chat = db.query(models.Chat).filter_by(user1_id=u1, user2_id=u2).first()
+    if chat:
+        return chat
+    chat = models.Chat(user1_id=u1, user2_id=u2)
+    db.add(chat)
+    db.commit()
+    db.refresh(chat)
+    return chat
+
+# ---------- Endpoints ----------
+
+# ฟังก์ชันที่ทำงานเมื่อมีคนเรียก URL นั้น
+@router.get("")
+def list_my_chats(
+    me_id: int = Query(...),
+    db: Session = Depends(database.get_db),
+):
+    chats = (
+        db.query(models.Chat)
+        .filter((models.Chat.user1_id == me_id) | (models.Chat.user2_id == me_id))
+        .all()
+    )
+
+    result = []
+    for c in chats:
+        other_id = c.user2_id if c.user1_id == me_id else c.user1_id
+        if not is_friends(db, me_id, other_id):
+            continue
+
+        friend = c.user2 if c.user1_id == me_id else c.user1
+
+        # ดึงข้อความล่าสุดแบบรวดเร็ว
+        last = (
+            db.query(models.ChatMessage)
+            .options(selectinload(models.ChatMessage.attachments))
+            .filter(models.ChatMessage.chat_id == c.id)
+            .order_by(models.ChatMessage.created_at.desc())
+            .first()
+        )
+
+
+        preview = ""
+        if last and last.attachments:
+            a = last.attachments[0]
+            if a.kind == "image":
+                preview = "[image]"
+            elif a.kind == "video":
+                preview = "[video]"
+            else:
+                preview = a.original_name or "[file]"
+        else:
+            preview = last.text or "" if last else ""
+
+        result.append({
+            "id": c.id,
+            "name": friend.name or friend.username,
+            "username": friend.username,
+            "avatar": getattr(friend, "profile_image", None) or "/images/default.jpg",
+            "lastMessage": preview,   # << ใช้ preview เสมอ
+        })
+    return result
+
+
+@router.post("/with/{other_user_id}")
+def open_chat_with(
+    other_user_id: int,
+    me_id: int = Query(..., description="uid ของฉัน"),
+    db: Session = Depends(database.get_db),
+):
+    """
+    เปิดหรือสร้างห้องแชตกับเพื่อน (เฉพาะถ้าเป็นเพื่อนกันจริง)
+    """
+    if other_user_id == me_id:
+        raise HTTPException(400, "Cannot chat with yourself")
+    if not is_friends(db, me_id, other_user_id):
+        raise HTTPException(403, "You must be friends to start a chat")
+
+    chat = ensure_chat_if_friends(db, me_id, other_user_id)
+    return {"chat_id": chat.id}
+
+
+@router.post("/sync-my-friend-chats")
+def sync_my_friend_chats(
+    me_id: int = Query(..., description="uid ของฉัน"),
+    db: Session = Depends(database.get_db),
+):
+    """
+    ใช้เมื่ออยากแน่ใจว่าเพื่อนทุกคนที่ follow กันสองทาง มีห้องแชตครบ
+    """
+    following = {f.following_id for f in db.query(models.Follow).filter_by(follower_id=me_id).all()}
+    followers = {f.follower_id for f in db.query(models.Follow).filter_by(following_id=me_id).all()}
+    mutuals = sorted(list(following & followers))
+
+    created = []
+    for uid in mutuals:
+        chat = ensure_chat_if_friends(db, me_id, uid)
+        if chat:
+            created.append({"chat_id": chat.id, "with": uid})
+
+    return {"created_or_existing": created, "total": len(mutuals)}
+
+# ดึงข้อความทั้งหมดในห้อง
+@router.get("/{chat_id}/messages")
+def get_messages(chat_id: int,
+                 me_id: int = Query(...),
+                 db: Session = Depends(database.get_db)):
+    # โหลด messages พร้อม attachments ทีเดียว
+    msgs = (
+        db.query(models.ChatMessage)
+        .options(selectinload(models.ChatMessage.attachments),
+                 selectinload(models.ChatMessage.sender))
+        .filter(models.ChatMessage.chat_id == chat_id)
+        .order_by(models.ChatMessage.created_at.asc())
+        .all()
+    )
+    out = []
+    for m in msgs:
+        sender = "me" if m.sender_id == me_id else (m.sender.name or m.sender.username)
+
+        if m.attachments:
+            # แตกเป็นรายการละ 1 ไฟล์ เพื่อให้ frontend render ง่าย
+            for a in m.attachments:
+                basename = os.path.basename(a.path)
+                out.append({
+                    "sender": sender,
+                    "text": m.text or "",
+                    "kind": a.kind,                          # "image" | "video" | "file"
+                    "url": f"/uploads/{basename}", # a.path เราเก็บเป็นชื่อไฟล์
+                    "name": a.original_name,             
+                    "created_at": m.created_at.isoformat(),
+                })
+        else:
+            out.append({
+                "sender": sender,
+                "text": m.text or "",
+                "kind": m.kind or "text",
+                "url": None,
+                "name": None,
+                "created_at": m.created_at.isoformat(),
+            })
+    return out
+
+
+# ส่งข้อความใหม่ในห้อง
+@router.post("/{chat_id}/messages")
+def send_message(
+    chat_id: int,
+    payload: dict,
+    me_id: int = Query(...),
+    db: Session = Depends(database.get_db),
+):
+    chat = db.query(models.Chat).filter_by(id=chat_id).first()
+    if not chat:
+        raise HTTPException(404, "Chat not found")
+    if me_id not in [chat.user1_id, chat.user2_id]:
+        raise HTTPException(403, "You are not in this chat")
+
+    text = (payload or {}).get("text")
+    if not text:
+        raise HTTPException(400, "Message text is required")
+
+    message = models.ChatMessage(chat_id=chat_id, sender_id=me_id, kind="text", text=text)
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+
+    return {
+        "sender": "me",
+        "text": message.text,
+        "kind": "text",
+        "url": None,
+        "created_at": message.created_at.isoformat(),
+    }
+
+# ---------- อัปโหลดไฟล์/รูป/วิดีโอ ----------
+@router.post("/{chat_id}/upload")
+def upload_attachments(
+    chat_id: int,
+    me_id: int = Query(...),
+    files: List[UploadFile] = File(...),
+    db: Session = Depends(database.get_db),
+):
+    # 1) ตรวจว่า chat มีอยู่และผู้ใช้เป็นสมาชิกของห้องนี้
+    chat = db.query(models.Chat).filter(models.Chat.id == chat_id).first()
+    if not chat or (me_id not in (chat.user1_id, chat.user2_id)):
+        raise HTTPException(HTTP_404_NOT_FOUND, "Chat not found or not a member")
+
+    # 2) สร้างข้อความเปล่าไว้เป็น parent (kind="text", text อาจจะ None)
+    msg = models.ChatMessage(chat_id=chat_id, sender_id=me_id, kind="text", text=None)
+    db.add(msg)
+    db.flush()  # เอา msg.id มาใช้
+
+    saved = []
+    for f in files:
+        ext = os.path.splitext(f.filename)[1]  # .png, .pdf, ...
+        fname = f"{uuid.uuid4().hex}{ext}"
+        dest = os.path.join(UPLOAD_DIR, fname)
+
+        with open(dest, "wb") as out:
+            out.write(f.file.read())
+
+        att_kind = (
+            "image" if f.content_type.startswith("image/")
+            else "video" if f.content_type.startswith("video/")
+            else "file"
+        )
+
+        att = models.ChatAttachment(
+            message_id=msg.id,
+            kind=att_kind,
+            path=fname,                 # เก็บแค่ชื่อไฟล์พอ
+            original_name=f.filename,
+            mime_type=f.content_type,
+        )
+        db.add(att)
+        saved.append(att)
+
+    db.commit()
+    # ส่ง URL ให้หน้าเว็บใช้แสดง/กดเปิด
+    return {
+        "message_id": msg.id,
+        "attachments": [
+            {
+                "id": a.id,
+                "kind": a.kind,
+                "url": f"/uploads/{a.path}",
+                "name": a.original_name,
+                "mime_type": a.mime_type,
+            }
+            for a in saved
+        ],
+    }
