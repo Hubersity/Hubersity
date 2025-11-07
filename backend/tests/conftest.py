@@ -52,7 +52,7 @@ def test_user(client):
         "confirm_password": VALID_PASSWORD
     }
     res = client.post("/users/", json=user_data)
-    assert res.status_code == 201, "Failed to create test_user in fixture"
+    assert res.status_code == 201, f"Failed to create test_user in fixture. Response: {res.json()}"
     
     login_res = client.post("/login/", data={
         "username": "test@example.com", 

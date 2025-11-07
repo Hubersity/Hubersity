@@ -1,7 +1,6 @@
 # tests/test_users.py
 import pytest
-
-VALID_PASSWORD = "ValidPass123!"
+from tests.conftest import VALID_PASSWORD
 
 def test_create_user_success(client):
     res = client.post("/users/", json={
