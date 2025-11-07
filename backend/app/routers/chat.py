@@ -155,12 +155,13 @@ def get_messages(chat_id: int,
         if m.attachments:
             # แตกเป็นรายการละ 1 ไฟล์ เพื่อให้ frontend render ง่าย
             for a in m.attachments:
-                basename = os.path.basename(a.path)
+                # basename = os.path.basename(a.path)
+                url = f"/uploads/{a.path}"     # a.path = "chat/1/xxx.png" หรือ "xxx.png"
                 out.append({
                     "sender": sender,
                     "text": m.text or "",
                     "kind": a.kind,                          # "image" | "video" | "file"
-                    "url": f"/uploads/{basename}", # a.path เราเก็บเป็นชื่อไฟล์
+                    "url": f"/uploads/{a.path}",   # a.path = "chat/1/xxx.png"
                     "name": a.original_name,             
                     "created_at": m.created_at.isoformat(),
                 })
@@ -215,35 +216,41 @@ def upload_attachments(
     files: List[UploadFile] = File(...),
     db: Session = Depends(database.get_db),
 ):
-    # 1) ตรวจว่า chat มีอยู่และผู้ใช้เป็นสมาชิกของห้องนี้
+    # ตรวจสิทธิ์เหมือนเดิม
     chat = db.query(models.Chat).filter(models.Chat.id == chat_id).first()
     if not chat or (me_id not in (chat.user1_id, chat.user2_id)):
-        raise HTTPException(HTTP_404_NOT_FOUND, "Chat not found or not a member")
+        raise HTTPException(status_code=404, detail="Chat not found or not a member")
 
-    # 2) สร้างข้อความเปล่าไว้เป็น parent (kind="text", text อาจจะ None)
+    # สร้าง parent message ว่าง
     msg = models.ChatMessage(chat_id=chat_id, sender_id=me_id, kind="text", text=None)
     db.add(msg)
-    db.flush()  # เอา msg.id มาใช้
+    db.flush()
+
+    # >>> โฟลเดอร์ย่อยตามห้อง
+    chat_dir = os.path.join(UPLOAD_DIR, "chat", str(chat_id))
+    os.makedirs(chat_dir, exist_ok=True)
 
     saved = []
     for f in files:
-        ext = os.path.splitext(f.filename)[1]  # .png, .pdf, ...
+        ext = os.path.splitext(f.filename)[1]
         fname = f"{uuid.uuid4().hex}{ext}"
-        dest = os.path.join(UPLOAD_DIR, fname)
+
+        # >>> ที่เซฟไฟล์จริง
+        dest = os.path.join(chat_dir, fname)
+
+        # >>> path แบบสัมพันธ์ เก็บลง DB
+        rel_path = os.path.join("chat", str(chat_id), fname)  # e.g. chat/1/xxx.png
 
         with open(dest, "wb") as out:
             out.write(f.file.read())
 
-        att_kind = (
-            "image" if f.content_type.startswith("image/")
-            else "video" if f.content_type.startswith("video/")
-            else "file"
-        )
+        att_kind = "image" if f.content_type.startswith("image/") else \
+                   "video" if f.content_type.startswith("video/") else "file"
 
         att = models.ChatAttachment(
             message_id=msg.id,
             kind=att_kind,
-            path=fname,                 # เก็บแค่ชื่อไฟล์พอ
+            path=rel_path,                # << สำคัญ: เก็บ path แบบสัมพันธ์
             original_name=f.filename,
             mime_type=f.content_type,
         )
@@ -251,14 +258,14 @@ def upload_attachments(
         saved.append(att)
 
     db.commit()
-    # ส่ง URL ให้หน้าเว็บใช้แสดง/กดเปิด
+
     return {
         "message_id": msg.id,
         "attachments": [
             {
                 "id": a.id,
                 "kind": a.kind,
-                "url": f"/uploads/{a.path}",
+                "url": f"/uploads/{a.path}",   # => /uploads/chat/<chat_id>/<file>
                 "name": a.original_name,
                 "mime_type": a.mime_type,
             }
