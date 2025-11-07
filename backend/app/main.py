@@ -5,7 +5,10 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from . import models, database
 from .database import engine
-from .routers import users, auth, study_calendar, posts
+from .routers import users, auth, study_calendar, posts, chat
+from fastapi.staticfiles import StaticFiles
+import os
+
 
 # สร้างตารางทั้งหมดในฐานข้อมูล
 models.Base.metadata.create_all(bind=engine)
@@ -19,7 +22,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["http://localhost:5173"],  # ที่ frontend เปิดอยู่
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -27,6 +30,9 @@ app.add_middleware(
 
 # ให้โหลดไฟล์จากโฟลเดอร์ uploads ได้
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+os.makedirs("/app/uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
 
 # ตรวจสอบการเชื่อมต่อฐานข้อมูล
 try:
@@ -41,6 +47,7 @@ app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(study_calendar.router)
 app.include_router(posts.router)
+app.include_router(chat.router)
 
 # Seed forum data อัตโนมัติเมื่อ start server
 @app.on_event("startup")
