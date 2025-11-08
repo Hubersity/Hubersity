@@ -1,4 +1,4 @@
-from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, func, UniqueConstraint, CheckConstraint, Index
+from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, func, UniqueConstraint, CheckConstraint, Index, Date
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -132,14 +132,33 @@ class StudySession(Base):
     user = relationship("User", back_populates="sessions")
 
 
+# class DailyProgress(Base):
+#     __tablename__ = "daily_progress"
+
+#     id = Column(Integer, primary_key=True)
+#     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
+#     date = Column(TIMESTAMP(timezone=True), nullable=False)
+#     total_minutes = Column(Integer, default=0)
+#     badge_level = Column(Integer, default=0)
+
+#     user = relationship("User", back_populates="progress")
+
+#     def update_badge(self):
+#         self.badge_level = min(self.total_minutes // 180, 4)
+from sqlalchemy import Column, Integer, Date, TIMESTAMP, ForeignKey
+# ถ้ายังใช้ TIMESTAMP ต่อ ก็ไม่ต้องเปลี่ยน type ตรง date
+
 class DailyProgress(Base):
     __tablename__ = "daily_progress"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
-    date = Column(TIMESTAMP(timezone=True), nullable=False)
-    total_minutes = Column(Integer, default=0)
-    badge_level = Column(Integer, default=0)
+    date = Column(TIMESTAMP(timezone=True), nullable=False)  # คุณใช้แบบนี้อยู่
+    total_minutes = Column(Integer, default=0, nullable=False)
+    badge_level = Column(Integer, default=0, nullable=False)
+
+    # ✅ ใส่ให้ตรงกับ DB
+    total_seconds = Column(Integer, default=0, nullable=False)
 
     user = relationship("User", back_populates="progress")
 
