@@ -10,10 +10,12 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.main import app as fastapi_app
 from app.database import Base, get_db
+from app import models 
 import app.database
-from app import models
+
+from app.main import app as fastapi_app
+
 
 VALID_PASSWORD = "ValidPass123!"
 
