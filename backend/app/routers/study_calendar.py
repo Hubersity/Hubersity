@@ -9,6 +9,8 @@ from calendar import monthrange
 from .. import models
 from sqlalchemy import func, text
 
+LOCAL_TZ = "Asia/Bangkok"
+
 router = APIRouter(
     prefix="/study",
     tags=["Study Timer"]
@@ -17,15 +19,20 @@ router = APIRouter(
 def upsert_daily_progress(db, user_id: int, add_seconds: int, badge: int):
     q = text("""
     INSERT INTO daily_progress (user_id, date, total_seconds, total_minutes, badge_level)
-    VALUES (:uid, date_trunc('day', now() AT TIME ZONE 'UTC'), :secs, :secs/60, :badge)
-    ON CONFLICT (user_id, ((date AT TIME ZONE 'UTC')::date))
+    VALUES (
+      :uid,
+      -- ปักเวลาเป็นเที่ยงคืนของวันตามโซนท้องถิ่น แล้วเก็บลงคอลัมน์ timestamptz
+      (date_trunc('day', timezone(:tz, now())) AT TIME ZONE :tz),
+      :secs, :secs/60, :badge
+    )
+    ON CONFLICT (user_id, ((date AT TIME ZONE :tz)::date))
     DO UPDATE SET
       total_seconds = daily_progress.total_seconds + EXCLUDED.total_seconds,
       total_minutes = (daily_progress.total_seconds + EXCLUDED.total_seconds)/60,
       badge_level   = GREATEST(daily_progress.badge_level, EXCLUDED.badge_level)
     RETURNING total_seconds, total_minutes, badge_level
     """)
-    row = db.execute(q, {"uid": user_id, "secs": add_seconds, "badge": badge}).first()
+    row = db.execute(q, {"uid": user_id, "secs": add_seconds, "badge": badge, "tz": LOCAL_TZ}).first()
     db.commit()
     return {"total_seconds": row[0], "total_minutes": row[1], "badge_level": row[2]}
 
@@ -75,15 +82,17 @@ def get_calendar(user_id: int, year: int, month: int, db: Session = Depends(get_
     end = dt_date(year, month, last_day)
 
     # ⬇️ ใช้ func.date(timezone('UTC', ...)) เพื่อเทียบเป็น “วันที่ (UTC)”
+    # /calendar
     records = (
-        db.query(models.DailyProgress)
-        .filter(models.DailyProgress.user_id == user_id)
-        .filter(
-            func.date(text("timezone('UTC', daily_progress.date)"))
-            .between(dt_date(year, month, 1), dt_date(year, month, last_day))
-        )
-        .all()
+    db.query(models.DailyProgress)
+    .filter(models.DailyProgress.user_id == user_id)
+    .filter(func.date(text("timezone(:tz, daily_progress.date)")).between(
+        dt_date(year, month, 1), dt_date(year, month, last_day)
+    ))
+    .params(tz=LOCAL_TZ)
+    .all()
     )
+
 
     return {
         r.date.strftime("%Y-%m-%d"): {
@@ -104,12 +113,11 @@ def get_daily_progress(user_id: int, year: int, month: int, day: int, db: Sessio
 
     # ⬇️ เทียบ “วันเดียวกัน (UTC)” แถวเดียวต่อวัน
     progress = (
-        db.query(models.DailyProgress)
-        .filter(models.DailyProgress.user_id == user_id)
-        .filter(
-            func.date(text("timezone('UTC', daily_progress.date)")) == target_date
-        )
-        .first()
+    db.query(models.DailyProgress)
+    .filter(models.DailyProgress.user_id == user_id)
+    .filter(func.date(text("timezone(:tz, daily_progress.date)")) == dt_date(year, month, day))
+    .params(tz=LOCAL_TZ)
+    .first()
     )
 
     if not progress:
