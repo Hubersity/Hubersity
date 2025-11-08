@@ -1,4 +1,4 @@
-from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, func, UniqueConstraint, CheckConstraint, Index
+from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, func, UniqueConstraint, CheckConstraint, Index, Date
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -131,15 +131,20 @@ class StudySession(Base):
 
     user = relationship("User", back_populates="sessions")
 
+from sqlalchemy import Column, Integer, Date, TIMESTAMP, ForeignKey
+# ถ้ายังใช้ TIMESTAMP ต่อ ก็ไม่ต้องเปลี่ยน type ตรง date
 
 class DailyProgress(Base):
     __tablename__ = "daily_progress"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
-    date = Column(TIMESTAMP(timezone=True), nullable=False)
-    total_minutes = Column(Integer, default=0)
-    badge_level = Column(Integer, default=0)
+    date = Column(TIMESTAMP(timezone=True), nullable=False)  # คุณใช้แบบนี้อยู่
+    total_minutes = Column(Integer, default=0, nullable=False)
+    badge_level = Column(Integer, default=0, nullable=False)
+
+    # ✅ ใส่ให้ตรงกับ DB
+    total_seconds = Column(Integer, default=0, nullable=False)
 
     user = relationship("User", back_populates="progress")
 
@@ -186,19 +191,6 @@ class Chat(Base):
     messages = relationship(
         "ChatMessage", back_populates="chat", cascade="all, delete-orphan"
     )
-
-# class ChatMessage(Base):
-#     __tablename__ = "chat_messages"
-#     __table_args__ = (Index("ix_msg_chat_created", "chat_id", "created_at"),)
-
-#     id = Column(Integer, primary_key=True)
-#     chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
-#     sender_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
-#     text = Column(Text, nullable=False)
-#     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
-
-#     chat = relationship("Chat", back_populates="messages")
-#     sender = relationship("User")
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
