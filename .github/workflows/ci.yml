@@ -2,7 +2,6 @@ name: Backend CI Tests
 
 on:
   push:
-    # Fix this later
     branches:
       - "backend/add_testing"
       # If you want this to ALSO run on your main branch,
@@ -36,4 +35,6 @@ jobs:
         run: |
           docker run --rm \
             -e DATABASE_URL="sqlite:///:memory:" \
-            my-app pytest tests
+            my-app pytest
+            # FIX 1: Removed -e PYTHONPATH=. (conftest.py now handles this)
+            # FIX 2: Changed 'pytest tests' to just 'pytest'

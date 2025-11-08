@@ -1,4 +1,10 @@
 # tests/conftest.py
+import sys
+from pathlib import Path
+
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -28,9 +34,17 @@ def override_get_db():
 
 @pytest.fixture(scope="function")
 def client(monkeypatch):
+    """
+    Fixture for the test client.
+    - Overrides the database engine and session.
+    - Overrides the get_db dependency.
+    - Creates all tables before each test.
+    - Drops all tables after each test.
+    """
     
     monkeypatch.setattr(app.database, 'engine', engine)
     monkeypatch.setattr(app.database, 'SessionLocal', TestingSessionLocal)
+    
     fastapi_app.dependency_overrides[get_db] = override_get_db
 
     Base.metadata.create_all(bind=engine)
@@ -39,6 +53,7 @@ def client(monkeypatch):
         yield test_client
     
     Base.metadata.drop_all(bind=engine)
+    
     fastapi_app.dependency_overrides.pop(get_db, None)
 
 
@@ -58,6 +73,9 @@ def test_user(client):
         "username": "test@example.com", 
         "password": VALID_PASSWORD
     })
+    
+    assert login_res.status_code == 200, f"Failed to log in test_user. Response: {login_res.json()}"
+    
     token = login_res.json()["access_token"]
     
     return {"user": user_data, "token": f"Bearer {token}"}
