@@ -23,20 +23,6 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
   const timerRef = useRef(null);
   const [sessionId, setSessionId] = useState(null);
 
-  // const user = JSON.parse(localStorage.getItem("user"));
-  // const token = localStorage.getItem("token");
-
-  // const [userObj, setUserObj] = useState(null);
-  // const [token, setToken] = useState(null);
-
-  // useEffect(() => {
-  //   if (typeof window === "undefined") return;
-  //   const u = JSON.parse(localStorage.getItem("user") || "null");
-  //   const t = localStorage.getItem("token");
-  //   setUserObj(u);
-  //   setToken(t);
-  // }, []);
-
   useEffect(() => {
     if (!userObj?.uid || !token) return;
     (async () => {
@@ -55,29 +41,6 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     return () => timerRef.current && clearInterval(timerRef.current);
   }, [userObj?.uid, token]);
 
-  // useEffect(() => {
-  //   if (!userObj?.uid || !token) return;
-  //   const loadToday = async () => {
-  //     const now = new Date();
-  //     const y = now.getFullYear();
-  //     const m = String(now.getMonth()+1).padStart(2,"0");
-  //     const d = String(now.getDate()).padStart(2,"0");
-  //     try {
-  //       const res = await fetch(
-  //         `http://localhost:8000/study/progress/${userObj.uid}/${y}/${m}/${d}`,
-  //         { headers: { Authorization: `Bearer ${token}` } }
-  //       );
-  //       if (!res.ok) return;
-  //       const data = await res.json();
-  //       const secs = data.total_seconds ?? (data.total_minutes || 0) * 60;
-  //       setTime(secs);
-  //       onSyncSeconds?.(secs);
-  //     } catch {}
-  //   };
-  //   loadToday();
-  //   return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  // }, [userObj?.uid, token]);
-
   const fetchTodaySeconds = async (uid, token) => {
     const now = new Date();
     const y = now.getFullYear();
@@ -91,43 +54,6 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     return data?.total_seconds ?? (data?.total_minutes || 0) * 60;
   };
 
-  //  useEffect(() => {
-  //   const loadToday = async () => {
-  //   const now = new Date();
-  //   const y = now.getFullYear();
-  //   const m = String(now.getMonth() + 1).padStart(2, "0");
-  //   const d = String(now.getDate()).padStart(2, "0");
-  //   try {
-  //     const res = await fetch(`http://localhost:8000/study/progress/${user?.uid}/${y}/${m}/${d}`, {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  //     const data = await res.json();
-  //     const secs = data.total_seconds ?? (data.total_minutes || 0) * 60;
-  //     setTime(secs);
-  //   } catch (e) { console.error(e); }
-  //   };
-  //   loadToday();
-  //   return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  // }, []);
-
-  // === ฟังก์ชันเริ่ม session (start timer ใน backend) ===
-  // const startSession = async () => {
-  //   if (!userObj?.uid) return;
-  //   try {
-  //     // const res = await fetch("http://localhost:8000/study/start?user_id=" + user?.uid, {
-  //       const res = await fetch(`http://localhost:8000/study/start?user_id=${userObj.uid}`, {
-  //       method: "POST",
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-  //     const data = await res.json();
-  //     if (data.sid) setSessionId(data.sid);
-  //     console.log("Session started:", data);
-  //   } catch (err) {
-  //     console.error("Start session failed:", err);
-  //   }
-  // };
   const startSession = async () => {
     if (!userObj?.uid || !token) return;
     try {
@@ -141,21 +67,6 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
   };
 
   // === ฟังก์ชันหยุด session (stop timer ใน backend) ===
-  // const stopSession = async () => {
-  //   if (!sessionId) return;
-  //   try {
-  //     const res = await fetch(`http://localhost:8000/study/stop/${sessionId}`, {
-  //       method: "POST",
-  //       headers: {
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //     });
-  //     const data = await res.json();
-  //     console.log("Session stopped:", data);
-  //   } catch (err) {
-  //     console.error("Stop session failed:", err);
-  //   }
-  // };
   const stopSession = async () => {
     if (!sessionId || !token) return;
     try {
@@ -169,22 +80,6 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     } catch (err) { console.error("Stop session failed:", err); }
   };
 
-  // start time (frontend)
-  // const start_t = async () => {
-  //   if (!running) {
-  //     if (!userObj?.uid) return;
-  //     await startSession();
-  //     setrunning(true);
-  //     timerRef.current = setInterval(() => {
-  //       // setTime((sce) => sce + 1);
-  //       setTime((sce) => {
-  //         const next = sce + 1;
-  //         onSyncSeconds?.(next); // ส่งให้ปฏิทินรู้สีของ "วันนี้" ทันที
-  //         return next;
-  //       });
-  //     }, 1000);
-  //   }
-  // };
   const start_t = async () => {
     if (running) return;
     if (!userObj?.uid || !token) return;
@@ -199,28 +94,6 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     }, 1000);
   };
 
-  //pause time (frontend)
-  // const pause_time = async () => {
-  //   setrunning(false);
-  //   clearInterval(timerRef.current);
-  //   await stopSession();
-  //   // โหลดเวลาวันนี้จาก backend เพื่อไม่ให้กลับไป 0
-  //   const now = new Date();
-  //   const y = now.getFullYear();
-  //   const m = String(now.getMonth() + 1).padStart(2, "0");
-  //   const d = String(now.getDate()).padStart(2, "0");
-  //   try {
-  //     const res = await fetch(`http://localhost:8000/study/progress/${userObj.uid}/${y}/${m}/${d}`, {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  //     const data = await res.json();
-  //     const secs = data.total_seconds ?? (data.total_minutes || 0) * 60;
-  //     setTime(secs);
-  //     onSyncSeconds?.(secs);
-  //   } catch (e) { console.error(e); }
-  //   // ดึงข้อมูลเดือนใหม่หลังบันทึกเวลาวันนี้เสร็จ
-  //   onAfterStop?.();
-  // };
   const pause_time = async () => {
     setrunning(false);
     clearInterval(timerRef.current);
@@ -340,9 +213,6 @@ function Calendar() {
   const [month, setMonth] = useState(currentDate.getMonth() + 1);
   const [year, setYear] = useState(currentDate.getFullYear());
   const [studyData, setStudyData] = useState({});
-  
-  // const user = JSON.parse(localStorage.getItem("user"));
-  // const token = localStorage.getItem("token");
 
   // โหลด user/token จาก localStorage ใน parent (ครั้งเดียว)
   const [userObj, setUserObj] = useState(null);
@@ -363,18 +233,6 @@ function Calendar() {
     "July", "August", "September", "October", "November", "December"
   ];
 
-  // const fetchCalendar = async () => {
-  //   try {
-  //     // const res = await fetch(`http://localhost:8000/study/calendar/${user?.uid}/${year}/${month}`, {
-  //     const res = await fetch(`http://localhost:8000/study/calendar/${userObj.uid}/${year}/${month}`, {
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  //     const data = await res.json();
-  //     setStudyData(data);
-  //   } catch (err) {
-  //     console.error("Fetch calendar failed:", err);
-  //   }
-  // };
   const fetchCalendar = async () => {
     if (!userObj?.uid || !token) return;
     try {
@@ -393,48 +251,11 @@ function Calendar() {
     fetchCalendar();
   }, [month, year, userObj?.uid, token]);
 
-  // const daysInMonth = getDaysInMonth(month, year);
-  // const firstDay = getFirstDayOfMonth(month, year);
-
   // --- สีของแต่ละวัน ---
   const currentDayStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}-${String(currentDate.getDate()).padStart(2,'0')}`;
 
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDay = new Date(year, month - 1, 1).getDay();
-
-  // const getColorForDay = (day) => {
-  //   // const dayStr = `${year}-${month < 10 ? `0${month}` : month}-${day < 10 ? `0${day}` : day}`;
-  //   const dayStr = `${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`
-  //   // if (dayStr > currentDayStr) return "bg-transparent";
-  //   // if (dayStr === currentDayStr) return "bg-[#b7ddbf] rounded-full";
-
-  //   // if (dayStr > currentDayStr) return "bg-transparent"; // วันอนาคต
-  //   // const dayData = studyData[dayStr];
-  //   // if (!dayData) return "bg-[#a6a6a6]";
-
-  //   // const hours = (dayData.total_minutes || 0) / 60;
-
-  //   // ถ้าเป็น "วันนี้" ใช้เวลาจริงจากนาฬิกา (รวมช่วงกำลังนับ)
-  //   if (dayStr > currentDayStr) return "bg-transparent";
-  //   if (dayStr === currentDayStr) {
-  //     const hoursLive = todaySeconds / 3600;
-  //     if (hoursLive <= 0) return "bg-[#a6a6a6]";
-  //     if (hoursLive <= 3) return "bg-[#38b6ff]";
-  //     if (hoursLive <= 6) return "bg-[#fe9031]";
-  //     if (hoursLive <= 9) return "bg-[#8c52ff]";
-  //     return "bg-[#ea4128]";
-  //   }
-  //   // วันอื่น ๆ ใช้ข้อมูลจาก backend ตามปกติ
-  //   const dayData = studyData[dayStr];
-  //   if (!dayData) return "bg-[#a6a6a6]";
-  //   const secs = dayData.total_seconds ?? (dayData.total_minutes || 0) * 60;
-  //   const hours = secs / 3600;
-  //   if (hours <= 0) return "bg-[#a6a6a6]";
-  //   if (hours <= 3) return "bg-[#38b6ff]";
-  //   if (hours <= 6) return "bg-[#fe9031]";
-  //   if (hours <= 9) return "bg-[#8c52ff]";
-  //   return "bg-[#ea4128]";
-  // };
 
   const getColorForDay = (day) => {
     const dayStr = `${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
@@ -460,37 +281,6 @@ function Calendar() {
     return "bg-[#ea4128]";
   };
 
-
-  // const renderCalendar = () => {
-  //   const days = [];
-  //   let day = 1;
-  //   for (let i = 0; i < firstDay; i++) {
-  //     days.push(<div key={`empty-${i}`} className="w-[5vh] h-[5vh]" />);
-  //   }
-  //   for (let i = 0; i < daysInMonth; i++) {
-  //     const dayStr = `${year}-${month < 10 ? `0${month}` : month}-${day < 10 ? `0${day}` : day}`;
-  //     const isnotCurrentDay = dayStr !== currentDayStr;
-  //     const isCurrentDay = dayStr === currentDayStr;
-  //     days.push(
-  //       <div key={i} className="flex flex-col items-center justify-center p-2 w-[5vh] h-[5vh]">
-  //         <div className="font-bold">{day}</div>
-  //         {/* {isnotCurrentDay && (
-  //           <div className={`w-[5vh] h-[5vh] rounded-full ${getColorForDay(day)}`}></div>
-  //         )}
-  //         {isCurrentDay && (
-  //           <div className={`w-[5vh] h-[5vh] rounded-full bg-[#b7ddbf]`}></div>
-  //         )} */}
-  //         <div
-  //           className={`w-[5vh] h-[5vh] rounded-full ${getColorForDay(day)} ${
-  //             isCurrentDay ? "ring-2 ring-[#b7ddbf]" : ""
-  //           }`}
-  //         />
-  //       </div>
-  //     );
-  //     day++;
-  //   }
-  //   return days;
-  // };
   const renderCalendar = () => {
     const days = [];
     let day = 1;
@@ -559,12 +349,6 @@ function Calendar() {
           </div>
         </div>
         <div className="w-1/2 h-[87vh] sticky top-0 bg-[#fffbf5] rounded-xl shadow-2xl p-4 overflow-auto">
-          {/* <CountTime /> */}
-          {/* <CountTime onAfterStop={fetchCalendar} /> */}
-          {/* <CountTime
-            onAfterStop={fetchCalendar}
-            onSyncSeconds={setTodaySeconds}
-          /> */}
           {userObj?.uid && token ? (
             <CountTime onAfterStop={fetchCalendar} onSyncSeconds={setTodaySeconds} userObj={userObj} token={token} />
           ) : (
