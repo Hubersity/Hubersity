@@ -11,7 +11,10 @@ import os
 
 
 # สร้างตารางทั้งหมดในฐานข้อมูล
-models.Base.metadata.create_all(bind=engine)
+# Allow tests to skip DB init by setting SKIP_DB_INIT=1 in the environment.
+SKIP_DB_INIT = os.getenv("SKIP_DB_INIT", "") == "1"
+if not SKIP_DB_INIT:
+    models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -34,13 +37,14 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 os.makedirs("/app/uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
 
-# ตรวจสอบการเชื่อมต่อฐานข้อมูล
-try:
-    with engine.connect() as conn:
-        conn.execute(text("SELECT 1"))
-    print("Database connection OK ")
-except Exception as e:
-    print("Database connection failed :", e)
+# ตรวจสอบการเชื่อมต่อฐานข้อมูล (skippable in tests)
+if not SKIP_DB_INIT:
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        print("Database connection OK ")
+    except Exception as e:
+        print("Database connection failed :", e)
 
 # รวมทุก router
 app.include_router(users.router)
@@ -52,6 +56,10 @@ app.include_router(chat.router)
 # Seed forum data อัตโนมัติเมื่อ start server
 @app.on_event("startup")
 def seed_forum_data():
+    # Skip seeding in test environments where DB is not initialized
+    if SKIP_DB_INIT:
+        return
+
     db: Session = next(database.get_db())
     existing = db.query(models.Forum).all()
     if len(existing) == 0:
