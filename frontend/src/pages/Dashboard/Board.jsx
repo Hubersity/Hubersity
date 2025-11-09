@@ -324,6 +324,32 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
   );
 }
 
+// 🕒 ฟังก์ชันคำนวณเวลาโพสต์
+function formatTimeAgo(createdAt) {
+  if (!createdAt) return "--";
+
+  const now = new Date();
+  const postTime = new Date(createdAt);
+  const diffMs = now - postTime; // ส่วนต่างเป็นมิลลิวินาที
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHr = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHr / 24);
+
+  if (diffSec < 60) return `${diffSec} sec ago`;
+  if (diffMin < 60) return `${diffMin} min ago`;
+  if (diffHr < 24) return `${diffHr} hr ago`;
+
+  // ถ้าเกิน 1 วัน → แสดงเป็นวันที่จริง
+  return postTime.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 
 // ============ Main Board ============
 
@@ -333,6 +359,7 @@ export default function Board() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("university");
   const [commentInputs, setCommentInputs] = useState({});
+  const [commentFiles, setCommentFiles] = useState({});
   const [openComments, setOpenComments] = useState({});
   const [pendingFiles, setPendingFiles] = useState([]);
   const [menuOpen, setMenuOpen] = useState(null);
@@ -401,6 +428,7 @@ export default function Board() {
               minutes: Math.floor((Date.now() - new Date(c.created_at)) / 60000),
             })) || [],
           images: p.images || [],
+          created_at: p.created_at,
           category: "university",
         }));
 
@@ -466,7 +494,7 @@ const handlePost = async () => {
       {
         id: created.pid || Date.now(),
         username: currentUser.username || created.username || "You",
-        displayName: currentUser.name || currentUser.username || "You",
+        displayName: currentUser.username || "You", // ✅ เปลี่ยนให้โชว์ username แทน name
         text: created.post_content || newPost,
         profile_image: created.profile_image || "/images/default.jpg",
         minutes: 0,
@@ -525,8 +553,11 @@ const handlePost = async () => {
   // Add comment
   const handleAddComment = async (postId) => {
     const content = commentInputs[postId]?.trim();
-    if (!content) return;
+    const files = commentFiles[postId] || [];
+    if (!content && files.length === 0) return;
+
     setCommentInputs({ ...commentInputs, [postId]: "" });
+    setCommentFiles({ ...commentFiles, [postId]: [] }); // ล้างไฟล์
 
     try {
       const currentKey = localStorage.getItem("currentUserKey");
@@ -535,11 +566,17 @@ const handlePost = async () => {
         : null;
 
       if (!token) return;
+
+      const formData = new FormData();
+      formData.append("content", content);
+      files.forEach((file) => formData.append("files", file)); // ✅ ส่งไฟล์หลายไฟล์
+
       const res = await fetch(`${API_URL}/posts/${postId}/comments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ content }),
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
+
       if (!res.ok) throw new Error("Failed to comment");
       const newComment = await res.json();
 
@@ -554,7 +591,10 @@ const handlePost = async () => {
                     username: newComment.username,
                     content: newComment.content,
                     profile_image: newComment.profile_image,
-                    minutes: Math.floor((Date.now() - new Date(newComment.created_at)) / 60000),
+                    minutes: Math.floor(
+                      (Date.now() - new Date(newComment.created_at)) / 60000
+                    ),
+                    files: newComment.files || [],
                   },
                 ],
               }
@@ -755,126 +795,169 @@ const confirmDelete = async () => {
       </div>
 
       {/* new post */}
-      <div className="flex items-center gap-3 mb-6 p-3 rounded-lg shadow bg-[#fdfaf6]">
-        <input
-          type="text"
-          placeholder="Type here what do you think..."
-          value={newPost}
-          onChange={(e) => setNewPost(e.target.value)}
-          className="flex-1 bg-transparent outline-none px-2"
-        />
-        <div className="flex items-center gap-5 pr-2">
-          <button
-            onClick={() => fileInputRef.current.click()}
-            className="text-gray-500 hover:text-green-600"
-          >
-            <Paperclip className="w-5 h-5" />
-          </button>
+      <div
+        className={`flex flex-col gap-2 mb-6 p-4 rounded-lg shadow bg-[#fdfaf6] transition-all duration-300 ${
+          pendingFiles.length > 0 ? "pb-4" : ""
+        }`}
+      >
+        {/* input bar */}
+        <div className="flex items-center gap-3">
           <input
-            ref={fileInputRef}
-            type="file"
-            hidden
-            onChange={handleFileUpload}
+            type="text"
+            placeholder="Type here what do you think..."
+            value={newPost}
+            onChange={(e) => setNewPost(e.target.value)}
+            className="flex-1 bg-transparent outline-none px-2 text-gray-700 placeholder-gray-400"
           />
-          <button
-            onClick={() => imageInputRef.current.click()}
-            className="text-gray-500 hover:text-green-600"
-          >
-            <Image className="w-5 h-5" />
-          </button>
-          <input
-            ref={imageInputRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={handleFileUpload}
-          />
-          <button
-            onClick={() => videoInputRef.current.click()}
-            className="text-gray-500 hover:text-green-600"
-          >
-            <Video className="w-5 h-5" />
-          </button>
-          <input
-            ref={videoInputRef}
-            type="file"
-            accept="video/*"
-            hidden
-            onChange={handleFileUpload}
-          />
-        </div>
-        <button
-          onClick={handlePost}
-          className="bg-green-600 text-white px-4 py-1.5 rounded-full hover:bg-green-700 text-sm font-medium"
-        >
-          POST
-        </button>
-      </div>
 
-      {pendingFiles.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {pendingFiles.map((file, index) => (
-            <div
-              key={index}
-              className="flex items-center gap-2 px-2 py-1 bg-emerald-50 rounded-md text-xs text-emerald-700 border border-emerald-200"
+          {/* ปุ่มแนบไฟล์ */}
+          <div className="flex items-center gap-5 pr-2">
+            <button
+              onClick={() => fileInputRef.current.click()}
+              className="text-gray-500 hover:text-green-600"
             >
-              <span className="truncate max-w-[100px]">{file.name}</span>
-              <button
-                onClick={() =>
-                  setPendingFiles((prev) => prev.filter((_, i) => i !== index))
-                }
-                className="text-red-500 hover:text-red-700"
-                title="Remove file"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+              <Paperclip className="w-5 h-5" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              onChange={handleFileUpload}
+            />
 
+            <button
+              onClick={() => imageInputRef.current.click()}
+              className="text-gray-500 hover:text-green-600"
+            >
+              <Image className="w-5 h-5" />
+            </button>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleFileUpload}
+            />
+
+            <button
+              onClick={() => videoInputRef.current.click()}
+              className="text-gray-500 hover:text-green-600"
+            >
+              <Video className="w-5 h-5" />
+            </button>
+            <input
+              ref={videoInputRef}
+              type="file"
+              accept="video/*"
+              hidden
+              onChange={handleFileUpload}
+            />
+          </div>
+
+          {/* ปุ่มโพสต์ */}
+          <button
+            onClick={handlePost}
+            className="bg-green-600 text-white px-4 py-1.5 rounded-full hover:bg-green-700 text-sm font-medium"
+          >
+            POST
+          </button>
+        </div>
+
+        {/* ✅ แสดงไฟล์แนบในกล่องเดียว (มีขอบเขียว #32a349) */}
+        {pendingFiles.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2 border border-[#32a349] bg-white/60 px-3 py-2 rounded-lg">
+            {pendingFiles.map((file, index) => (
+              <div
+                key={index}
+                className="group flex items-center gap-2 px-3 py-1 bg-white border border-[#32a349]/30 rounded-full text-sm text-gray-700 shadow-sm hover:shadow-md transition-all"
+              >
+                {/* ไอคอนไฟล์ */}
+                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-[#32a349]/15 text-[#32a349]">
+                  {file.type.startsWith("image/") ? (
+                    <Image className="w-3.5 h-3.5" />
+                  ) : file.type.startsWith("video/") ? (
+                    <Video className="w-3.5 h-3.5" />
+                  ) : (
+                    <Paperclip className="w-3.5 h-3.5" />
+                  )}
+                </div>
+
+                {/* ชื่อไฟล์ */}
+                <span className="truncate max-w-[140px] font-medium">
+                  {file.name.length > 20
+                    ? file.name.slice(0, 17) + "..."
+                    : file.name}
+                </span>
+
+                {/* ปุ่มลบ */}
+                <button
+                  onClick={() =>
+                    setPendingFiles((prev) => prev.filter((_, i) => i !== index))
+                  }
+                  className="text-gray-400 hover:text-red-500 transition"
+                  title="Remove file"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       {/* posts */}
       <div className="space-y-6">
         {filteredPosts.map((p) => (
           <div key={`${p.id}-${p.username}`} className="flex gap-3 items-start">
-            {/* profile */}
-              <div className="flex flex-col items-center justify-start w-20">
-                <Link
-                  to={`/app/user/${p.user_id || p.id || p.username}`} // ถ้ามี user_id ใช้อันนั้น
-                  className="text-xs font-medium mb-2 text-black hover:text-emerald-600 hover:underline"
-                >
-                  {p.displayName}
-                </Link>
+            {/* 🧑‍💼 Profile */}
+            <div className="flex flex-col items-center justify-start w-20">
+              <Link
+                to={
+                  !p?.user_id
+                    ? "/app/account"
+                    : currentUser?.uid === p.user_id
+                    ? "/app/account"
+                    : `/app/user/${p.user_id}`
+                }
+                className="text-xs font-medium mb-2 text-black hover:text-emerald-600 hover:underline"
+              >
+                {p.displayName}
+              </Link>
 
-                <Link
-                  to={`/app/user/${p.user_id || p.id || p.username}`}
-                  className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 hover:opacity-80 transition"
-                >
-                  <img
-                    src={
-                      p.profile_image
-                        ? p.profile_image.startsWith("http") ||
-                          p.profile_image.includes("/uploads/")
-                          ? `${API_URL}${p.profile_image.replace(API_URL, "")}`
-                          : `${API_URL}/uploads/user/${p.profile_image}`
-                        : userProfiles[p.username] || "/images/default.jpg"
-                    }
-                    alt={p.displayName}
-                    className="w-full h-full object-cover"
-                  />
-                </Link>
-              </div>
+              <Link
+                to={
+                  !p?.user_id
+                    ? "/app/account"
+                    : currentUser?.uid === p.user_id
+                    ? "/app/account"
+                    : `/app/user/${p.user_id}`
+                }
+                className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 hover:opacity-80 transition"
+              >
+                <img
+                  src={
+                    p.profile_image
+                      ? p.profile_image.startsWith("http") ||
+                        p.profile_image.includes("/uploads/")
+                        ? `${API_URL}${p.profile_image.replace(API_URL, "")}`
+                        : `${API_URL}/uploads/user/${p.profile_image}`
+                      : userProfiles[p.username] || "/images/default.jpg"
+                  }
+                  alt={p.displayName}
+                  className="w-full h-full object-cover"
+                />
+              </Link>
+            </div>
 
-            {/* card */}
+            {/* 🗒️ Card */}
             <div className="flex-1 rounded-lg shadow p-4 bg-[#fdfaf6] relative">
-              {/* menu */}
+              {/* ⋮ Menu */}
               <div className="absolute top-2 right-2" ref={menuRef}>
                 <button
                   onClick={(e) => {
-                    e.stopPropagation(); // ป้องกันการคลิกทะลุ
-                    setMenuOpen(menuOpen === p.id ? null : p.id); // toggle dropdown เฉพาะโพสต์นี้
-                    }}
-                    className="text-gray-500 hover:text-gray-700"
+                    e.stopPropagation();
+                    setMenuOpen(menuOpen === p.id ? null : p.id);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
                 >
                   <MoreVertical className="w-5 h-5" />
                 </button>
@@ -912,40 +995,50 @@ const confirmDelete = async () => {
                 )}
               </div>
 
+              {/* 📝 เนื้อหาโพสต์ */}
               <p className="text-slate-800">{p.text}</p>
-              {/* แสดงรูป/ไฟล์ที่แนบ */}
+
+              {/* 📎 รูป/ไฟล์แนบของโพสต์ */}
               {p.images && p.images.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-3">
                   {p.images.map((img, i) => {
-                    const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(img.path);
-                    const isPdf = /\.pdf$/i.test(img.path);
+                    const type = img.file_type || "";
+                    const isImage =
+                      type.startsWith("image/") ||
+                      /\.(jpg|jpeg|png|gif|webp)$/i.test(img.path);
+                    const isVideo =
+                      type.startsWith("video/") ||
+                      /\.(mp4|mov|webm|ogg)$/i.test(img.path);
+                    const isPdf =
+                      type === "application/pdf" || /\.pdf$/i.test(img.path);
 
                     return (
-                      <div key={i} className="border rounded-lg p-2 bg-white shadow-sm">
-                        {isImage ? (
+                      <div key={i}>
+                        {isImage && (
                           <img
                             src={`${API_URL}${img.path}`}
                             alt={`attachment-${i}`}
-                            className="w-40 h-40 object-cover rounded-md cursor-pointer hover:opacity-80 transition"
+                            className="w-44 h-44 object-cover rounded-lg border border-gray-200 shadow-sm hover:opacity-80 transition"
                             onClick={() => setPreviewImage(`${API_URL}${img.path}`)}
                           />
-                        ) : isPdf ? (
+                        )}
+                        {isVideo && (
+                          <div className="rounded-lg overflow-hidden border border-gray-200 bg-black shadow-sm">
+                            <video
+                              src={`${API_URL}${img.path}`}
+                              controls
+                              className="w-64 h-40 object-contain"
+                            />
+                          </div>
+                        )}
+                        {isPdf && (
                           <a
                             href={`${API_URL}${img.path}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:underline flex items-center gap-2"
+                            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-blue-600 hover:text-blue-700 hover:underline text-sm shadow-sm"
                           >
                             📄 {img.path.split("/").pop()}
-                          </a>
-                        ) : (
-                          <a
-                            href={`${API_URL}${img.path}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-blue-600 hover:underline"
-                          >
-                            Download file
                           </a>
                         )}
                       </div>
@@ -954,14 +1047,13 @@ const confirmDelete = async () => {
                 </div>
               )}
 
+              {/* ❤️ Like / 💬 Comment */}
               <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
                 <div className="flex items-center gap-4">
                   <button
                     onClick={() => handleLike(p.id)}
                     className={`flex items-center gap-1 ${
-                      p.liked
-                        ? "text-red-600"
-                        : "hover:text-red-600"
+                      p.liked ? "text-red-600" : "hover:text-red-600"
                     }`}
                   >
                     <Heart
@@ -974,15 +1066,15 @@ const confirmDelete = async () => {
                     onClick={() => handleToggleComment(p.id)}
                     className="flex items-center gap-1 hover:text-blue-600"
                   >
-                    <MessageCircle className="w-4 h-4" />{" "}
-                    {p.comments.length}
+                    <MessageCircle className="w-4 h-4" /> {p.comments.length}
                   </button>
                 </div>
                 <div className="text-slate-400 text-xs">
-                  post {p.minutes} min ago
+                  {formatTimeAgo(p.created_at)}
                 </div>
               </div>
 
+              {/* 💬 ส่วนคอมเมนต์ */}
               {openComments[p.id] && (
                 <div className="mt-3 space-y-2">
                   {p.comments.map((c, i) => (
@@ -993,32 +1085,151 @@ const confirmDelete = async () => {
                             c.profile_image
                               ? c.profile_image.startsWith("http") ||
                                 c.profile_image.includes("/uploads/")
-                                ? `${API_URL}${c.profile_image.replace(
-                                    API_URL,
-                                    ""
-                                  )}`
+                                ? `${API_URL}${c.profile_image.replace(API_URL, "")}`
                                 : `${API_URL}/uploads/user/${c.profile_image}`
-                              : userProfiles[c.username] ||
-                                "/images/default.jpg"
+                              : userProfiles[c.username] || "/images/default.jpg"
                           }
                           alt={c.username}
                           className="w-full h-full object-cover"
                         />
                       </div>
+
                       <div className="flex-1 p-2 rounded-lg bg-[#fff6ee] relative">
-                        <span className="font-medium text-xs block">
-                          {c.username}
-                        </span>
-                        <p className="text-sm text-slate-800">
-                          {c.content}
-                        </p>
+                        <span className="font-medium text-xs block">{c.username}</span>
+                        <p className="text-sm text-slate-800">{c.content}</p>
+
+                        {/* 🖼 แสดงรูป / วิดีโอ / ไฟล์ในคอมเมนต์ */}
+                        {c.files && c.files.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {c.files.map((file, j) => {
+                              const type = file.file_type || "";
+                              const path = `${API_URL}${file.path}`;
+                              const isImage =
+                                type.startsWith("image") || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.path);
+                              const isVideo =
+                                type.startsWith("video") || /\.(mp4|mov|webm|ogg)$/i.test(file.path);
+                              const isPdf =
+                                type === "pdf" ||
+                                type === "application/pdf" ||
+                                /\.pdf$/i.test(file.path);
+
+                              return (
+                                <div key={j}>
+                                  {isImage && (
+                                    <img
+                                      src={path}
+                                      alt={`comment-img-${j}`}
+                                      className="w-28 h-28 object-cover rounded-md border border-gray-200 hover:opacity-80 transition"
+                                      onClick={() => setPreviewImage(path)}
+                                    />
+                                  )}
+                                  {isVideo && (
+                                    <video
+                                      src={path}
+                                      controls
+                                      className="w-40 h-28 rounded-md border border-gray-200"
+                                    />
+                                  )}
+                                  {isPdf && (
+                                    <a
+                                      href={path}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1 text-blue-600 hover:underline text-xs"
+                                    >
+                                      📄 {file.path.split("/").pop()}
+                                    </a>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
                         <span className="absolute bottom-1 right-2 text-xs text-gray-400">
                           {c.minutes} min ago
                         </span>
                       </div>
                     </div>
                   ))}
-                  <div className="flex gap-2 ml-6">
+
+                  {/* 🟩 กล่องเขียนคอมเมนต์ + แนบไฟล์ */}
+                  <div className="flex gap-2 ml-6 items-center">
+                    {/* 📎/🖼/🎥 ปุ่มแนบไฟล์ */}
+                    <div className="flex items-center gap-3">
+                      {/* ไฟล์ */}
+                      <button
+                        onClick={() =>
+                          document.getElementById(`comment-file-${p.id}`).click()
+                        }
+                        className="text-gray-500 hover:text-green-600"
+                      >
+                        <Paperclip className="w-4 h-4" />
+                      </button>
+                      <input
+                        id={`comment-file-${p.id}`}
+                        type="file"
+                        hidden
+                        multiple
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files);
+                          setCommentFiles((prev) => ({
+                            ...prev,
+                            [p.id]: [...(prev[p.id] || []), ...files],
+                          }));
+                        }}
+                      />
+
+                      {/* รูป */}
+                      <button
+                        onClick={() =>
+                          document.getElementById(`comment-image-${p.id}`).click()
+                        }
+                        className="text-gray-500 hover:text-green-600"
+                      >
+                        <Image className="w-4 h-4" />
+                      </button>
+                      <input
+                        id={`comment-image-${p.id}`}
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files);
+                          setCommentFiles((prev) => ({
+                            ...prev,
+                            [p.id]: [...(prev[p.id] || []), ...files],
+                          }));
+                        }}
+                      />
+
+                      {/* วิดีโอ */}
+                      <button
+                        onClick={() =>
+                          document.getElementById(`comment-video-${p.id}`).click()
+                        }
+                        className="text-gray-500 hover:text-green-600"
+                      >
+                        <Video className="w-4 h-4" />
+                      </button>
+                      <input
+                        id={`comment-video-${p.id}`}
+                        type="file"
+                        hidden
+                        accept="video/*"
+                        multiple
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files);
+                          setCommentFiles((prev) => ({
+                            ...prev,
+                            [p.id]: [...(prev[p.id] || []), ...files],
+                          }));
+                        }}
+                      />
+                    </div>
+
+                    {/* กล่องข้อความ */}
                     <input
                       type="text"
                       placeholder="Write a comment..."
@@ -1031,6 +1242,8 @@ const confirmDelete = async () => {
                       }
                       className="flex-1 border rounded-full px-3 py-1 text-sm"
                     />
+
+                    {/* ปุ่มส่ง */}
                     <button
                       onClick={() => handleAddComment(p.id)}
                       className="bg-green-600 text-white px-3 py-1 rounded-full text-sm hover:bg-green-700"
@@ -1038,6 +1251,46 @@ const confirmDelete = async () => {
                       Send
                     </button>
                   </div>
+
+                  {/* ✅ แสดงไฟล์แนบก่อนส่ง */}
+                  {commentFiles[p.id]?.length > 0 && (
+                    <div className="ml-6 mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
+                      {commentFiles[p.id].map((file, index) => {
+                        const isImage = file.type.startsWith("image/");
+                        const isVideo = file.type.startsWith("video/");
+                        const isPdf = file.type === "application/pdf";
+
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center gap-1 bg-gray-50 border px-2 py-1 rounded-full shadow-sm"
+                          >
+                            {isImage ? (
+                              <Image className="w-3.5 h-3.5 text-green-600" />
+                            ) : isVideo ? (
+                              <Video className="w-3.5 h-3.5 text-green-600" />
+                            ) : (
+                              <Paperclip className="w-3.5 h-3.5 text-green-600" />
+                            )}
+                            <span className="truncate max-w-[120px]">
+                              {file.name}
+                            </span>
+                            <button
+                              onClick={() =>
+                                setCommentFiles((prev) => ({
+                                  ...prev,
+                                  [p.id]: prev[p.id].filter((_, i) => i !== index),
+                                }))
+                              }
+                              className="text-gray-400 hover:text-red-500"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -52,13 +52,37 @@ def create_post(
     for upload_file in files:
         filename = f"{new_post.pid}_{upload_file.filename}"
         file_path = os.path.join(UPLOAD_DIR, filename)
+
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(upload_file.file, buffer)
-        db.add(models.PostImage(
-            post_id=new_post.pid,
-            path=f"/{UPLOAD_DIR}/{filename}",
-            caption=None
-        ))
+        
+        mime_type = upload_file.content_type or "application/octet-stream"
+
+        ext = os.path.splitext(upload_file.filename)[1].lower()
+        if ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]:
+            file_type = "image"
+        elif ext in [".mp4", ".mov", ".avi", ".mkv"]:
+            file_type = "video"
+        elif ext in [".pdf"]:
+            file_type = "pdf"
+        else:
+            file_type = "file"
+
+        # ✅ บันทึกโดยไม่อ้างถึงคอลัมน์ที่อาจยังไม่มีใน DB
+        try:
+            db.add(models.PostImage(
+                post_id=new_post.pid,
+                path=f"/{UPLOAD_DIR}/{filename}",
+                caption=None,
+                file_type=file_type,   # ใช้ได้ถ้ามีใน model
+            ))
+        except TypeError:
+            # ถ้า model ยังไม่มี column file_type ให้ fallback
+            db.add(models.PostImage(
+                post_id=new_post.pid,
+                path=f"/{UPLOAD_DIR}/{filename}",
+                caption=None
+            ))
     db.commit()
 
     # ✅ ดึงโพสต์ใหม่อีกครั้ง พร้อม images
@@ -86,7 +110,8 @@ def create_post(
         like_count=0,
         tags=refreshed_post.tags,
         images=refreshed_post.images,  # 🎯 ตรงนี้จะไม่ว่างอีกต่อไป
-        comments=refreshed_post.comments
+        comments=refreshed_post.comments,
+        created_at=refreshed_post.created_at
     )
 
 
@@ -120,14 +145,32 @@ def upload_post_files(
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(upload_file.file, buffer)
 
+        mime_type = upload_file.content_type or "application/octet-stream"
+
         # ✅ Create DB record
-        image_record = models.PostImage(
-            post_id=post_id,
-            path=f"/{UPLOAD_DIR}/{filename}",
-            caption=None
-        )
-        db.add(image_record)
-        saved_files.append(image_record)
+        ext = os.path.splitext(upload_file.filename)[1].lower()
+        if ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]:
+            file_type = "image"
+        elif ext in [".mp4", ".mov", ".avi", ".mkv"]:
+            file_type = "video"
+        elif ext in [".pdf"]:
+            file_type = "pdf"
+        else:
+            file_type = "file"
+
+        try:
+            image_record = models.PostImage(
+                post_id=post_id,
+                path=f"/{UPLOAD_DIR}/{filename}",
+                caption=None,
+                file_type=file_type,
+            )
+        except TypeError:
+            image_record = models.PostImage(
+                post_id=post_id,
+                path=f"/{UPLOAD_DIR}/{filename}",
+                caption=None
+            )
 
     db.commit()
     db.refresh(post)
@@ -160,7 +203,8 @@ def get_my_posts(
                 like_count=like_count,
                 tags=post.tags,
                 images=post.images,
-                comments=post.comments
+                comments=post.comments,
+                created_at=post.created_at
             )
         )
 
@@ -206,7 +250,74 @@ def get_all_posts(
                 like_count=like_count,
                 tags=post.tags,
                 images=post.images,
-                comments=enriched_comments
+                comments=enriched_comments,
+                created_at=post.created_at
+            )
+        )
+
+    return response
+
+@router.get("/", response_model=List[schemas.PostResponse])
+def get_posts(
+    user_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    # 🔹 เริ่มต้น query หลัก
+    query = db.query(models.Post)
+
+    # ✅ ถ้ามี user_id → ดึงเฉพาะโพสต์ของคนนั้น
+    if user_id is not None:
+        query = query.filter(models.Post.user_id == user_id)
+
+    # 🔹 เรียงโพสต์จากใหม่ไปเก่า
+    posts = (
+        query.options(
+            joinedload(models.Post.images),
+            joinedload(models.Post.tags),
+            joinedload(models.Post.comments),
+            joinedload(models.Post.user)
+        )
+        .order_by(models.Post.created_at.desc())
+        .all()
+    )
+
+    response = []
+
+    for post in posts:
+        # ✅ นับจำนวนไลก์
+        like_count = db.query(models.Like).filter(models.Like.post_id == post.pid).count()
+
+        # ✅ enrich ข้อมูลคอมเมนต์
+        enriched_comments = []
+        for c in post.comments:
+            user = db.query(models.User).filter(models.User.uid == c.user_id).first()
+            enriched_comments.append(
+                schemas.CommentResponse(
+                    cid=c.cid,
+                    content=c.content,
+                    user_id=c.user_id,
+                    post_id=c.post_id,
+                    username=user.username if user else None,
+                    profile_image=user.profile_image if user else None,
+                    created_at=c.created_at
+                )
+            )
+
+        # ✅ เพิ่มข้อมูลแต่ละโพสต์ลง response
+        response.append(
+            schemas.PostResponse(
+                pid=post.pid,
+                post_content=post.post_content,
+                forum_id=post.forum_id,
+                user_id=post.user_id,
+                username=post.user.username if post.user else "Unknown",
+                profile_image=post.user.profile_image if post.user else None,
+                like_count=like_count,
+                tags=post.tags,
+                images=post.images,
+                comments=enriched_comments,
+                created_at=post.created_at
             )
         )
 
@@ -234,7 +345,8 @@ def get_posts_by_forum(
                 like_count=like_count,
                 tags=post.tags,
                 images=post.images,
-                comments=post.comments
+                comments=post.comments,
+                created_at=post.created_at
             )
         )
     return response
@@ -328,9 +440,10 @@ def delete_post(
     return
 
 @router.post("/{post_id}/comments", response_model=schemas.CommentResponse)
-def create_comment(
+async def create_comment(
     post_id: int,
-    comment: schemas.CommentCreate,
+    content: str = Form(...),                       # ✅ เปลี่ยนจาก schemas.CommentCreate → Form
+    files: List[UploadFile] = File(None),           # ✅ รองรับไฟล์แนบ
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
@@ -338,8 +451,9 @@ def create_comment(
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
+    # ✅ บันทึกคอมเมนต์
     new_comment = models.Comment(
-        content=comment.content,
+        content=content,
         user_id=current_user.uid,
         post_id=post_id,
         username=current_user.username
@@ -348,6 +462,25 @@ def create_comment(
     db.commit()
     db.refresh(new_comment)
 
+    # ✅ ถ้ามีไฟล์แนบ → บันทึกลงโฟลเดอร์ uploads/comments
+    saved_files = []
+    if files:
+        for f in files:
+            file_path = os.path.join(UPLOAD_DIR, f.filename)
+            with open(file_path, "wb") as buffer:
+                buffer.write(await f.read())
+
+            # ถ้ามีตาราง CommentFile แยกไว้
+            file_record = models.CommentFile(
+                comment_id=new_comment.cid,
+                path=f"/{file_path}",
+                file_type=f.content_type
+            )
+            db.add(file_record)
+            saved_files.append(file_record)
+        db.commit()
+
+    # ✅ คืนค่าให้ frontend
     return schemas.CommentResponse(
         cid=new_comment.cid,
         content=new_comment.content,
@@ -355,9 +488,11 @@ def create_comment(
         post_id=new_comment.post_id,
         username=current_user.username,
         profile_image=current_user.profile_image,
-        created_at=new_comment.created_at
+        created_at=new_comment.created_at,
+        images=[
+            {"path": f.path, "file_type": f.file_type} for f in saved_files
+        ]
     )
-
 
 @router.get("/{post_id}/comments", response_model=List[schemas.CommentResponse])
 def get_comments_for_post(
@@ -417,3 +552,64 @@ def unlike_post(
         raise HTTPException(status_code=404, detail="You haven’t liked this post yet")
 
     
+@router.get("/{id}/posts", response_model=List[schemas.PostResponse])
+def get_user_posts(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    user = db.query(models.User).filter(models.User.uid == id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # ✅ preload ความสัมพันธ์ทั้งหมด (เหมือน /posts)
+    posts = (
+        db.query(models.Post)
+        .options(
+            joinedload(models.Post.images),
+            joinedload(models.Post.tags),
+            joinedload(models.Post.comments),
+            joinedload(models.Post.user)
+        )
+        .filter(models.Post.user_id == id)
+        .order_by(models.Post.created_at.desc())
+        .all()
+    )
+
+    response = []
+    for post in posts:
+        like_count = db.query(models.Like).filter(models.Like.post_id == post.pid).count()
+
+        # ✅ enrich comments พร้อม username/profile
+        enriched_comments = []
+        for c in post.comments:
+            comment_user = db.query(models.User).filter(models.User.uid == c.user_id).first()
+            enriched_comments.append(
+                schemas.CommentResponse(
+                    cid=c.cid,
+                    content=c.content,
+                    user_id=c.user_id,
+                    post_id=c.post_id,
+                    username=comment_user.username if comment_user else None,
+                    profile_image=comment_user.profile_image if comment_user else None,
+                    created_at=c.created_at
+                )
+            )
+
+        response.append(
+            schemas.PostResponse(
+                pid=post.pid,
+                post_content=post.post_content,
+                forum_id=post.forum_id,
+                user_id=post.user_id,
+                username=user.username,
+                profile_image=user.profile_image,
+                like_count=like_count,
+                tags=post.tags,
+                images=post.images,        # ✅ ตอนนี้ preload แล้ว
+                comments=enriched_comments,
+                created_at=post.created_at
+            )
+        )
+
+    return response

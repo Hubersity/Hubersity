@@ -1,4 +1,5 @@
-from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text
+from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text , DateTime
+from sqlalchemy.sql import func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -99,6 +100,8 @@ class Post(Base):
     post_content = Column(String, nullable=False)
     forum_id = Column(Integer, ForeignKey("forum.fid"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)  # new column
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     user = relationship("User", back_populates="posts")
     tags = relationship(
         "PostTag",
@@ -116,6 +119,7 @@ class PostImage(Base):
     post_id = Column(Integer, ForeignKey("post.pid"), nullable=False)
     path = Column(String, nullable=False)
     caption = Column(String)
+    file_type = Column(String, nullable=True)
     post = relationship("Post", back_populates="images")
 
 

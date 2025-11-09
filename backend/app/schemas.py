@@ -138,6 +138,7 @@ class PostResponse(BaseModel):
     tags: List[PostTagResponse] = []
     images: List[PostImageResponse] = []
     comments: List[CommentResponse] = []
+    created_at: datetime
 
     class Config:
         from_attributes = True
