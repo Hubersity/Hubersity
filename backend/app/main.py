@@ -8,6 +8,7 @@ from .database import engine
 from .routers import users, auth, study_calendar, posts, chat
 from fastapi.staticfiles import StaticFiles
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 # สร้างตารางทั้งหมดในฐานข้อมูล
 models.Base.metadata.create_all(bind=engine)
