@@ -14,11 +14,10 @@ Many students face confusion and repetitive issues due to scattered resources, l
 ## Key Features
 
 - University-specific forums and discussion areas
-- nteractive discussion boards with searchable posts , users can choose to view content from followed users only or from the entire university community.
-- Study timer feature that tracks learning progress and updates visual states dynamically based on study duration.
-- Private chat system allowing direct messages between users.
-- Supports image, video, and file attachments within both posts and chat messages.
-- University-based feed filtering and selection system with a clean, modern, and responsive UI design.
+- Login and user authentication system
+- University selector and filtering system
+- Modern UI with responsive components
+- Support for image-based content and resource sharing
 
 ## Tech Stack
 
@@ -50,7 +49,7 @@ docker-compose up -d --build
   http://localhost:8000/docs
 
 - pgAdmin (Database Management UI):  
-  http://localhost:8080  
+  http://localhost:8080
   - Email: admin@admin.com  
   - Password: admin
 
@@ -73,6 +72,10 @@ docker compose down
 
 **Iteration3**
 - https://youtu.be/tAIegs1dHJA
+
+**Iteration4**
+- https://youtu.be/HN7K8IoAMwo
+
 
 ## Planning & Tracking
 - **Project Document** – https://docs.google.com/document/d/1shQYve-ymTHfc__mhLfEjZmU7iCq36rVfYSqH0JG084/edit?tab=t.0#heading=h.c508vnuhfzms

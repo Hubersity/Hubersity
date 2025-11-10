@@ -103,14 +103,15 @@ export default function UserDetail() {
                 if (cancelled) return;
 
                 setUser({
-                username: data.username,
-                fullName: data.fullName,
-                avatar: data.avatar,
-                bio: data.bio,
-                numberOfReports: data.numberOfReports,
-                reportCategories: data.reportCategories,
-                action: data.action,
-                status: data.status,
+                    uid: data.uid,
+                    username: data.username,
+                    fullName: data.fullName,
+                    avatar: data.avatar,
+                    bio: data.bio,
+                    numberOfReports: data.numberOfReports,
+                    reportCategories: data.reportCategories,
+                    action: data.action,
+                    status: data.status,
                 });
                 setAllPosts(data.posts);
                 setPosts(data.posts.slice(0, PAGE_SIZE));
@@ -153,40 +154,85 @@ export default function UserDetail() {
     }
 
     async function handleUpdate() {
-        // when update it will send the action and the message to backend
+        if (!user) return;
+
         if (!action) {
             alert("Please choose an action first");
             return;
-            // alert() ใช้แสดง “popup message
         }
-        setSaving(true);
-        try {
-            // จำลองการหน่วงเวลา
-            await new Promise((r) => setTimeout(r, 500));
-            // await fetch(`/api/admin/report/${post.id}/action`, {
-            //     method: 'POST',
-            //     body: JSON.stringify({ action, message }),
-            //   });
 
-            // Update the post data in UI
-            setPost((prev) => ({
+        setSaving(true);
+
+        try {
+            await new Promise((r) => setTimeout(r, 500));
+
+            if (action === "Ban") {
+            const res = await fetch(`${API_URL}/admin/users/${user.uid}/ban`, {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ reason: message, duration: "1w" })
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to ban user");
+            }
+
+            alert("User banned successfully");
+            setUser((prev) => ({
                 ...prev,
-                action: action,      // keep the chosen category
-                status: "Resolved",  // mark as Resolved after update
+                action: "Ban",
+                status: "Banned"
+            }));
+            return;
+            }
+
+            if (action === "Unban") {
+            const res = await fetch(`${API_URL}/admin/users/${user.uid}/unban`, {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                }
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to unban user");
+            }
+
+            alert("User unbanned successfully");
+            setUser((prev) => ({
+                ...prev,
+                action: "Unban",
+                status: "Active"
+            }));
+            return;
+            }
+
+            // Other actions like "Warn", "Report", etc.
+            await fetch(`${API_URL}/admin/users/${user.uid}/action`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ action, message })
+            });
+
+            setUser((prev) => ({
+            ...prev,
+            action: action,
+            status: "Resolved"
             }));
 
-            // setPost คือการเปลี่ยนค่า post ใน state->prev
-            // (prev) => ({  ...prev,  ช้ค่าปัจจุบันของ post (ที่ React ส่งให้ในชื่อ prev) แล้วคืนค่าใหม่กลับไปให้ React เก็บ.
-            alert("Action sent");  // tell admin that ส่งคำสั่งเรียบร้อยแล้ว
-        }
-        catch (e) {
+            alert("Action sent");
+        } catch (e) {
             console.error(e);
             alert("Failed to send action");
-        }
-        finally {
+        } finally {
             setSaving(false);
         }
-    }
+        }
+
     if (loading) {
         return <div className="p-6">Loading post...</div>;
     }
@@ -219,11 +265,11 @@ export default function UserDetail() {
                     className="w-[20vw] h-[4vh] border rounded-full pl-5 ml-4 focus:ring-2 focus:ring-[#e0ebe2] appearance-none hover:bg-[#f6faf7]"
                 >
                     <option value="">Choose action</option>
-                    <option value="Warn">Ban</option>
-                    <option value="Delete">Report 1 month</option>
-                    <option value="Hide">Report 1 week</option>
-                    <option value="Hide">Report 1 year</option>
+                    <option value="Ban">Ban account for 1 week</option>
+                    <option value="Ban">Ban account for 1 month</option>
+                    <option value="Ban">Ban account for 1 year</option>
                     <option value="Hide">Delete this account</option>
+                    <option value="Unban">Unban</option>
                 </select>
 
                 <textarea

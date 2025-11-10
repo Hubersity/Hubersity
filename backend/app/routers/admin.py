@@ -39,28 +39,23 @@ def get_user(
 
 @router.get("/reports/users/{username}", response_model=AdminUserDetailResponse)
 def get_reported_user_detail(username: str, db: Session = Depends(get_db)):
-    # Step 1: Get the user by username
     user = db.query(User).filter(User.username == username).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Step 2: Get all post IDs by this user
     user_post_ids = db.query(Post.pid).filter(Post.user_id == user.uid).subquery()
 
-    # Step 3: Get all reports where the post belongs to this user
     reports = db.query(Report).filter(Report.post_id.in_(user_post_ids)).all()
 
-    # Step 4: Count report reasons
     report_categories = {}
     for r in reports:
         reason = r.reason or "Unspecified"
         report_categories[reason] = report_categories.get(reason, 0) + 1
 
-    # Step 5: Get all posts by this user
     posts = db.query(Post).filter(Post.user_id == user.uid).order_by(Post.created_at.desc()).all()
 
-    # Step 6: Build response
     return {
+        "uid": user.uid,
         "username": user.username,
         "fullName": user.name,
         "avatar": user.profile_image,
@@ -128,6 +123,12 @@ def ban_user(user_id: int, request: schemas.BanRequest, db: Session = Depends(ge
         raise HTTPException(status_code=400, detail="Invalid duration")
 
     user.is_banned = True
+
+    user_post_ids = db.query(models.Post.pid).filter(models.Post.user_id == user_id).subquery()
+
+    reports = db.query(models.Report).filter(models.Report.post_id.in_(user_post_ids)).all()
+    for report in reports:
+        report.status = "Resolved"
     db.commit()
     return {"message": f"{user.username} banned until {user.ban_until.strftime('%Y-%m-%d %H:%M:%S')}"}
 
@@ -296,6 +297,7 @@ def get_report_detail(
 
     return {
         "id": str(post.pid),
+        "uid": post.user_id,
         "username": username or "-",
         "avatar": avatar,
         "content": post.post_content,
@@ -305,4 +307,5 @@ def get_report_detail(
         "reportCategories": report_categories,
         "status": status.capitalize()
     }
+
 

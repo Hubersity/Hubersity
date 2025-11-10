@@ -1,6 +1,9 @@
 export async function getCurrentUser() {
   try {
-    const authData = JSON.parse(localStorage.getItem("authData") || "{}");
+    const currentKey = localStorage.getItem("currentUserKey");
+    if (!currentKey) throw new Error("No current user key found");
+
+    const authData = JSON.parse(localStorage.getItem(currentKey) || "{}");
     const token = authData.token;
     if (!token) throw new Error("No token found");
 
@@ -17,3 +20,4 @@ export async function getCurrentUser() {
     return null;
   }
 }
+

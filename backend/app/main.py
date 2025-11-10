@@ -5,47 +5,50 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from . import models, database
 from .database import engine
-from .routers import users, auth, study_calendar, posts, admin
+from .routers import users, auth, study_calendar, posts, chat, admin
+from fastapi.staticfiles import StaticFiles
+import os
 
+
+# สร้างตารางทั้งหมดในฐานข้อมูล
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-
-# ✅ อนุญาตทุก origin (เฉพาะตอนพัฒนา)
 origins = [
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "*",  
+    "http://127.0.0.1:5173",  
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173"
-    ],
+    allow_origins=["http://localhost:5173"],  # ที่ frontend เปิดอยู่
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
+# ให้โหลดไฟล์จากโฟลเดอร์ uploads ได้
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
+os.makedirs("/app/uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
+
+# ตรวจสอบการเชื่อมต่อฐานข้อมูล
 try:
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
-    print("Database connection OK")
+    print("Database connection OK ")
 except Exception as e:
-    print("Database connection failed:", e)
+    print("Database connection failed :", e)
 
-# routes
+# รวมทุก router
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(study_calendar.router)
 app.include_router(posts.router)
 app.include_router(admin.router)
+app.include_router(chat.router)
 
 # Seed forum data อัตโนมัติเมื่อ start server
 @app.on_event("startup")

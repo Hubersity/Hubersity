@@ -10,7 +10,6 @@ class UserCreate(BaseModel):
     password: str
     confirm_password: str
 
-
     name: Optional[str] = None
     birthdate: Optional[date] = None
     university: Optional[str] = None
@@ -135,7 +134,7 @@ class PostResponse(BaseModel):
     username: str
     like_count: int
     profile_image: Optional[str]
-    liked: Optional[bool] = None
+    liked: Optional[bool] = False
     tags: List[PostTagResponse] = []
     images: List[PostImageResponse] = []
     comments: List[CommentResponse] = []
@@ -158,6 +157,7 @@ class AdminPost(BaseModel):
     status: str
 
 class AdminUserDetailResponse(BaseModel):
+    uid: int
     username: str
     fullName: str
     avatar: str

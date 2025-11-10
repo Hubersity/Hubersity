@@ -7,41 +7,45 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker-fix.css";
 
 export default function CreateAcc() {
-  const signupData = JSON.parse(localStorage.getItem("signupData") || "{}");
+  // ✅ ดึงข้อมูลผู้ใช้จาก localStorage
+  const currentKey = localStorage.getItem("currentUserKey");
+  const authData = currentKey
+    ? JSON.parse(localStorage.getItem(currentKey) || "{}")
+    : {};
+
   const [image, setImage] = useState(null);
   const [privacy, setPrivacy] = useState("private");
   const [birthdate, setBirthdate] = useState(new Date());
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [university, setUniversity] = useState("");
-  const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
 
+  const navigate = useNavigate();
 
+  // 📸 เมื่อเลือกรูปใหม่
   const handleImageChange = (e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-
-  setSelectedFile(file); // store for later upload
-  setPreviewUrl(URL.createObjectURL(file)); // preview only
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
-
-
 
   const openFilePicker = () => {
     document.getElementById("profile-upload").click();
   };
 
+  // 💾 ฟังก์ชันบันทึกข้อมูลโปรไฟล์
   const handleSave = async () => {
-    if (!signupData.uid || !signupData.token) {
+    if (!authData.uid || !authData.token) {
       alert("Missing signup info. Please sign up again.");
       return;
     }
 
     let uploadedImagePath = null;
 
-    // ✅ Upload image only if selected
+    // ✅ อัปโหลดรูปก่อน ถ้ามี
     if (selectedFile) {
       const fd = new FormData();
       fd.append("file", selectedFile);
@@ -49,7 +53,7 @@ export default function CreateAcc() {
       const uploadRes = await fetch("http://localhost:8000/users/upload-avatar", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${signupData.token}`,
+          Authorization: `Bearer ${authData.token}`,
         },
         body: fd,
       });
@@ -60,7 +64,7 @@ export default function CreateAcc() {
       }
 
       const data = await uploadRes.json();
-      uploadedImagePath = data.filename; // e.g. "/uploads/user/123_avatar.jpg"
+      uploadedImagePath = data.filename;
     }
 
     const formattedDate = birthdate.toISOString().split("T")[0];
@@ -71,31 +75,39 @@ export default function CreateAcc() {
       university,
       privacy,
       description: bio,
-      profile_image: uploadedImagePath, // only if uploaded
+      profile_image: uploadedImagePath,
     };
 
-    const res = await fetch(`http://localhost:8000/users/${signupData.uid}`, {
+    const res = await fetch(`http://localhost:8000/users/${authData.uid}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${signupData.token}`,
+        Authorization: `Bearer ${authData.token}`,
       },
       body: JSON.stringify(body),
     });
 
     if (res.ok) {
-      localStorage.setItem("authData", JSON.stringify({
-        token: signupData.token,
-      }));
-      localStorage.removeItem("signupData");
-      alert("✅ Profile updated!");
-      navigate("/app/board");
+      // ✅ เก็บข้อมูลโปรไฟล์กลับเข้าคีย์ปัจจุบัน
+      localStorage.setItem(
+        currentKey,
+        JSON.stringify({
+          ...authData,
+          name,
+          bio,
+          description: bio,
+          university,
+          profile_image: uploadedImagePath,
+        })
+      );
+
+      alert("✅ Profile updated successfully!");
+      window.location.href = "/app/board";
     } else {
-      const err = await res.json();
+      const err = await res.json().catch(() => ({}));
       alert(`❌ Error: ${err.detail || "Failed to update profile"}`);
     }
   };
-
 
   return (
     <motion.div
@@ -107,19 +119,34 @@ export default function CreateAcc() {
       <motion.div
         className="w-[50vh] h-[200vh] bg-[#338646] absolute"
         initial={{ x: 0, y: 0, opacity: 0.3 }}
-        animate={{ x: ["0%", "40vw"], y: ["0%", "40vh"], rotate: 50, opacity: 1 }}
+        animate={{
+          x: ["0%", "40vw"],
+          y: ["0%", "40vh"],
+          rotate: 50,
+          opacity: 1,
+        }}
         transition={{ duration: 3, type: "spring" }}
       />
       <motion.div
         className="w-[200vh] h-[50vh] bg-[#8cab93] absolute"
         initial={{ x: 0, y: 100, opacity: 0.3 }}
-        animate={{ x: ["0%", "-25vw"], y: ["0%", "50vh"], rotate: 25, opacity: 1 }}
+        animate={{
+          x: ["0%", "-25vw"],
+          y: ["0%", "50vh"],
+          rotate: 25,
+          opacity: 1,
+        }}
         transition={{ duration: 3, type: "spring" }}
       />
       <motion.div
         className="w-[50vh] h-[200vh] bg-[#8cab93] absolute"
         initial={{ x: -100, y: 0, opacity: 0.3 }}
-        animate={{ x: ["0%", "45vw"], y: ["0%", "-50vh"], rotate: 135, opacity: 1 }}
+        animate={{
+          x: ["0%", "45vw"],
+          y: ["0%", "-50vh"],
+          rotate: 135,
+          opacity: 1,
+        }}
         transition={{ duration: 3, type: "spring" }}
       />
 
@@ -139,8 +166,8 @@ export default function CreateAcc() {
 
       {/* --- กล่องฟอร์ม --- */}
       <motion.div
-        className="relative z-10 bg-white rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.15)] 
-                   p-10 flex flex-col md:flex-row items-center justify-center gap-12 
+        className="relative z-10 bg-white rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.15)]
+                   p-10 flex flex-col md:flex-row items-center justify-center gap-12
                    w-[90vw] md:w-[70vw]"
         initial={{ y: "100vh", opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -150,7 +177,11 @@ export default function CreateAcc() {
         <div className="flex flex-col items-center justify-center w-full md:w-1/2 gap-4">
           <div className="w-40 h-40 rounded-full border-2 border-gray-300 overflow-hidden flex items-center justify-center bg-white">
             {previewUrl ? (
-              <img src={previewUrl} alt="Profile preview" className="object-cover w-full h-full" />
+              <img
+                src={previewUrl}
+                alt="Profile preview"
+                className="object-cover w-full h-full"
+              />
             ) : (
               <span className="text-gray-500">No Photo</span>
             )}
@@ -200,13 +231,22 @@ export default function CreateAcc() {
               minDate={new Date("1900-01-01")}
               renderCustomHeader={({ date, decreaseMonth, increaseMonth }) => (
                 <div className="flex justify-between items-center px-2 py-1 bg-[#eaf2ed] rounded-t-lg">
-                  <button onClick={decreaseMonth} className="text-gray-600 hover:text-black">
+                  <button
+                    onClick={decreaseMonth}
+                    className="text-gray-600 hover:text-black"
+                  >
                     {"<"}
                   </button>
                   <span className="text-gray-800 font-medium">
-                    {date.toLocaleString("default", { month: "long" })} {date.getFullYear()}
+                    {date.toLocaleString("default", {
+                      month: "long",
+                    })}{" "}
+                    {date.getFullYear()}
                   </span>
-                  <button onClick={increaseMonth} className="text-gray-600 hover:text-black">
+                  <button
+                    onClick={increaseMonth}
+                    className="text-gray-600 hover:text-black"
+                  >
                     {">"}
                   </button>
                 </div>
@@ -261,11 +301,21 @@ export default function CreateAcc() {
                 className="bg-gray-100 w-full py-2 focus:outline-none cursor-pointer"
               >
                 <option value="">Select your University</option>
-                <option value="Kasetsart University">Kasetsart University</option>
-                <option value="Chulalongkorn University">Chulalongkorn University</option>
-                <option value="Chiang Mai University">Chiang Mai University</option>
-                <option value="Mahidol University">Mahidol University</option>
-                <option value="Thammasat University">Thammasat University</option>
+                <option value="Kasetsart University">
+                  Kasetsart University
+                </option>
+                <option value="Chulalongkorn University">
+                  Chulalongkorn University
+                </option>
+                <option value="Chiang Mai University">
+                  Chiang Mai University
+                </option>
+                <option value="Mahidol University">
+                  Mahidol University
+                </option>
+                <option value="Thammasat University">
+                  Thammasat University
+                </option>
               </select>
             </div>
           </div>

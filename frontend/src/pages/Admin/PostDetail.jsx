@@ -101,6 +101,7 @@ export default function PostDetail() {
 
         const formatted = {
             id: String(found.id),
+            user_id: found.user_id || found.uid || null,
             author: found.username || "-",
             avatar: found.avatar || "/images/default-avatar.png",
             content: found.content || "-",
@@ -156,14 +157,32 @@ export default function PostDetail() {
             return;
             }
 
-            // For other actions like "warn user" or "hide post"
-            await fetch(`/api/admin/report/${post.id}/action`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ action, message })
-            });
+            if (action === "Ban") {
+                const res = await fetch(`${API_URL}/admin/users/${post.user_id}/ban`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ reason: message, duration: "1w" })
+                });
+
+                if (!res.ok) {
+                    throw new Error("Failed to ban user");
+                }
+
+                alert("User banned successfully");
+                setPost((prev) => {
+                    const updated = {
+                        ...prev,
+                        action: action,
+                        status: "Resolved"
+                    };
+                    console.log("✅ Updated post:", updated);
+                    return updated;
+                });
+
+            }
+
 
             setPost((prev) => ({
                 ...prev,
@@ -239,7 +258,7 @@ export default function PostDetail() {
                             <option value="">Choose action</option>
                             {/* <option value="Warn">Warn user</option> */}
                             <option value="Delete">Delete post</option>
-                            {/* <option value="Hide">Hide post</option> */}
+                            <option value="Ban">Ban User</option>
                         </select>
 
                         <label className="block mb-2 text-sm">Message to user (optional)</label>

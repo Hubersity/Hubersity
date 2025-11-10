@@ -10,54 +10,66 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // ✅ ฟังก์ชัน login (ใช้ JSON)
+  // ฟังก์ชัน login
   const handleLogin = async (e) => {
-  e.preventDefault();
-  setError("");
+    e.preventDefault();
+    setError("");
 
-  const apiUrl = `http://localhost:8000/login`;
-  console.log("🔗 Sending login request to:", apiUrl);
+    const apiUrl = `http://localhost:8000/login`;
+    console.log("🔗 Sending login request to:", apiUrl);
 
-  try {
-    const res = await fetch(apiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: email,
-        password: password,
-      }),
-    });
+    try {
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
 
-    console.log("📡 Response status:", res.status);
+      console.log("Response status:", res.status);
 
-    if (!res.ok) {
-      const errMsg =
-        res.status === 403
-          ? "Invalid email or password"
-          : "Cannot connect to server";
-      setError(errMsg);
-      console.warn("❌ Login failed:", res.status, errMsg);
-      return;
+      if (!res.ok) {
+        const errMsg =
+          res.status === 403
+            ? "Invalid email or password"
+            : "Cannot connect to server";
+        setError(errMsg);
+        console.warn("Login failed:", res.status, errMsg);
+        return;
+      }
+
+      const data = await res.json();
+      console.log("✅ Login success:", data);
+
+
+      const username = data.username || email.split("@")[0] || "guest";
+
+      // เก็บข้อมูลแยกเป็น authData_<username>
+      localStorage.setItem(
+        `authData_${username}`,
+        JSON.stringify({
+          token: data.access_token,
+          username: username,
+          uid: data.uid || null,
+        })
+      );
+
+      // เก็บ key ปัจจุบันไว้บอกว่าใคร login อยู่
+      localStorage.setItem("currentUserKey", `authData_${username}`);
+
+      console.log("Saved session for:", username);
+
+      // ไปหน้า board
+      navigate("/app/board");
+    } catch (err) {
+      console.error("Connection error:", err);
+      setError("Cannot connect to server");
     }
-
-    const data = await res.json();
-    console.log("✅ Login success:", data);
-
-    localStorage.setItem("authData", JSON.stringify({
-      token: data.access_token,
-    }));
-
-    navigate("/app/board");
-  } catch (err) {
-    console.error("🚨 Connection error:", err);
-    setError("Cannot connect to server");
-  }
-};
-
-
-
+  };
 
   return (
     <div className="min-h-screen bg-[#f1f6ec] flex relative overflow-hidden">

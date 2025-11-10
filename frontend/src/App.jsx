@@ -71,6 +71,7 @@ import Account from './pages/Dashboard/Account';
 import Follow from './pages/Dashboard/Follow';
 import Chat from './pages/Dashboard/Chat';
 import Notifications from './pages/Dashboard/Notifications';
+import UserProfile from './pages/Dashboard/UserProfile';
 import Tags from './pages/Dashboard/Tags';
 
 // ⬇️ admin: lazy imports (so they don't execute until visited)
@@ -78,15 +79,19 @@ const Dashboard_admin     = lazy(() => import('./pages/Admin/Dashboard-admin.jsx
 const Overview            = lazy(() => import('./pages/Admin/Overview.jsx'));
 const Account_admin       = lazy(() => import('./pages/Admin/Account-admin.jsx'));
 const Report              = lazy(() => import('./pages/Admin/Report.jsx'));
-// const Tag                = lazy(() => import('./pages/Admin/Tags.jsx'));
-const Notification_admin = lazy(() => import('./pages/Admin/Notification-admin.jsx'));
-const PostDetail          = lazy(() => import('./pages/Admin/PostDetail.jsx'))
-const UserDetail          = lazy(() => import('./pages/Admin/UserDetail.jsx'))
+const Notification_admin  = lazy(() => import('./pages/Admin/Notification-admin.jsx'));
+const PostDetail          = lazy(() => import('./pages/Admin/PostDetail.jsx'));
+const UserDetail          = lazy(() => import('./pages/Admin/UserDetail.jsx'));
 
 // Simple Error Boundary to isolate admin crashes
 class AdminErrorBoundary extends React.Component {
-  constructor(props){ super(props); this.state = { hasError:false, err:null }; }
-  static getDerivedStateFromError(err){ return { hasError:true, err }; }
+  constructor(props){ 
+    super(props); 
+    this.state = { hasError:false, err:null }; 
+  }
+  static getDerivedStateFromError(err){ 
+    return { hasError:true, err }; 
+  }
   render(){
     if (this.state.hasError) {
       return (
@@ -118,6 +123,7 @@ export default function App() {
         <Route path="chat" element={<Chat />} />
         <Route path="notification" element={<Notifications />} />
         <Route path="account" element={<Account />} />
+        <Route path="user/:userId" element={<UserProfile />} />
         <Route path="tags" element={<Tags />} />
       </Route>
 
@@ -146,4 +152,4 @@ export default function App() {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
-};
+}
