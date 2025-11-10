@@ -324,7 +324,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
   );
 }
 
-// 🕒 ฟังก์ชันคำนวณเวลาโพสต์
+// ฟังก์ชันคำนวณเวลาโพสต์
 function formatTimeAgo(createdAt) {
   if (!createdAt) return "--";
 
@@ -426,6 +426,7 @@ export default function Board() {
               content: c.content,
               profile_image: c.profile_image,
               minutes: Math.floor((Date.now() - new Date(c.created_at)) / 60000),
+              files: c.files || [],
             })) || [],
           images: p.images || [],
           created_at: p.created_at,
@@ -494,7 +495,7 @@ const handlePost = async () => {
       {
         id: created.pid || Date.now(),
         username: currentUser.username || created.username || "You",
-        displayName: currentUser.username || "You", // ✅ เปลี่ยนให้โชว์ username แทน name
+        displayName: currentUser.username || "You",
         text: created.post_content || newPost,
         profile_image: created.profile_image || "/images/default.jpg",
         minutes: 0,
@@ -569,7 +570,7 @@ const handlePost = async () => {
 
       const formData = new FormData();
       formData.append("content", content);
-      files.forEach((file) => formData.append("files", file)); // ✅ ส่งไฟล์หลายไฟล์
+      files.forEach((file) => formData.append("files", file)); 
 
       const res = await fetch(`${API_URL}/posts/${postId}/comments`, {
         method: "POST",
@@ -863,7 +864,7 @@ const confirmDelete = async () => {
           </button>
         </div>
 
-        {/* ✅ แสดงไฟล์แนบในกล่องเดียว (มีขอบเขียว #32a349) */}
+
         {pendingFiles.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-2 border border-[#32a349] bg-white/60 px-3 py-2 rounded-lg">
             {pendingFiles.map((file, index) => (
@@ -908,7 +909,7 @@ const confirmDelete = async () => {
       <div className="space-y-6">
         {filteredPosts.map((p) => (
           <div key={`${p.id}-${p.username}`} className="flex gap-3 items-start">
-            {/* 🧑‍💼 Profile */}
+            {/* Profile */}
             <div className="flex flex-col items-center justify-start w-20">
               <Link
                 to={
@@ -948,7 +949,7 @@ const confirmDelete = async () => {
               </Link>
             </div>
 
-            {/* 🗒️ Card */}
+            {/* Card */}
             <div className="flex-1 rounded-lg shadow p-4 bg-[#fdfaf6] relative">
               {/* ⋮ Menu */}
               <div className="absolute top-2 right-2" ref={menuRef}>
@@ -995,10 +996,10 @@ const confirmDelete = async () => {
                 )}
               </div>
 
-              {/* 📝 เนื้อหาโพสต์ */}
+              {/* เนื้อหาโพสต์ */}
               <p className="text-slate-800">{p.text}</p>
 
-              {/* 📎 รูป/ไฟล์แนบของโพสต์ */}
+              {/* รูป/ไฟล์แนบของโพสต์ */}
               {p.images && p.images.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-3">
                   {p.images.map((img, i) => {
@@ -1074,7 +1075,7 @@ const confirmDelete = async () => {
                 </div>
               </div>
 
-              {/* 💬 ส่วนคอมเมนต์ */}
+              {/* ส่วนคอมเมนต์ */}
               {openComments[p.id] && (
                 <div className="mt-3 space-y-2">
                   {p.comments.map((c, i) => (
@@ -1098,7 +1099,7 @@ const confirmDelete = async () => {
                         <span className="font-medium text-xs block">{c.username}</span>
                         <p className="text-sm text-slate-800">{c.content}</p>
 
-                        {/* 🖼 แสดงรูป / วิดีโอ / ไฟล์ในคอมเมนต์ */}
+                        {/* แสดงรูป / วิดีโอ / ไฟล์ในคอมเมนต์ */}
                         {c.files && c.files.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {c.files.map((file, j) => {
@@ -1153,9 +1154,9 @@ const confirmDelete = async () => {
                     </div>
                   ))}
 
-                  {/* 🟩 กล่องเขียนคอมเมนต์ + แนบไฟล์ */}
+                  {/* กล่องเขียนคอมเมนต์ + แนบไฟล์ */}
                   <div className="flex gap-2 ml-6 items-center">
-                    {/* 📎/🖼/🎥 ปุ่มแนบไฟล์ */}
+                    {/* ปุ่มแนบไฟล์ */}
                     <div className="flex items-center gap-3">
                       {/* ไฟล์ */}
                       <button
@@ -1252,7 +1253,7 @@ const confirmDelete = async () => {
                     </button>
                   </div>
 
-                  {/* ✅ แสดงไฟล์แนบก่อนส่ง */}
+                  {/* แสดงไฟล์แนบก่อนส่ง */}
                   {commentFiles[p.id]?.length > 0 && (
                     <div className="ml-6 mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
                       {commentFiles[p.id].map((file, index) => {
@@ -1302,7 +1303,7 @@ const confirmDelete = async () => {
         )}
       </div>
 
-      {/* 🔹 Image Preview Modal */}
+      {/* Image Preview Modal */}
       {previewImage && (
         <div
           className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm"

@@ -110,7 +110,7 @@ class Post(Base):
     )
     images = relationship("PostImage", back_populates="post")
     likes = relationship("Like", back_populates="post")
-    comments = relationship("Comment", back_populates="post")
+    comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
 
 class PostImage(Base):
     __tablename__ = "post_images"
@@ -167,7 +167,18 @@ class Comment(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
     
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
-    post_id = Column(Integer, ForeignKey("post.pid"), nullable=False)
+    post_id = Column(Integer, ForeignKey("post.pid", ondelete="CASCADE"), nullable=False)
     username = Column(String, nullable=False)
     user = relationship("User")
     post = relationship("Post", back_populates="comments")
+    files = relationship("CommentFile", back_populates="comment", cascade="all, delete-orphan")
+    
+class CommentFile(Base):
+    __tablename__ = "comment_files"
+
+    id = Column(Integer, primary_key=True, index=True)
+    comment_id = Column(Integer, ForeignKey("comments.cid", ondelete="CASCADE"), nullable=False)
+    path = Column(String, nullable=False)
+    file_type = Column(String, nullable=True)
+
+    comment = relationship("Comment", back_populates="files")
