@@ -106,6 +106,32 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     }, 1000);
   };
 
+  // const pause_time = async () => {
+  //   setrunning(false);
+  //   clearInterval(timerRef.current);
+  //   if (!sessionId || !token) return;
+  
+  //   try {
+  //     const res = await fetch(`http://localhost:8000/study/stop/${sessionId}`, {
+  //       method: "POST",
+  //       headers: { Authorization: `Bearer ${token}` },
+  //     });
+  
+  //     if (res.ok) {
+  //       const data = await res.json(); // รวม commit แล้ว
+  //       const secs = data.total_seconds ?? (data.total_minutes || 0) * 60;
+  //       setTime(secs); // แค่ setTime; effect จะ sync ให้เอง
+  //     } else {
+  //       console.error("Stop failed", res.status);
+  //     }
+  //   } catch (e) {
+  //     console.error("Pause error:", e);
+  //   }
+  
+  //   // ✅ ดีเฟอร์เพื่อเลี่ยง warning update ข้าม component
+  //   setTimeout(() => onAfterStop?.(), 0);
+  // };
+
   const pause_time = async () => {
     setrunning(false);
     clearInterval(timerRef.current);
@@ -117,19 +143,19 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
         headers: { Authorization: `Bearer ${token}` },
       });
   
-      if (res.ok) {
-        const data = await res.json(); // รวม commit แล้ว
-        const secs = data.total_seconds ?? (data.total_minutes || 0) * 60;
-        setTime(secs); // แค่ setTime; effect จะ sync ให้เอง
-      } else {
-        console.error("Stop failed", res.status);
+      if (!res.ok) {
+        const txt = await res.text(); // เผื่อดู error
+        console.error("Stop failed", res.status, txt);
+        return;
       }
+  
+      const data = await res.json();                       // ← ยอดที่ commit แล้ว
+      const secs = data.total_seconds ?? (data.total_minutes || 0) * 60;
+      setTime(secs);                                      // ← time ใหม่จะยิง onSyncSeconds ให้อัตโนมัติ
+      await onAfterStop?.();                              // ← เรียกให้ parent รีโหลด calendar ทันที
     } catch (e) {
       console.error("Pause error:", e);
     }
-  
-    // ✅ ดีเฟอร์เพื่อเลี่ยง warning update ข้าม component
-    setTimeout(() => onAfterStop?.(), 0);
   };
 
   // picture system
@@ -444,7 +470,13 @@ function Calendar() {
         </div>
         <div className="w-1/2 h-[87vh] sticky top-0 bg-[#fffbf5] rounded-xl shadow-2xl p-4 overflow-auto">
           {userObj?.uid && token ? (
-            <CountTime onAfterStop={fetchCalendar} onSyncSeconds={setTodaySeconds} userObj={userObj} token={token} />
+            // <CountTime onAfterStop={fetchCalendar} onSyncSeconds={setTodaySeconds} userObj={userObj} token={token} />
+            <CountTime
+              userObj={userObj}
+              token={token}
+              onSyncSeconds={(s) => setTodaySeconds(s)}   // ให้สีของ “วันนี้” เปลี่ยนแบบเรียลไทม์
+              onAfterStop={fetchCalendar}                 // ← ให้รีโหลดสีทั้งเดือนหลัง stop
+            />
           ) : (
             <div className="text-sm text-gray-500">Loading user...</div>
           )}

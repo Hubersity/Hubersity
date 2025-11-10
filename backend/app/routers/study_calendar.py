@@ -11,6 +11,7 @@ from sqlalchemy import func, text
 from zoneinfo import ZoneInfo
 
 LOCAL_TZ = "Asia/Bangkok"
+TZ = ZoneInfo("Asia/Bangkok")
 
 router = APIRouter(
     prefix="/study",
@@ -19,6 +20,12 @@ router = APIRouter(
 
 
 def upsert_daily_progress(db, user_id: int, add_seconds: int, badge: int, target_day_utc: datetime):
+        # กันค่าผิด ๆ หลุดมา
+    if add_seconds < 0:
+        add_seconds = 0
+    if add_seconds > 24*3600:
+        add_seconds = 24*3600
+        
     q = text("""
     INSERT INTO daily_progress (user_id, date, total_seconds, total_minutes, badge_level)
     VALUES (:uid, :day_utc, :secs, :secs/60, :badge)
@@ -176,9 +183,29 @@ def stop_session(sid: int, db: Session = Depends(get_db)):
 #     else:
 #         return {"total_seconds": 0, "total_minutes": 0, "badge": 0}
 
+# @router.get("/calendar/{user_id}/{year}/{month}")
+# def get_calendar(user_id: int, year: int, month: int, db: Session = Depends(get_db)):
+#     last_day = monthrange(year, month)[1]
+#     records = (
+#         db.query(models.DailyProgress)
+#         .filter(models.DailyProgress.user_id == user_id)
+#         .filter(text("date(timezone('Asia/Bangkok', daily_progress.date)) BETWEEN :d1 AND :d2"))
+#         .params(d1=dt_date(year, month, 1), d2=dt_date(year, month, last_day))
+#         .all()
+#     )
+#     return {
+#         r.date.strftime("%Y-%m-%d"): {
+#             "total_minutes": r.total_minutes or 0,
+#             "total_seconds": getattr(r, "total_seconds", (r.total_minutes or 0) * 60),
+#             "badge": r.badge_level or 0,
+#         }
+#         for r in records
+#     }
+
 @router.get("/calendar/{user_id}/{year}/{month}")
 def get_calendar(user_id: int, year: int, month: int, db: Session = Depends(get_db)):
     last_day = monthrange(year, month)[1]
+
     records = (
         db.query(models.DailyProgress)
         .filter(models.DailyProgress.user_id == user_id)
@@ -186,14 +213,18 @@ def get_calendar(user_id: int, year: int, month: int, db: Session = Depends(get_
         .params(d1=dt_date(year, month, 1), d2=dt_date(year, month, last_day))
         .all()
     )
-    return {
-        r.date.strftime("%Y-%m-%d"): {
+
+    out = {}
+    for r in records:
+        # แปลง timestamp ที่เก็บเป็น UTC ให้เป็น “วันที่ตามไทย” ก่อนทำ key
+        local_key = r.date.astimezone(TZ).strftime("%Y-%m-%d")
+        total_seconds = getattr(r, "total_seconds", (r.total_minutes or 0) * 60)
+        out[local_key] = {
             "total_minutes": r.total_minutes or 0,
-            "total_seconds": getattr(r, "total_seconds", (r.total_minutes or 0) * 60),
+            "total_seconds": total_seconds,
             "badge": r.badge_level or 0,
         }
-        for r in records
-    }
+    return out
 
 @router.get("/progress/{user_id}/{year}/{month}/{day}")
 def get_daily_progress(user_id: int, year: int, month: int, day: int, db: Session = Depends(get_db)):
