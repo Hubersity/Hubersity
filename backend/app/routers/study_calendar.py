@@ -8,6 +8,7 @@ from ..database import get_db
 from calendar import monthrange
 from .. import models
 from sqlalchemy import func, text
+from zoneinfo import ZoneInfo
 
 LOCAL_TZ = "Asia/Bangkok"
 
@@ -16,23 +17,18 @@ router = APIRouter(
     tags=["Study Timer"]
 )
 
-def upsert_daily_progress(db, user_id: int, add_seconds: int, badge: int):
+def upsert_daily_progress(db, user_id: int, add_seconds: int, badge: int, target_day_utc: datetime):
     q = text("""
     INSERT INTO daily_progress (user_id, date, total_seconds, total_minutes, badge_level)
-    VALUES (
-      :uid,
-      -- ปักเวลาเป็นเที่ยงคืนของวันตามโซนท้องถิ่น แล้วเก็บลงคอลัมน์ timestamptz
-      (date_trunc('day', timezone(:tz, now())) AT TIME ZONE :tz),
-      :secs, :secs/60, :badge
-    )
-    ON CONFLICT (user_id, ((date AT TIME ZONE :tz)::date))
+    VALUES (:uid, :day_utc, :secs, :secs/60, :badge)
+    ON CONFLICT (user_id, ((date AT TIME ZONE 'Asia/Bangkok')::date))
     DO UPDATE SET
       total_seconds = daily_progress.total_seconds + EXCLUDED.total_seconds,
       total_minutes = (daily_progress.total_seconds + EXCLUDED.total_seconds)/60,
       badge_level   = GREATEST(daily_progress.badge_level, EXCLUDED.badge_level)
     RETURNING total_seconds, total_minutes, badge_level
     """)
-    row = db.execute(q, {"uid": user_id, "secs": add_seconds, "badge": badge, "tz": LOCAL_TZ}).first()
+    row = db.execute(q, {"uid": user_id, "day_utc": target_day_utc, "secs": add_seconds, "badge": badge}).first()
     db.commit()
     return {"total_seconds": row[0], "total_minutes": row[1], "badge_level": row[2]}
 
@@ -54,19 +50,27 @@ def stop_session(sid: int, db: Session = Depends(get_db)):
     if not session or session.end_time:
         return {"error": "Invalid session"}
 
+    # จบ session
     session.end_time = datetime.now(timezone.utc)
     elapsed = int((session.end_time - session.start_time).total_seconds())
     db.commit()
 
-    # คำนวณ badge ตาม logic ของคุณ (ตอนนี้ใส่ 0 ไปก่อน)
+    # ===== ✅ คำนวณวันตาม Asia/Bangkok จาก start_time =====
+    tz = ZoneInfo("Asia/Bangkok")
+    local = session.start_time.astimezone(tz)
+    day_start_local = datetime(local.year, local.month, local.day, 0, 0, 0, tzinfo=tz)
+    target_day_utc = day_start_local.astimezone(timezone.utc)
+    # =======================================================
+
     badge = 0
 
-    # ⬇️ ใช้ UPSERT เดียว จบ ไม่ชน UNIQUE
+
     totals = upsert_daily_progress(
         db=db,
         user_id=session.user_id,
         add_seconds=elapsed,
         badge=badge,
+        target_day_utc=target_day_utc,  # ✅ ส่งเข้าฟังก์ชัน
     )
 
     return {
@@ -137,4 +141,26 @@ def get_daily_progress(user_id: int, year: int, month: int, day: int, db: Sessio
         "total_seconds": total_seconds,
         "hours": round(total_seconds / 3600, 2),
         "badge_level": progress.badge_level or 0,
+    }
+
+@router.get("/active/{user_id}")
+def get_active_session(user_id: int, db: Session = Depends(get_db)):
+    s = (
+        db.query(models.StudySession)
+        .filter(models.StudySession.user_id == user_id, models.StudySession.end_time.is_(None))
+        .order_by(models.StudySession.start_time.desc())
+        .first()
+    )
+    server_now = datetime.now(timezone.utc)
+    if not s:
+        return {"active": False, "server_now": server_now.isoformat()}
+
+    # ถ้าต้องการกันเคสข้ามเที่ยงคืนให้โชว์เฉพาะเวลาตั้งแต่ 00:00 ของวันนี้:
+    # สมมติเราใช้ ‘Asia/Bangkok’ เป็น day boundary
+    # (ถ้ายังไม่อยากยุ่ง timezone มาก ใช้ client คำนวณก็ได้ — ดูโค้ดฝั่ง frontend)
+    return {
+        "active": True,
+        "sid": s.sid,
+        "start_time": s.start_time.isoformat(),
+        "server_now": server_now.isoformat(),
     }
