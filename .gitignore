@@ -10,6 +10,9 @@ dist/
 build/
 *.egg-info/
 
+# Test/upload artifacts
+backend/uploads/
+
 # Node.js artifacts (Frontend)
 node_modules/
 dist/

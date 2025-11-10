@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from datetime import datetime, date
 from typing import List, Optional
 import re
@@ -18,7 +18,7 @@ class UserCreate(BaseModel):
     profile_image: Optional[str] = None
 
     # ตรวจสอบ password 
-    @validator("password")
+    @field_validator("password")
     def password_rules(cls, v):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
@@ -29,10 +29,11 @@ class UserCreate(BaseModel):
         if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
             raise ValueError("Password must contain at least one special character (!@#$...)")
         return v
-
-    @validator("confirm_password")
-    def passwords_match(cls, v, values):
-        if "password" in values and v != values["password"]:
+    @field_validator("confirm_password")
+    def passwords_match(cls, v, info):
+        # info.data contains the raw input dict
+        pw = info.data.get("password")
+        if pw is not None and v != pw:
             raise ValueError("Passwords do not match")
         return v
 
@@ -53,8 +54,7 @@ class UserResponse(BaseModel):
     following_count: int
 
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
@@ -76,8 +76,7 @@ class UserBriefResponse(BaseModel):
     name: Optional[str]
     profile_image: Optional[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Token(BaseModel):
@@ -102,15 +101,13 @@ class PostImageResponse(BaseModel):
     path: str
     caption: Optional[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PostTagResponse(BaseModel):
     ptid: int
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CommentCreate(BaseModel):
     content: str
@@ -123,8 +120,7 @@ class CommentResponse(BaseModel):
     profile_image: Optional[str]
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class PostResponse(BaseModel):
     pid: int
@@ -139,5 +135,4 @@ class PostResponse(BaseModel):
     images: List[PostImageResponse] = []
     comments: List[CommentResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

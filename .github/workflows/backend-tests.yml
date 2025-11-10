@@ -26,9 +26,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests with coverage
+      - name: Run tests with coverage and junit
         run: |
-          pytest -q --maxfail=1 --disable-warnings --cov=app --cov-report=xml
+          pytest -q --maxfail=1 --disable-warnings --cov=app --cov-report=xml --junitxml=pytest-report.xml
 
       - name: Upload coverage xml
         if: always()
@@ -36,3 +36,10 @@ jobs:
         with:
           name: backend-coverage-xml
           path: coverage.xml
+
+      - name: Upload pytest junit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-junit-xml
+          path: pytest-report.xml
