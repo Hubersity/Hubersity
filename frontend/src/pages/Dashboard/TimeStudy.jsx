@@ -150,9 +150,9 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
 
   let ShowPicture = picture_f[0];
   if (hoursNum === 0 && minutesNum === 0 && secondsNum === 0) ShowPicture = picture_f[0];
-  else if (hoursNum <= 3) ShowPicture = picture_f[1];
-  else if (hoursNum <= 6) ShowPicture = picture_f[2];
-  else if (hoursNum <= 9) ShowPicture = picture_f[3];
+  else if (hoursNum < 3) ShowPicture = picture_f[1];
+  else if (hoursNum < 6) ShowPicture = picture_f[2];
+  else if (hoursNum < 9) ShowPicture = picture_f[3];
   else ShowPicture = picture_f[4];
 
   return (
@@ -292,9 +292,9 @@ function Calendar() {
     if (dayStr === currentDayStr) {
       const hoursLive = todaySeconds / 3600;
       if (hoursLive <= 0) return "bg-[#a6a6a6]";
-      if (hoursLive <= 3) return "bg-[#38b6ff]";
-      if (hoursLive <= 6) return "bg-[#fe9031]";
-      if (hoursLive <= 9) return "bg-[#8c52ff]";
+      if (hoursLive < 3) return "bg-[#38b6ff]";
+      if (hoursLive < 6) return "bg-[#fe9031]";
+      if (hoursLive < 9) return "bg-[#8c52ff]";
       return "bg-[#ea4128]";
     }
 
@@ -303,9 +303,9 @@ function Calendar() {
     const secs = dayData.total_seconds ?? (dayData.total_minutes || 0) * 60;
     const hours = secs / 3600;
     if (hours <= 0) return "bg-[#a6a6a6]";
-    if (hours <= 3) return "bg-[#38b6ff]";
-    if (hours <= 6) return "bg-[#fe9031]";
-    if (hours <= 9) return "bg-[#8c52ff]";
+    if (hours < 3) return "bg-[#38b6ff]";
+    if (hours < 6) return "bg-[#fe9031]";
+    if (hours < 9) return "bg-[#8c52ff]";
     return "bg-[#ea4128]";
   };
 
