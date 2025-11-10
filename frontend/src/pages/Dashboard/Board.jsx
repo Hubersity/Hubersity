@@ -135,6 +135,58 @@ function DeleteConfirmModal({ open, onClose, onConfirm }) {
     </div>
   );
 }
+// ============ Delete Comment Modal ============
+function DeleteCommentModal({ open, onClose, onConfirm }) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* overlay */}
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+
+      {/* modal */}
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 border border-gray-100 overflow-hidden animate-fadeIn">
+        <div className="px-5 py-4 border-b bg-gradient-to-r from-amber-50 to-rose-50 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-800">Delete Comment</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-red-500 p-1"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-5 text-center">
+          <p className="text-gray-700 mb-5">
+            Are you sure you want to delete this comment?
+            <br />
+            <span className="text-gray-500 text-sm">
+              This action cannot be undone.
+            </span>
+          </p>
+        </div>
+
+        <div className="px-5 py-4 bg-gray-50 border-t flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 // ============ Report Modal ============
 
 function ReportModal({ open, onClose, postId, onSubmit }) {
@@ -230,7 +282,9 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
         <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-emerald-50 to-amber-50 border-b">
           <div className="flex items-center gap-2">
             <Flag className="w-5 h-5 text-emerald-700" />
-            <h3 className="text-lg font-semibold text-gray-800">Report Post</h3>
+            <h3 className="text-lg font-semibold text-gray-800">
+              {postId?.toString().startsWith("comment-") ? "Report Comment" : "Report Post"}
+            </h3>
           </div>
           <button
             onClick={onClose}
@@ -422,6 +476,7 @@ export default function Board() {
           profile_image: p.profile_image,
           comments:
             p.comments?.map((c) => ({
+              cid: c.cid || c.id || c.comment_id,
               username: c.username,
               content: c.content,
               profile_image: c.profile_image,
@@ -589,6 +644,7 @@ const handlePost = async () => {
                 comments: [
                   ...p.comments,
                   {
+                    cid: newComment.cid || newComment.id || newComment.comment_id, 
                     username: newComment.username,
                     content: newComment.content,
                     profile_image: newComment.profile_image,
@@ -605,6 +661,12 @@ const handlePost = async () => {
     } catch (err) {
       console.error("Error adding comment:", err);
     }
+  };
+
+  // เปิด modal ยืนยันลบคอมเมนต์
+  const handleDeleteComment = (postId, commentIndex, commentId) => {
+    setDeleteCommentTarget({ postId, commentIndex, commentId });
+    setDeleteCommentOpen(true);
   };
   // Edit post
   const [editOpen, setEditOpen] = useState(false);
@@ -659,29 +721,64 @@ const handlePost = async () => {
     setDeleteOpen(true);
     setMenuOpen(null); // ปิดเมนู dropdown
   };
-
+  // สำหรับ modal ลบคอมเมนต์
+  const [deleteCommentOpen, setDeleteCommentOpen] = useState(false);
+  const [deleteCommentTarget, setDeleteCommentTarget] = useState(null); // {postId, commentIndex, commentId}
   // ฟังก์ชันลบจริง (เรียกจากปุ่ม Delete ใน modal)
-const confirmDelete = async () => {
-  try {
-    const currentKey = localStorage.getItem("currentUserKey");
-    const token = currentKey
-      ? JSON.parse(localStorage.getItem(currentKey) || "{}")?.token
-      : null;
+  const confirmDelete = async () => {
+    try {
+      const currentKey = localStorage.getItem("currentUserKey");
+      const token = currentKey
+        ? JSON.parse(localStorage.getItem(currentKey) || "{}")?.token
+        : null;
 
-    if (!token) return;
+      if (!token) return;
 
-    await fetch(`${API_URL}/posts/${deletePostId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+      await fetch(`${API_URL}/posts/${deletePostId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    setPosts((prev) => prev.filter((p) => p.id !== deletePostId));
-    setDeleteOpen(false);
-    setDeletePostId(null);
-  } catch (err) {
-    console.error("Error deleting post:", err);
-  }
-};
+      setPosts((prev) => prev.filter((p) => p.id !== deletePostId));
+      setDeleteOpen(false);
+      setDeletePostId(null);
+    } catch (err) {
+      console.error("Error deleting post:", err);
+    }
+  };
+  const confirmDeleteComment = async () => {
+    if (!deleteCommentTarget) return;
+    const { postId, commentIndex, commentId } = deleteCommentTarget;
+
+    try {
+      const currentKey = localStorage.getItem("currentUserKey");
+      const token = currentKey
+        ? JSON.parse(localStorage.getItem(currentKey) || "{}")?.token
+        : null;
+
+      if (!token) return;
+
+      const res = await fetch(`${API_URL}/posts/comments/${commentId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Failed to delete comment");
+
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? { ...p, comments: p.comments.filter((_, i) => i !== commentIndex) }
+            : p
+        )
+      );
+
+      setDeleteCommentOpen(false);
+      setDeleteCommentTarget(null);
+    } catch (err) {
+      console.error("Error deleting comment:", err);
+    }
+  };
 
 
 
@@ -705,8 +802,14 @@ const confirmDelete = async () => {
     setMenuOpen(null);
   };
 
-  // ส่งรีพอร์ตไป backend
-  const submitReport = async ({ postId, reason, details, evidence }) => {
+  // เปิดหน้าต่างรีพอร์ตคอมเมนต์
+  const openReportComment = (commentId) => {
+    setReportPostId(`comment-${commentId}`); // ใช้ prefix แยกจาก post
+    setReportOpen(true);
+  };
+
+  // ส่งรีพอร์ต (รองรับทั้งโพสต์และคอมเมนต์)
+  const submitReport = async ({ postId, reason, details }) => {
     try {
       const currentKey = localStorage.getItem("currentUserKey");
       const token = currentKey
@@ -714,25 +817,29 @@ const confirmDelete = async () => {
         : null;
 
       if (!token) return;
-      // รองรับไฟล์แนบด้วย FormData
+
       const form = new FormData();
       form.append("reason", reason);
       form.append("details", details || "");
-      if (evidence) form.append("evidence", evidence);
 
-      const res = await fetch(`${API_URL}/posts/${postId}/report`, {
+      // ถ้าเป็น comment (prefix comment-)
+      const endpoint = postId.startsWith("comment-")
+        ? `${API_URL}/posts/comments/${postId.replace("comment-", "")}/report`
+        : `${API_URL}/posts/${postId}/report`;
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: form,
       });
 
       if (!res.ok) throw new Error("Failed to submit report");
-      // ปิดโมดอล + แสดงผลลัพธ์เบาๆ
+
       setReportOpen(false);
-      alert("Thanks! Your report has been submitted.");
+      alert("Report submitted successfully!");
     } catch (err) {
       console.error("Error submitting report:", err);
-      alert("Could not submit the report. Please try again.");
+      alert("Failed to submit report.");
     }
   };
 
@@ -1048,7 +1155,7 @@ const confirmDelete = async () => {
                 </div>
               )}
 
-              {/* ❤️ Like / 💬 Comment */}
+              {/*  Like /  Comment */}
               <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
                 <div className="flex items-center gap-4">
                   <button
@@ -1079,7 +1186,7 @@ const confirmDelete = async () => {
               {openComments[p.id] && (
                 <div className="mt-3 space-y-2">
                   {p.comments.map((c, i) => (
-                    <div key={i} className="flex gap-2 ml-6 items-center">
+                    <div key={i} className="flex gap-2 ml-6 items-start">
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
                         <img
                           src={
@@ -1096,10 +1203,29 @@ const confirmDelete = async () => {
                       </div>
 
                       <div className="flex-1 p-2 rounded-lg bg-[#fff6ee] relative">
+                        {/* ปุ่มลบหรือรีพอร์ตคอมเมนต์ */}
+                        {c.username === currentUser?.username ? (
+                          <button
+                            onClick={() => handleDeleteComment(p.id, i, c.cid)}
+                            className="absolute top-1 right-1 text-gray-400 hover:text-red-600"
+                            title="Delete comment"
+                          >
+                            <Trash className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => openReportComment(c.cid)}
+                            className="absolute top-1 right-1 text-gray-400 hover:text-amber-600"
+                            title="Report comment"
+                          >
+                            <Flag className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+
                         <span className="font-medium text-xs block">{c.username}</span>
                         <p className="text-sm text-slate-800">{c.content}</p>
 
-                        {/* แสดงรูป / วิดีโอ / ไฟล์ในคอมเมนต์ */}
+                        {/* รูป / วิดีโอ / PDF */}
                         {c.files && c.files.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {c.files.map((file, j) => {
@@ -1341,6 +1467,12 @@ const confirmDelete = async () => {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={confirmDelete}
+      />
+
+      <DeleteCommentModal
+        open={deleteCommentOpen}
+        onClose={() => setDeleteCommentOpen(false)}
+        onConfirm={confirmDeleteComment}
       />
     </div>
   );
