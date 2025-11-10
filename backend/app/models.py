@@ -1,9 +1,10 @@
-from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text , DateTime
 from sqlalchemy.sql import func
+from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, func, UniqueConstraint, CheckConstraint, Index, Date , DateTime
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
+
 from .database import Base
 
 
@@ -134,15 +135,20 @@ class StudySession(Base):
 
     user = relationship("User", back_populates="sessions")
 
+from sqlalchemy import Column, Integer, Date, TIMESTAMP, ForeignKey
+# ถ้ายังใช้ TIMESTAMP ต่อ ก็ไม่ต้องเปลี่ยน type ตรง date
 
 class DailyProgress(Base):
     __tablename__ = "daily_progress"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
-    date = Column(TIMESTAMP(timezone=True), nullable=False)
-    total_minutes = Column(Integer, default=0)
-    badge_level = Column(Integer, default=0)
+    date = Column(TIMESTAMP(timezone=True), nullable=False)  # คุณใช้แบบนี้อยู่
+    total_minutes = Column(Integer, default=0, nullable=False)
+    badge_level = Column(Integer, default=0, nullable=False)
+
+    # ใส่ให้ตรงกับ DB
+    total_seconds = Column(Integer, default=0, nullable=False)
 
     user = relationship("User", back_populates="progress")
 
@@ -171,6 +177,7 @@ class Comment(Base):
     username = Column(String, nullable=False)
     user = relationship("User")
     post = relationship("Post", back_populates="comments")
+
     files = relationship("CommentFile", back_populates="comment", cascade="all, delete-orphan")
     
 class CommentFile(Base):
@@ -182,3 +189,51 @@ class CommentFile(Base):
     file_type = Column(String, nullable=True)
 
     comment = relationship("Comment", back_populates="files")
+
+
+class Chat(Base):
+    __tablename__ = "chats"
+    __table_args__ = (
+        CheckConstraint("user1_id < user2_id", name="ck_chat_order"),
+        UniqueConstraint("user1_id", "user2_id", name="uq_chat_pair"),
+    )
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    user1_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
+    user2_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
+
+    user1 = relationship("User", foreign_keys=[user1_id])
+    user2 = relationship("User", foreign_keys=[user2_id])
+
+    messages = relationship(
+        "ChatMessage", back_populates="chat", cascade="all, delete-orphan"
+    )
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    __table_args__ = (Index("ix_msg_chat_created", "chat_id", "created_at"),)
+    
+    id = Column(Integer, primary_key=True)
+    chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
+    sender_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
+    kind = Column(String, default="text")   # "text" | "system" (เน้นข้อความ)
+    text = Column(Text, nullable=True)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    chat = relationship("Chat", back_populates="messages")
+    sender = relationship("User")
+    attachments = relationship("ChatAttachment", back_populates="message", cascade="all, delete-orphan")
+
+
+class ChatAttachment(Base):
+    __tablename__ = "chat_attachments"
+    id = Column(Integer, primary_key=True)
+    message_id = Column(Integer, ForeignKey("chat_messages.id", ondelete="CASCADE"), nullable=False)
+    kind = Column(String, nullable=False)   # "image" | "video" | "file"
+    path = Column(String, nullable=False)
+    original_name = Column(String)
+    mime_type = Column(String)
+    size = Column(Integer)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+    message = relationship("ChatMessage", back_populates="attachments")
+    
