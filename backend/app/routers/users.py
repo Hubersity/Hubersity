@@ -4,6 +4,7 @@ from .. import models, schemas, utils, oauth2
 from ..database import get_db
 from typing import List
 import datetime, shutil, os
+from .notification import create_notification_template
 
 
 router = APIRouter(
@@ -258,3 +259,40 @@ def get_user_following(
             )
 
     return response
+
+@router.post("/{user_id}/report", status_code=status.HTTP_201_CREATED)
+def report_user(
+    user_id: int,
+    report_data: schemas.ReportRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    user = db.query(models.User).filter(models.User.uid == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    report = models.Report(
+        user_id=user_id,
+        reporter_id=current_user.uid,
+        report_type="user",
+        reason=report_data.reason
+    )
+    db.add(report)
+
+    noti_payload = {
+        "title": "ReportUser",
+        "receiver_id": user_id,
+        "target_role": "admin"
+    }
+
+    try:
+        create_notification_template(
+            db=db,
+            current_user=current_user,
+            payload_data=noti_payload
+        )
+    except Exception as e:
+        print(f"Error creating internal notification: {e}")
+
+    db.commit()
+    return {"message": "User report submitted"}

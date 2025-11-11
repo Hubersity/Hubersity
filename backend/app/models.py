@@ -37,7 +37,7 @@ class User(Base):
     progress = relationship("DailyProgress", back_populates="user", cascade="all, delete-orphan")
     following = relationship("Follow", foreign_keys="[Follow.follower_id]", backref="follower", cascade="all, delete-orphan")
     followers = relationship("Follow", foreign_keys="[Follow.following_id]", backref="following", cascade="all, delete-orphan")
-    reports = relationship("Report", back_populates="reporter", cascade="all, delete-orphan")
+    reports = relationship("Report", back_populates="reporter", foreign_keys="[Report.reporter_id]")
     comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
 
 
@@ -190,17 +190,24 @@ class Report(Base):
     __tablename__ = "reports"
 
     rid = Column(Integer, primary_key=True, index=True)
-    post_id = Column(Integer, ForeignKey("post.pid"))
+
+    post_id = Column(Integer, ForeignKey("post.pid"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.uid"), nullable=True)
+
     reporter_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
-    reason = Column(String)
+    report_type = Column(String, nullable=False)
+    reason = Column(String, nullable=False)
+    status = Column(String, default="pending")
+
     created_at = Column(
         TIMESTAMP(timezone=True),
         nullable=False,
         server_default=text('now()')
     )
-    status = Column(String, default="pending")
-    post = relationship("Post", back_populates="reports")
-    reporter = relationship("User", back_populates="reports")
+
+    post = relationship("Post", back_populates="reports", foreign_keys=[post_id])
+    reported_user = relationship("User", foreign_keys=[user_id])
+    reporter = relationship("User", back_populates="reports", foreign_keys=[reporter_id])
 
 class Chat(Base):
     __tablename__ = "chats"
@@ -255,6 +262,7 @@ class Notification(Base):
     message = Column(Text, nullable=False)
     sender_id = Column(Integer, ForeignKey("users.uid"), nullable=True)
     receiver_id = Column(Integer, nullable=True)
+    target_role = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     is_read = Column(Boolean, default=False)
 

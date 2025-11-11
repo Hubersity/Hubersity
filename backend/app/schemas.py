@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime, date
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Literal
 import re
 
 # สร้างบัญชีใหม่ (Sign Up)
@@ -171,6 +171,7 @@ class NotificationCreate(BaseModel):
     title: str
     message: str
     receiver_id: Optional[int] = None
+    target_role: Optional[str] = "admin"
 
 class NotificationResponse(BaseModel):
     id: int
@@ -178,9 +179,10 @@ class NotificationResponse(BaseModel):
     message: Optional[str]
     sender_id: Optional[int]
     receiver_id: Optional[int]
+    target_role: Optional[str]
     created_at: datetime
-    is_read: bool
+    is_read: Optional[bool] = False
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 

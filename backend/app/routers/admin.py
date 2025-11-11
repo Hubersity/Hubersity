@@ -1,6 +1,6 @@
 from fastapi import status, HTTPException, Depends, APIRouter, UploadFile, File
 from datetime import timedelta
-from sqlalchemy import func, distinct, desc
+from sqlalchemy import func, distinct, desc, or_
 from sqlalchemy.orm import Session
 from .. import models, schemas, utils, oauth2
 from ..database import get_db
@@ -43,12 +43,14 @@ def get_reported_user_detail(username: str, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    user_post_ids = db.query(Post.pid).filter(Post.user_id == user.uid).subquery()
+    post_ids = db.query(Post.pid).filter(Post.user_id == user.uid).subquery()
 
-    reports = db.query(Report).filter(Report.post_id.in_(user_post_ids)).all()
+    post_reports = db.query(Report).filter(Report.post_id.in_(post_ids)).all()
+    user_reports = db.query(Report).filter(Report.user_id == user.uid).all()
+    all_reports = post_reports + user_reports
 
     report_categories = {}
-    for r in reports:
+    for r in all_reports:
         reason = r.reason or "Unspecified"
         report_categories[reason] = report_categories.get(reason, 0) + 1
 
@@ -60,7 +62,7 @@ def get_reported_user_detail(username: str, db: Session = Depends(get_db)):
         "fullName": user.name,
         "avatar": user.profile_image,
         "bio": user.description,
-        "numberOfReports": len(reports),
+        "numberOfReports": len(all_reports),
         "reportCategories": report_categories,
         "status": "Banned" if user.is_banned else ("Pending Ban" if user.ban_until else "Active"),
         "action": "",
@@ -71,7 +73,7 @@ def get_reported_user_detail(username: str, db: Session = Depends(get_db)):
                 "createdAt": post.created_at.isoformat(),
                 "likes": len(post.likes),
                 "comments": len(post.comments),
-                "status": "Reported" if any(r.post_id == post.pid for r in reports) else "Normal",
+                "status": "Reported" if any(r.post_id == post.pid for r in post_reports) else "Normal",
             }
             for post in posts
         ],
@@ -170,22 +172,20 @@ def delete_post(
     return
 
 @router.get("/reports")
-def get_reported_data(
-    db: Session = Depends(get_db),
-):
+def get_reported_data(db: Session = Depends(get_db)):
+    # --- Reported Posts ---
     reported_posts = (
-    db.query(
-        models.Report.post_id.label("post_id"),
-        models.Post.post_content.label("content"),
-        func.count(models.Report.rid).label("report_count"),
-        func.max(models.Report.created_at).label("last_date"),
-        func.max(models.Report.status).label("status"),
+        db.query(
+            models.Report.post_id.label("post_id"),
+            models.Post.post_content.label("content"),
+            func.count(models.Report.rid).label("report_count"),
+            func.max(models.Report.created_at).label("last_date"),
+            func.max(models.Report.status).label("status"),
+        )
+        .join(models.Post, models.Post.pid == models.Report.post_id)
+        .group_by(models.Report.post_id, models.Post.post_content)
+        .all()
     )
-    .join(models.Post, models.Post.pid == models.Report.post_id)
-    .group_by(models.Report.post_id, models.Post.post_content)
-    .all()
-    )
-
 
     post_details = []
     for post in reported_posts:
@@ -204,54 +204,67 @@ def get_reported_data(
             "NumberOfReports": post.report_count,
             "PopularReasons": top_reason or "-",
             "LastDate": post.last_date.strftime("%Y-%m-%d"),
-            "Action": "", 
+            "Action": "",
             "status": post.status or "Pending"
         })
 
-    reported_users = (
+    # --- Unified Reported Users ---
+    # Collect all reports that target users either directly or via their posts
+    all_user_reports = (
         db.query(
             models.User.uid.label("uid"),
             models.User.username.label("username"),
-            func.count(models.Report.rid).label("report_count"),
-            func.max(models.Report.created_at).label("last_date"),
             models.User.is_banned.label("is_banned"),
-            func.max(models.Report.status).label("status")
+            models.Report.reason.label("reason"),
+            models.Report.created_at.label("created_at"),
+            models.Report.status.label("status")
         )
-        .join(models.Post, models.Post.user_id == models.User.uid)
-        .join(models.Report, models.Report.post_id == models.Post.pid)
-        .group_by(models.User.uid, models.User.username)
+        .outerjoin(models.Post, models.Post.user_id == models.User.uid)
+        .outerjoin(models.Report, or_(
+            models.Report.user_id == models.User.uid,
+            models.Report.post_id == models.Post.pid
+        ))
+        .filter(models.Report.rid.isnot(None))
         .all()
     )
 
+    # Aggregate by user
+    user_map = {}
+    for r in all_user_reports:
+        if r.uid not in user_map:
+            user_map[r.uid] = {
+                "UserName": r.username,
+                "NumberOfReports": 0,
+                "PopularReasons": {},
+                "LastDate": r.created_at,
+                "Action": "",
+                "status": "Banned" if r.is_banned else "Active"
+            }
 
+        user_entry = user_map[r.uid]
+        user_entry["NumberOfReports"] += 1
+        user_entry["LastDate"] = max(user_entry["LastDate"], r.created_at)
+        reason = r.reason or "Unspecified"
+        user_entry["PopularReasons"][reason] = user_entry["PopularReasons"].get(reason, 0) + 1
 
-
+    # Format top reason and final structure
     user_details = []
-    for user in reported_users:
-        top_reason = (
-            db.query(models.Report.reason)
-            .join(models.Post, models.Post.pid == models.Report.post_id)
-            .filter(models.Post.user_id == user.uid)
-            .group_by(models.Report.reason)
-            .order_by(desc(func.count(models.Report.reason)))
-            .limit(1)
-            .scalar()
-        )
-
+    for user in user_map.values():
+        top_reason = max(user["PopularReasons"].items(), key=lambda x: x[1])[0]
         user_details.append({
-            "UserName": user.username,
-            "NumberOfReports": user.report_count,
-            "PopularReasons": top_reason or "-",
-            "LastDate": user.last_date.strftime("%Y-%m-%d"),
-            "Action": "",
-            "status": "Banned" if user.is_banned else "Active"
+            "UserName": user["UserName"],
+            "NumberOfReports": user["NumberOfReports"],
+            "PopularReasons": top_reason,
+            "LastDate": user["LastDate"].strftime("%Y-%m-%d"),
+            "Action": user["Action"],
+            "status": user["status"]
         })
-
 
     return {
         "reported_posts": post_details,
         "reported_users": user_details
     }
+
 
 @router.get("/reports/{rid}")
 def get_report_detail(

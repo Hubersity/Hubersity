@@ -152,7 +152,7 @@ export default function Overview() {
 
                     <div className="w-[28vw] h-[20vh] bg-[#fdfaf6] rounded-xl shadow-2xl">
                         <div className="flex flex-col h-full mb-4 ml-4">
-                            <h1 className="mt-4 text-xl">Number of report posts</h1>
+                            <h1 className="mt-4 text-xl">Number of reported posts</h1>
                             <div className="flex justify-center items-center h-full -mt-6">
                                 <div className="text-6xl font-bold">
                                     {isLoading ? "..." : reportedPosts}
@@ -163,7 +163,7 @@ export default function Overview() {
 
                     <div className="w-[28vw] h-[20vh] bg-[#fdfaf6] rounded-xl shadow-2xl">
                         <div className="flex flex-col h-full mt-4 ml-4">
-                            <h1 className="mt-4 text-xl">Number of report users</h1>
+                            <h1 className="mt-4 text-xl">Number of reported users</h1>
                             <div className="flex justify-center items-center h-full -mt-6">
                                 <div className="text-6xl font-bold">
                                     {isLoading ? "..." : reportedUsers}

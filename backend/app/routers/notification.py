@@ -21,7 +21,7 @@ def create_notification_template(
     current_user: models.User,
     payload_data: dict 
 ):
-    data = payload_data 
+    data = payload_data.copy() 
 
     if data["title"] == "ReportUser" and data.get("receiver_id"):
         receiver = db.query(models.User).filter(models.User.uid == data["receiver_id"]).first()
@@ -40,6 +40,9 @@ def create_notification_template(
         post_owner_username = post_owner.username if post_owner else "an unknown user"
         
         data["message"] = f"{current_user.username} has reported post id {post_id} by {post_owner_username}"
+
+    if "target_role" not in data or data["target_role"] is None:
+        data["target_role"] = "user"
 
     noti = models.Notification(
         **data,
@@ -69,12 +72,7 @@ def create_notification(
 def get_all_notifications(db: Session = Depends(get_db)):
     return db.query(models.Notification).order_by(models.Notification.created_at.desc()).all()
 
-@router.get("/{id}", response_model=schemas.NotificationResponse)
-def get_notification_by_id(id: int, db: Session = Depends(get_db)):
-    noti = db.query(models.Notification).filter(models.Notification.id == id).first()
-    if not noti:
-        raise HTTPException(status_code=404, detail="Notification not found")
-    return noti
+
 
 @router.get("/admin", response_model=List[schemas.NotificationResponse])
 def get_admin_notifications(db: Session = Depends(get_db)):
@@ -82,27 +80,74 @@ def get_admin_notifications(db: Session = Depends(get_db)):
 
 @router.get("/user/{uid}", response_model=List[schemas.NotificationResponse])
 def get_user_notifications(uid: int, db: Session = Depends(get_db)):
-    read_ids = db.query(models.NotificationRead.notification_id).filter(models.NotificationRead.user_id == uid).subquery()
+    # Determine target role based on is_admin
+    user = db.query(models.User).filter(models.User.uid == uid).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    return db.query(models.Notification).filter(
-        models.Notification.target_role == "user",
-        ~models.Notification.id.in_(read_ids)
-    ).order_by(models.Notification.created_at.desc()).all()
+    target_role = "admin" if user.is_admin else "user"
+
+    # Get read notification IDs
+    read_ids = db.query(models.NotificationRead.notification_id).filter(
+        models.NotificationRead.user_id == uid
+    ).all()
+    read_ids_set = set(r[0] for r in read_ids)
+
+    # Get relevant notifications
+    if target_role == "admin":
+        notifications = db.query(models.Notification).filter(
+            (models.Notification.target_role == target_role) |
+            (models.Notification.receiver_id == uid)
+        ).order_by(models.Notification.created_at.desc()).all()
+    else:
+        notifications = db.query(models.Notification).filter(
+            (models.Notification.target_role == target_role) and
+            (models.Notification.receiver_id == uid) |
+            (models.Notification.title == "all")
+        ).order_by(models.Notification.created_at.desc()).all()
+
+    # Annotate each with is_read
+    return [
+        schemas.NotificationResponse.from_orm(noti).copy(update={"is_read": noti.id in read_ids_set})
+        for noti in notifications
+    ]
 
 @router.get("/me", response_model=List[schemas.NotificationResponse])
 def get_my_notifications(
+    skip: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
+    # Determine target role based on is_admin
+    target_role = "admin" if current_user.is_admin else "user"
+
+    # Get read notification IDs
     read_ids = db.query(models.NotificationRead.notification_id).filter(
         models.NotificationRead.user_id == current_user.uid
-    ).subquery()
+    ).all()
+    read_ids_set = set(r[0] for r in read_ids)
 
-    return db.query(models.Notification).filter(
-        (models.Notification.target_role == current_user.role) | 
-        (models.Notification.receiver_id == current_user.uid),
-        ~models.Notification.id.in_(read_ids)
-    ).order_by(models.Notification.created_at.desc()).all()
+    # Get relevant notifications
+    if target_role == "admin":
+        notifications = db.query(models.Notification).filter(
+            (models.Notification.target_role == target_role) |
+            (models.Notification.receiver_id == current_user.uid)
+        ).order_by(models.Notification.created_at.desc()).all()
+    else:
+        notifications = db.query(models.Notification).filter(
+            (models.Notification.target_role == target_role) and
+            (models.Notification.receiver_id == current_user.uid) |
+            (models.Notification.title == "all")
+        ).order_by(models.Notification.created_at.desc()).all()
+
+    # Annotate each with is_read
+    return [
+        schemas.NotificationResponse.from_orm(noti).copy(update={"is_read": noti.id in read_ids_set})
+        for noti in notifications
+    ]
+
+
 
 @router.post("/{id}/read", status_code=204)
 def mark_notification_as_read(
@@ -119,9 +164,34 @@ def mark_notification_as_read(
         read_entry = models.NotificationRead(
             notification_id=id,
             user_id=current_user.uid,
-            read_at=datetime.datetime.utcnow()
+            read_at=datetime.datetime.now()
         )
         db.add(read_entry)
         db.commit()
 
     return
+
+
+@router.get("/me/unread/count")
+def get_unread_count(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    read_ids = db.query(models.NotificationRead.notification_id).filter(
+        models.NotificationRead.user_id == current_user.uid
+    ).subquery()
+
+    count = db.query(func.count(models.Notification.id)).filter(
+        (models.Notification.target_role == current_user.role) |
+        (models.Notification.receiver_id == current_user.uid),
+        ~models.Notification.id.in_(read_ids)
+    ).scalar()
+
+    return {"unread_count": count}
+
+@router.get("/{id}", response_model=schemas.NotificationResponse)
+def get_notification_by_id(id: int, db: Session = Depends(get_db)):
+    noti = db.query(models.Notification).filter(models.Notification.id == id).first()
+    if not noti:
+        raise HTTPException(status_code=404, detail="Notification not found")
+    return noti

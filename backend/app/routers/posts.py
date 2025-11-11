@@ -441,6 +441,7 @@ def report_post(
     report = models.Report(
         post_id=post_id,
         reporter_id=current_user.uid,
+        report_type="post",
         reason=report_data.reason
     )
     db.add(report)
@@ -448,7 +449,7 @@ def report_post(
     noti_payload = {
         "title": "ReportPost",
         "receiver_id": post_id,
-        "message": "..."
+        "target_role": "admin"
     }
 
     try:
@@ -459,7 +460,9 @@ def report_post(
         )
     except Exception as e:
         print(f"Error creating internal notification: {e}")
+
     db.commit()
-    return {"message": "Report submitted"}
+    return {"message": "Post report submitted"}
+
 
 

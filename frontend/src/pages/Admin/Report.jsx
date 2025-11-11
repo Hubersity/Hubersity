@@ -152,7 +152,7 @@ export default function Report() {
             <div className="flex flex-row gap-4">
                 <div className="w-[50vw] h-[20vh] bg-[#fdfaf6] rounded-xl shadow-2xl">
                     <div className="flex flex-col h-full ml-4">
-                        <h1 className="mt-4 text-xl">Number of report posts</h1>
+                        <h1 className="mt-4 text-xl">Number of reported posts</h1>
                         <div className="flex justify-center items-center h-full -mt-6">
                             <div className="text-6xl font-bold">
                                 {isLoading ? "..." : numReports}
@@ -163,7 +163,7 @@ export default function Report() {
 
                 <div className="w-[50vw] h-[20vh] bg-[#fdfaf6] rounded-xl shadow-2xl">
                     <div className="flex flex-col h-full ml-4">
-                        <h1 className="mt-4 text-xl">Number of report users</h1>
+                        <h1 className="mt-4 text-xl">Number of reported users</h1>
                         <div className="flex justify-center items-center h-full -mt-6">
                             <div className="text-6xl font-bold">
                                 {isLoading ? "..." : numReportsUser}
@@ -184,7 +184,7 @@ export default function Report() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className={`ml-[15vw] text-xl rounded-3xl px-8 transition ${lookNow === "post" ? "bg-[#e0ebe2]" : "bg-[#ffffff]"} hover:opacity-90`}>
-                        Report posts
+                        Reported posts
                     </motion.button>
                 {/* Report user */}
                 <motion.button
@@ -195,7 +195,7 @@ export default function Report() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className={`ml-[27vw] text-xl rounded-3xl px-8 transition ${lookNow === "user" ? "bg-[#e0ebe2]" : "bg-[#ffffff]"} hover:opacity-90`}>
-                        Report users
+                        Reported users
                 </motion.button>
             </div>
 
