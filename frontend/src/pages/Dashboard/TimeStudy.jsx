@@ -106,32 +106,6 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     }, 1000);
   };
 
-  // const pause_time = async () => {
-  //   setrunning(false);
-  //   clearInterval(timerRef.current);
-  //   if (!sessionId || !token) return;
-  
-  //   try {
-  //     const res = await fetch(`http://localhost:8000/study/stop/${sessionId}`, {
-  //       method: "POST",
-  //       headers: { Authorization: `Bearer ${token}` },
-  //     });
-  
-  //     if (res.ok) {
-  //       const data = await res.json(); // รวม commit แล้ว
-  //       const secs = data.total_seconds ?? (data.total_minutes || 0) * 60;
-  //       setTime(secs); // แค่ setTime; effect จะ sync ให้เอง
-  //     } else {
-  //       console.error("Stop failed", res.status);
-  //     }
-  //   } catch (e) {
-  //     console.error("Pause error:", e);
-  //   }
-  
-  //   // ✅ ดีเฟอร์เพื่อเลี่ยง warning update ข้าม component
-  //   setTimeout(() => onAfterStop?.(), 0);
-  // };
-
   const pause_time = async () => {
     setrunning(false);
     clearInterval(timerRef.current);
@@ -267,12 +241,6 @@ function Calendar() {
 
   const [todayStr, setTodayStr] = useState(getTodayStr());
   const [todaySeconds, setTodaySeconds] = useState(0);
-  
-    // // กันเครื่องนอน/แท็บแช่ยาว: sync todayStr ทุก ๆ 1 นาที
-    // useEffect(() => {
-    //   const id = setInterval(() => setTodayStr(getTodayStr()), 60_000);
-    //   return () => clearInterval(id);
-    // }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -281,24 +249,6 @@ function Calendar() {
     setUserObj(u);
     setToken(t);
   }, []);
-
-  // useEffect(() => {
-  //   const tickToMidnight = () => {
-  //     const now = new Date();
-  //     const next = new Date(now);
-  //     next.setHours(24, 0, 0, 0); // เที่ยงคืนถัดไป
-  //     return next.getTime() - now.getTime();
-  //   };
-  
-  //   let t = setTimeout(async () => {
-  //     // 1) ถ้ามี session กำลังวิ่ง → ให้ CountTime หยุดอัตโนมัติ
-  //     // (ถ้ายังไม่มีระบบ onAutoStop ก็แค่ reload calendar พอ)
-  //     await fetchCalendar(); // รีโหลดสีทั้งเดือน (วันที่เก่า update)
-  //     setTodaySeconds(0);    // รีเซ็ต counter ของวันใหม่
-  //   }, tickToMidnight());
-  
-  //   return () => clearTimeout(t);
-  // }, [userObj?.uid, token, month, year]);
 
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -349,30 +299,6 @@ function Calendar() {
 
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDay = new Date(year, month - 1, 1).getDay();
-
-  // const getColorForDay = (day) => {
-  //   const dayStr = `${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-  //   if (dayStr > currentDayStr) return "bg-transparent"; // อนาคต
-
-  //   if (dayStr === currentDayStr) {
-  //     const hoursLive = todaySeconds / 3600;
-  //     if (hoursLive <= 0) return "bg-[#a6a6a6]";
-  //     if (hoursLive < 3) return "bg-[#38b6ff]";
-  //     if (hoursLive < 6) return "bg-[#fe9031]";
-  //     if (hoursLive < 9) return "bg-[#8c52ff]";
-  //     return "bg-[#ea4128]";
-  //   }
-
-  //   const dayData = studyData[dayStr];
-  //   if (!dayData) return "bg-[#a6a6a6]";
-  //   const secs = dayData.total_seconds ?? (dayData.total_minutes || 0) * 60;
-  //   const hours = secs / 3600;
-  //   if (hours <= 0) return "bg-[#a6a6a6]";
-  //   if (hours < 3) return "bg-[#38b6ff]";
-  //   if (hours < 6) return "bg-[#fe9031]";
-  //   if (hours < 9) return "bg-[#8c52ff]";
-  //   return "bg-[#ea4128]";
-  // };
 
 
   // ใช้ todayStr ในการระบายสี
