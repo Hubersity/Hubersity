@@ -1104,7 +1104,26 @@ const handlePost = async () => {
               </div>
 
               {/* เนื้อหาโพสต์ */}
-              <p className="text-slate-800">{p.text}</p>
+              <p className="text-slate-800 flex flex-wrap gap-1">
+                {p.text.split(/(\s+)/).map((word, i) =>
+                  word.startsWith("#") ? (
+                    <span
+                      key={i}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // 👉 ไปหน้า tag หรือ filter โพสต์
+                        console.log("Clicked tag:", word);
+                        // ถ้ามีหน้า tag แล้วใช้ navigate(`/tags/${word.slice(1)}`)
+                      }}
+                      className="text-green-700 hover:text-green-800 font-medium cursor-pointer"
+                    >
+                      {word}
+                    </span>
+                  ) : (
+                    <span key={i}>{word}</span>
+                  )
+                )}
+              </p>
 
               {/* รูป/ไฟล์แนบของโพสต์ */}
               {p.images && p.images.length > 0 && (
