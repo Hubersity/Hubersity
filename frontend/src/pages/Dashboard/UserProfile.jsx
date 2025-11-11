@@ -1,4 +1,3 @@
-// UserProfile.jsx (เวอร์ชันแก้ไขไฟนอล)
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Lock, X } from "lucide-react";
@@ -48,19 +47,27 @@ export default function UserProfile() {
   const [reportPostId, setReportPostId] = useState(null);
   const [selectedReason, setSelectedReason] = useState("");
   const [extraDetails, setExtraDetails] = useState("");
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [reportAccountOpen, setReportAccountOpen] = useState(false);
 
   const openReport = (pid) => {
     setReportPostId(pid);
     setReportOpen(true);
   };
 
-  const submitReport = async (reason) => {
+  const submitReport = async (reason, details = "") => {
     if (!authData?.token) return;
     try {
       const form = new FormData();
       form.append("reason", reason);
+      form.append("details", details);
 
-      const res = await fetch(`${API_URL}/posts/${reportPostId}/report`, {
+      // ตรวจว่าเป็น report post หรือ report account
+      const url = reportPostId
+        ? `${API_URL}/posts/${reportPostId}/report`
+        : `${API_URL}/users/${userId}/report`;
+
+      const res = await fetch(url, {
         method: "POST",
         headers: { Authorization: `Bearer ${authData.token}` },
         body: form,
@@ -69,6 +76,8 @@ export default function UserProfile() {
       if (!res.ok) throw new Error("Failed to submit report");
       alert("Report submitted successfully!");
       setReportOpen(false);
+      setReportAccountOpen(false); // ปิด popup ของ account ด้วย
+      setReportPostId(null); // reset ค่า
     } catch (err) {
       console.error("Error submitting report:", err);
       alert("Failed to submit report");
@@ -133,6 +142,27 @@ export default function UserProfile() {
     fetchUserData();
   }, [authData, userId]);
 
+  useEffect(() => {
+    if (!authData?.token || !user) return;
+
+    const checkFollowing = async () => {
+      try {
+        const res = await fetch(`${API_URL}/follow/following`, {
+          headers: { Authorization: `Bearer ${authData.token}` },
+        });
+        if (res.ok) {
+          const followingList = await res.json();
+          const alreadyFollowing = followingList.some((f) => String(f.uid) === String(userId));
+          setIsFollowing(alreadyFollowing);
+        }
+      } catch (err) {
+        console.error("Error checking follow status:", err);
+      }
+    };
+
+    checkFollowing();
+  }, [authData, user]);
+
   if (error)
     return <div className="p-10 text-center text-red-500">Failed to load user: {error}</div>;
   if (!authData)
@@ -148,28 +178,63 @@ export default function UserProfile() {
     ? `${API_URL}${user.profile_image}`
     : "/images/default-avatar.png";
 
+  const handleFollowToggle = async () => {
+    if (!authData?.token) return;
+
+    try {
+      if (isFollowing) {
+        // ยกเลิกติดตาม
+        const res = await fetch(`${API_URL}/follow/${userId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${authData.token}` },
+        });
+        if (res.ok) setIsFollowing(false);
+      } else {
+        // ติดตาม
+        const res = await fetch(`${API_URL}/follow/${userId}`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${authData.token}` },
+        });
+        if (res.ok) setIsFollowing(true);
+      }
+    } catch (err) {
+      console.error("Follow action failed:", err);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center bg-white min-h-[calc(100vh-64px)] py-10 relative">
       {/* กล่องโปรไฟล์ */}
       <div className="bg-white shadow-lg rounded-[24px] w-[90%] max-w-6xl px-12 py-12 text-center">
-        <div className="flex justify-center gap-5 mb-6">
-          {["Follow", "Block", "Report"].map((btn, i) => (
-            <motion.button
-              key={i}
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.95 }}
-              className={`px-6 py-2 rounded-[10px] font-medium shadow-sm text-sm hover:shadow-md transition-all text-white ${
-                btn === "Follow"
-                  ? "bg-[#32a349]"
-                  : btn === "Block"
-                  ? "bg-[#ea4124]"
-                  : "bg-[#a6a6a6]"
-              }`}
-            >
-              {btn}
-            </motion.button>
-          ))}
-        </div>
+      <div className="flex justify-center gap-5 mb-6">
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleFollowToggle}
+          className={`px-6 py-2 rounded-[10px] font-medium shadow-sm text-sm hover:shadow-md transition-all text-white ${
+            isFollowing ? "bg-[#6dbf74]" : "bg-[#32a349]"
+          }`}
+        >
+          {isFollowing ? "Following" : "Follow"}
+        </motion.button>
+
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.95 }}
+          className="px-6 py-2 rounded-[10px] font-medium shadow-sm text-sm hover:shadow-md bg-[#ea4124] text-white"
+        >
+          Block
+        </motion.button>
+
+        <motion.button
+          whileHover={{ scale: 1.08 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setReportAccountOpen(true)}
+          className="px-6 py-2 rounded-[10px] font-medium shadow-sm text-sm hover:shadow-md bg-[#a6a6a6] text-white"
+        >
+          Report
+        </motion.button>
+      </div>
 
         <div className="flex flex-col items-center">
           <motion.div
@@ -694,6 +759,131 @@ export default function UserProfile() {
               <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
                 <button
                   onClick={() => setReportOpen(false)}
+                  className="px-5 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-100 text-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => submitReport(selectedReason, extraDetails)}
+                  className="px-5 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow"
+                >
+                  Submit Report
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Report Account */}
+      <AnimatePresence>
+        {reportAccountOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-[3px]"
+              onClick={() => setReportAccountOpen(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 20 }}
+              transition={{ type: "spring", stiffness: 150, damping: 20 }}
+              className="relative w-full max-w-lg mx-4 rounded-2xl bg-white shadow-2xl border border-gray-100 overflow-hidden flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-emerald-50 to-amber-50 border-b">
+                <div className="flex items-center gap-2 text-gray-800 font-semibold text-lg">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-5 h-5 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 3h18M9 3v18m6-18v18"
+                    />
+                  </svg>
+                  Report Account
+                </div>
+                <button
+                  onClick={() => setReportAccountOpen(false)}
+                  className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  Please select a reason for reporting this account:
+                </p>
+
+                {[
+                  {
+                    key: "Harassment",
+                    text: "Harassment (Bullying, discrimination, or targeting a religion, gender, or group.)",
+                  },
+                  {
+                    key: "Fake Account",
+                    text: "Fake Account (Pretending to be someone else or impersonating others.)",
+                  },
+                  {
+                    key: "Spam",
+                    text: "Spam (Fake, automated, or promotional accounts.)",
+                  },
+                  {
+                    key: "Inappropriate Behavior",
+                    text: "Inappropriate Behavior (Offensive, threatening, or harmful activity.)",
+                  },
+                  {
+                    key: "Privacy Violation",
+                    text: "Privacy Violation (Sharing private information or photos of others without consent.)",
+                  },
+                  { key: "Other", text: "Other (Please specify.)" },
+                ].map((r) => (
+                  <label
+                    key={r.key}
+                    className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:border-emerald-300 hover:bg-emerald-50 cursor-pointer transition-all"
+                  >
+                    <input
+                      type="radio"
+                      name="report_account_reason"
+                      value={r.key}
+                      onChange={() => setSelectedReason(r.key)}
+                      className="mt-1 accent-emerald-500"
+                    />
+                    <span className="text-sm text-gray-700">{r.text}</span>
+                  </label>
+                ))}
+
+                {/* Extra details */}
+                <div className="mt-4">
+                  <label className="block text-sm text-gray-600 mb-1">
+                    Additional details (optional)
+                  </label>
+                  <textarea
+                    rows="3"
+                    placeholder="Describe what happened or any context that helps us review this report."
+                    className="w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-emerald-400 focus:ring-emerald-200 outline-none"
+                    onChange={(e) => setExtraDetails(e.target.value)}
+                  ></textarea>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+                <button
+                  onClick={() => setReportAccountOpen(false)}
                   className="px-5 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-100 text-gray-700"
                 >
                   Cancel
