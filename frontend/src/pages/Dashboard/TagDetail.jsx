@@ -337,6 +337,43 @@ export default function TagDetail() {
   const [reportOpen, setReportOpen] = useState(false);
   const [reportPostId, setReportPostId] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [commentInputs, setCommentInputs] = useState({});
+  const [commentFiles, setCommentFiles] = useState({});
+  const [openComments, setOpenComments] = useState({});
+
+  const [reportCommentId, setReportCommentId] = useState(null);
+  const [deleteCommentId, setDeleteCommentId] = useState(null);
+
+  const handleToggleComment = (id) => {
+    setOpenComments((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+    // ลบคอมเมนต์ของตัวเอง
+  const handleDeleteComment = async (pid, cid) => {
+  const token = authData?.token;
+      if (!token) return alert("Please log in again.");
+      try {
+         await fetch(`${API_URL}/comments/${cid}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+         });
+          setPosts(prev =>
+          prev.map(p =>
+              p.id === pid
+              ? { ...p, comments: p.comments.filter(c => c.cid !== cid) }
+              : p
+          )
+          );
+      } catch (err) {
+          console.error("Delete comment failed:", err);
+      }
+      };
+
+      // รายงานคอมเมนต์ของคนอื่น
+  const handleReportComment = (cid) => {
+  setReportPostId(`comment-${cid}`);
+  setReportOpen(true);
+    };
 
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -469,17 +506,103 @@ export default function TagDetail() {
     if (!file) return;
     setPendingFiles((prev) => [...prev, file]);
   };
+  
+    const handleLike = async (id) => {
+    const token = authData?.token;
+    if (!token) return alert("Please log in to like posts.");
 
-  const handleLike = (id) => {
+    // 1. อัปเดต UI ทันที (optimistic update)
     setPosts((prev) =>
-      prev.map((p) =>
+        prev.map((p) =>
         p.id === id
-          ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
-          : p
-      )
+            ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
+            : p
+        )
     );
-  };
 
+    try {
+        // 2. ส่งคำขอจริงไป backend
+        const res = await fetch(`${API_URL}/posts/${id}/like`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!res.ok) throw new Error("Like request failed");
+
+        const updated = await res.json();
+
+        // 3. ถ้า backend ส่งข้อมูลใหม่มา (บางระบบมี delay)
+        if (updated.like_count !== undefined) {
+        setPosts((prev) =>
+            prev.map((p) =>
+            p.id === id
+                ? { ...p, liked: updated.liked, likes: updated.like_count }
+                : p
+            )
+        );
+        }
+    } catch (err) {
+        console.error("Error updating like:", err);
+        // 4. ถ้า error ให้ revert กลับ
+        setPosts((prev) =>
+        prev.map((p) =>
+            p.id === id
+            ? { ...p, liked: !p.liked, likes: p.liked ? p.likes - 1 : p.likes + 1 }
+            : p
+        )
+        );
+    }
+    };
+// ========== COMMENTS ==========
+const handleCommentFile = (pid, e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  setCommentFiles((prev) => ({
+    ...prev,
+    [pid]: [...(prev[pid] || []), file],
+  }));
+};
+
+    const handleCommentChange = (pid, text) => {
+    setCommentInputs((prev) => ({ ...prev, [pid]: text }));
+    };
+
+    const handleCommentSubmit = async (pid) => {
+    const token = authData?.token;
+    const uid = authData?.uid;
+    if (!token) return alert("Please log in to comment.");
+
+    const text = commentInputs[pid]?.trim();
+    if (!text && (!commentFiles[pid] || commentFiles[pid].length === 0))
+        return;
+
+    const formData = new FormData();
+    formData.append("content", text);
+    formData.append("user_id", uid);
+    commentFiles[pid]?.forEach((file) => formData.append("files", file));
+
+    try {
+        const res = await fetch(`${API_URL}/posts/${pid}/comments`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+        });
+        if (!res.ok) throw new Error("Failed to comment");
+        const newComment = await res.json();
+
+        setPosts((prev) =>
+        prev.map((p) =>
+            p.id === pid
+            ? { ...p, comments: [...p.comments, newComment] }
+            : p
+        )
+        );
+        setCommentInputs((prev) => ({ ...prev, [pid]: "" }));
+        setCommentFiles((prev) => ({ ...prev, [pid]: [] }));
+    } catch (err) {
+        console.error("Comment failed:", err);
+    }
+    };
   const formatTimeAgo = (createdAt) => {
     if (!createdAt) return "just now";
     const diffMs = Date.now() - new Date(createdAt);
@@ -857,21 +980,266 @@ export default function TagDetail() {
 
                 {/* ปุ่ม Like / Comment */}
                 <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
-                    <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4">
                     <button
-                        onClick={() => handleLike(p.id)}
-                        className={`flex items-center gap-1 ${
+                    onClick={() => handleLike(p.id)}
+                    className={`flex items-center gap-1 ${
                         p.liked ? "text-red-600" : "hover:text-red-600"
-                        }`}
+                    }`}
                     >
-                        <Heart className="w-4 h-4" fill={p.liked ? "red" : "none"} /> {p.likes}
+                    <Heart
+                        className="w-4 h-4"
+                        fill={p.liked ? "red" : "none"}
+                    />{" "}
+                    {p.likes}
                     </button>
-                    <button className="flex items-center gap-1 hover:text-blue-600">
-                        <MessageCircle className="w-4 h-4" /> {p.comments.length}
+                    <button
+                    onClick={() => handleToggleComment(p.id)}
+                    className="flex items-center gap-1 hover:text-blue-600"
+                    >
+                    <MessageCircle className="w-4 h-4" /> {p.comments.length}
+                    </button>
+                </div>
+                <div className="text-slate-400 text-xs">
+                    {formatTimeAgo(p.created_at)}
+                </div>
+                </div>
+
+                {/* ===== COMMENTS SECTION ===== */}
+                {openComments[p.id] && (
+                <div className="mt-3 space-y-2">
+                    {p.comments.map((c, i) => (
+                    <div key={i} className="flex gap-2 ml-6 items-start">
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
+                        <img
+                            src={
+                            c.profile_image
+                                ? c.profile_image.startsWith("http") ||
+                                c.profile_image.includes("/uploads/")
+                                ? `${API_URL}${c.profile_image.replace(API_URL, "")}`
+                                : `${API_URL}/uploads/user/${c.profile_image}`
+                                : "/images/default.jpg"
+                            }
+                            alt={c.username}
+                            className="w-full h-full object-cover"
+                        />
+                        </div>
+
+                        <div className="flex-1 p-2 rounded-lg bg-[#fff6ee] relative">
+                        {c.username === currentUser?.username ? (
+                            <button
+                            onClick={() => handleDeleteComment(p.id, i, c.cid)}
+                            className="absolute top-1 right-1 text-gray-400 hover:text-red-600"
+                            title="Delete comment"
+                            >
+                            <Trash className="w-3.5 h-3.5" />
+                            </button>
+                        ) : (
+                            <button
+                            onClick={() => handleReportComment(c.cid)}
+                            className="absolute top-1 right-1 text-gray-400 hover:text-amber-600"
+                            title="Report comment"
+                            >
+                            <Flag className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+
+                        <span className="font-medium text-xs block">{c.username}</span>
+                        <p className="text-sm text-slate-800 leading-relaxed">
+                            {c.comment_text || c.comment || c.text || c.content || "(no text)"}
+                        </p>
+
+                        {c.files && c.files.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                            {c.files.map((file, j) => {
+                                const type = file.file_type || "";
+                                const path = `${API_URL}${file.path}`;
+                                const isImage =
+                                type.startsWith("image") || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.path);
+                                const isVideo =
+                                type.startsWith("video") || /\.(mp4|mov|webm|ogg)$/i.test(file.path);
+                                const isPdf =
+                                type === "pdf" ||
+                                type === "application/pdf" ||
+                                /\.pdf$/i.test(file.path);
+
+                                return (
+                                <div key={j}>
+                                    {isImage && (
+                                    <img
+                                        src={path}
+                                        alt={`comment-img-${j}`}
+                                        className="w-28 h-28 object-cover rounded-md border border-gray-200 hover:opacity-80 transition"
+                                        onClick={() => setPreviewImage(path)}
+                                    />
+                                    )}
+                                    {isVideo && (
+                                    <video
+                                        src={path}
+                                        controls
+                                        className="w-40 h-28 rounded-md border border-gray-200"
+                                    />
+                                    )}
+                                    {isPdf && (
+                                    <a
+                                        href={path}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1 text-blue-600 hover:underline text-xs"
+                                    >
+                                        📄 {file.path.split("/").pop()}
+                                    </a>
+                                    )}
+                                </div>
+                                );
+                            })}
+                            </div>
+                        )}
+
+                        <span className="absolute bottom-1 right-2 text-xs text-gray-400">
+                            {c.minutes ? `${c.minutes} min ago` : formatTimeAgo(c.created_at)}
+                        </span>
+                        </div>
+                    </div>
+                    ))}
+
+                    {/* กล่องพิมพ์คอมเมนต์ */}
+                    <div className="flex gap-2 ml-6 items-center">
+                    {/* ปุ่มแนบไฟล์ */}
+                    <div className="flex items-center gap-3">
+                        <button
+                        onClick={() =>
+                            document.getElementById(`comment-file-${p.id}`).click()
+                        }
+                        className="text-gray-500 hover:text-green-600"
+                        >
+                        <Paperclip className="w-4 h-4" />
+                        </button>
+                        <input
+                        id={`comment-file-${p.id}`}
+                        type="file"
+                        hidden
+                        multiple
+                        onChange={(e) => {
+                            const files = Array.from(e.target.files);
+                            setCommentFiles((prev) => ({
+                            ...prev,
+                            [p.id]: [...(prev[p.id] || []), ...files],
+                            }));
+                        }}
+                        />
+
+                        <button
+                        onClick={() =>
+                            document.getElementById(`comment-image-${p.id}`).click()
+                        }
+                        className="text-gray-500 hover:text-green-600"
+                        >
+                        <Image className="w-4 h-4" />
+                        </button>
+                        <input
+                        id={`comment-image-${p.id}`}
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => {
+                            const files = Array.from(e.target.files);
+                            setCommentFiles((prev) => ({
+                            ...prev,
+                            [p.id]: [...(prev[p.id] || []), ...files],
+                            }));
+                        }}
+                        />
+
+                        <button
+                        onClick={() =>
+                            document.getElementById(`comment-video-${p.id}`).click()
+                        }
+                        className="text-gray-500 hover:text-green-600"
+                        >
+                        <Video className="w-4 h-4" />
+                        </button>
+                        <input
+                        id={`comment-video-${p.id}`}
+                        type="file"
+                        hidden
+                        accept="video/*"
+                        multiple
+                        onChange={(e) => {
+                            const files = Array.from(e.target.files);
+                            setCommentFiles((prev) => ({
+                            ...prev,
+                            [p.id]: [...(prev[p.id] || []), ...files],
+                            }));
+                        }}
+                        />
+                    </div>
+
+                    {/* กล่องข้อความ */}
+                    <input
+                        type="text"
+                        placeholder="Write a comment..."
+                        value={commentInputs[p.id] || ""}
+                        onChange={(e) =>
+                        setCommentInputs({
+                            ...commentInputs,
+                            [p.id]: e.target.value,
+                        })
+                        }
+                        className="flex-1 border rounded-full px-3 py-1 text-sm"
+                    />
+
+                    {/* ปุ่มส่ง */}
+                    <button
+                        onClick={() => handleCommentSubmit(p.id)}
+                        className="bg-green-600 text-white px-3 py-1 rounded-full text-sm hover:bg-green-700"
+                    >
+                        Send
                     </button>
                     </div>
-                    <div className="text-slate-400 text-xs">{formatTimeAgo(p.created_at)}</div>
+
+                    {/* แสดงไฟล์แนบก่อนส่ง */}
+                    {commentFiles[p.id]?.length > 0 && (
+                    <div className="ml-6 mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
+                        {commentFiles[p.id].map((file, index) => {
+                        const isImage = file.type.startsWith("image/");
+                        const isVideo = file.type.startsWith("video/");
+                        const isPdf = file.type === "application/pdf";
+
+                        return (
+                            <div
+                            key={index}
+                            className="flex items-center gap-1 bg-gray-50 border px-2 py-1 rounded-full shadow-sm"
+                            >
+                            {isImage ? (
+                                <Image className="w-3.5 h-3.5 text-green-600" />
+                            ) : isVideo ? (
+                                <Video className="w-3.5 h-3.5 text-green-600" />
+                            ) : (
+                                <Paperclip className="w-3.5 h-3.5 text-green-600" />
+                            )}
+                            <span className="truncate max-w-[120px]">
+                                {file.name}
+                            </span>
+                            <button
+                                onClick={() =>
+                                setCommentFiles((prev) => ({
+                                    ...prev,
+                                    [p.id]: prev[p.id].filter((_, i) => i !== index),
+                                }))
+                                }
+                                className="text-gray-400 hover:text-red-500"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                            </div>
+                        );
+                        })}
+                    </div>
+                    )}
                 </div>
+                )}
                 </div>
               </div>
             ))
