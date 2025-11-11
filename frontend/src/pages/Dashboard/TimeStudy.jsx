@@ -158,12 +158,12 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
   return (
     <div>
       <h2 className="text-5xl font-bold self-end mb-8 mt-4">Today</h2>
-      <div className="flex flex-col items-center gap-2 mt-12">
-        <div className="flex gap-1 mt-4">
-          <img src={ShowPicture} alt="study-status" className="w-full h-full object-contain" />
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex gap-1">
+          <img src={ShowPicture} alt="study-status" className="max-w-[450pw] max-h-[450px] w-auto h-auto object-contain" />
         </div>
 
-        <span className="text-4xl font-bold mt-14">{`${hours}:${minutes}:${seconds}`}</span>
+        <span className="text-4xl font-bold">{`${hours}:${minutes}:${seconds}`}</span>
 
         <div className="flex gap-[20vh] mt-14">
           <motion.button
