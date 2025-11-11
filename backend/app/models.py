@@ -1,4 +1,5 @@
-from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, func, UniqueConstraint, CheckConstraint, Index, Date, DateTime
+from sqlalchemy.sql import func
+from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, func, UniqueConstraint, CheckConstraint, Index, Date , DateTime
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -105,6 +106,8 @@ class Post(Base):
     post_content = Column(String, nullable=False)
     forum_id = Column(Integer, ForeignKey("forum.fid"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)  # new column
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     user = relationship("User", back_populates="posts")
     tags = relationship(
         "PostTag",
@@ -121,7 +124,6 @@ class Post(Base):
     comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="post", cascade="all, delete-orphan")
 
-
 class PostImage(Base):
     __tablename__ = "post_images"
 
@@ -129,6 +131,7 @@ class PostImage(Base):
     post_id = Column(Integer, ForeignKey("post.pid"), nullable=False)
     path = Column(String, nullable=False)
     caption = Column(String)
+    file_type = Column(String, nullable=True)
     post = relationship("Post", back_populates="images")
 
 
@@ -155,7 +158,7 @@ class DailyProgress(Base):
     total_minutes = Column(Integer, default=0, nullable=False)
     badge_level = Column(Integer, default=0, nullable=False)
 
-    # ✅ ใส่ให้ตรงกับ DB
+    # ใส่ให้ตรงกับ DB
     total_seconds = Column(Integer, default=0, nullable=False)
 
     user = relationship("User", back_populates="progress")
@@ -181,10 +184,11 @@ class Comment(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
     
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
-    post_id = Column(Integer, ForeignKey("post.pid"), nullable=False)
+    post_id = Column(Integer, ForeignKey("post.pid", ondelete="CASCADE"), nullable=False)
     username = Column(String, nullable=False)
     user = relationship("User", back_populates="comments")
-    post = relationship("Post", back_populates="comments") 
+    post = relationship("Post", back_populates="comments")
+    files = relationship("CommentFile", back_populates="comment", cascade="all, delete-orphan")
 
 class Report(Base):
     __tablename__ = "reports"
@@ -208,6 +212,19 @@ class Report(Base):
     post = relationship("Post", back_populates="reports", foreign_keys=[post_id])
     reported_user = relationship("User", foreign_keys=[user_id])
     reporter = relationship("User", back_populates="reports", foreign_keys=[reporter_id])
+
+
+    
+class CommentFile(Base):
+    __tablename__ = "comment_files"
+
+    id = Column(Integer, primary_key=True, index=True)
+    comment_id = Column(Integer, ForeignKey("comments.cid", ondelete="CASCADE"), nullable=False)
+    path = Column(String, nullable=False)
+    file_type = Column(String, nullable=True)
+
+    comment = relationship("Comment", back_populates="files")
+
 
 class Chat(Base):
     __tablename__ = "chats"
@@ -277,3 +294,4 @@ class NotificationRead(Base):
 
     notification = relationship("Notification", backref="reads")
     user = relationship("User")
+

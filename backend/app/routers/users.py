@@ -61,21 +61,6 @@ def get_current_user_data(
         )
     return user
 
-# ดึงข้อมูลผู้ใช้ตาม id
-@router.get("/{id}", response_model=schemas.UserResponse)
-def get_user(
-    id: int,
-    db: Session = Depends(get_db),
-    current_user: int = Depends(oauth2.get_current_user)
-):
-    user = db.query(models.User).filter(models.User.uid == id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User id:{id} was not found"
-        )
-    return user
-
 
 # แก้ไขข้อมูลโปรไฟล์
 @router.put("/{id}", response_model=schemas.UserResponse)
@@ -296,3 +281,19 @@ def report_user(
 
     db.commit()
     return {"message": "User report submitted"}
+
+# ดึงข้อมูลผู้ใช้ตาม id
+@router.get("/{id}", response_model=schemas.UserResponse)
+def get_user(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: int = Depends(oauth2.get_current_user)
+):
+    user = db.query(models.User).filter(models.User.uid == id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User id:{id} was not found"
+        )
+    return user
+

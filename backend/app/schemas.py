@@ -115,6 +115,14 @@ class PostTagResponse(BaseModel):
 class CommentCreate(BaseModel):
     content: str
 
+class CommentFileResponse(BaseModel):
+    id: int
+    path: str
+    file_type: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 class CommentResponse(BaseModel):
     cid: int
     content: str
@@ -122,9 +130,11 @@ class CommentResponse(BaseModel):
     username: str
     profile_image: Optional[str] = None
     created_at: datetime
+    files: Optional[List[CommentFileResponse]] = []
 
     class Config:
         from_attributes = True
+
 
 class PostResponse(BaseModel):
     pid: int
@@ -138,6 +148,7 @@ class PostResponse(BaseModel):
     tags: List[PostTagResponse] = []
     images: List[PostImageResponse] = []
     comments: List[CommentResponse] = []
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -188,3 +199,7 @@ class NotificationResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class PostUpdate(BaseModel):
+    post_content: Optional[str] = None
+    forum_id: Optional[int] = None
+    tags: Optional[List[int]] = None

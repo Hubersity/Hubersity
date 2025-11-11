@@ -135,6 +135,58 @@ function DeleteConfirmModal({ open, onClose, onConfirm }) {
     </div>
   );
 }
+// ============ Delete Comment Modal ============
+function DeleteCommentModal({ open, onClose, onConfirm }) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* overlay */}
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+
+      {/* modal */}
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 border border-gray-100 overflow-hidden animate-fadeIn">
+        <div className="px-5 py-4 border-b bg-gradient-to-r from-amber-50 to-rose-50 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-800">Delete Comment</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-red-500 p-1"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-5 text-center">
+          <p className="text-gray-700 mb-5">
+            Are you sure you want to delete this comment?
+            <br />
+            <span className="text-gray-500 text-sm">
+              This action cannot be undone.
+            </span>
+          </p>
+        </div>
+
+        <div className="px-5 py-4 bg-gray-50 border-t flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 // ============ Report Modal ============
 
 function ReportModal({ open, onClose, postId, onSubmit }) {
@@ -230,7 +282,9 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
         <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-emerald-50 to-amber-50 border-b">
           <div className="flex items-center gap-2">
             <Flag className="w-5 h-5 text-emerald-700" />
-            <h3 className="text-lg font-semibold text-gray-800">Report Post</h3>
+            <h3 className="text-lg font-semibold text-gray-800">
+              {postId?.toString().startsWith("comment-") ? "Report Comment" : "Report Post"}
+            </h3>
           </div>
           <button
             onClick={onClose}
@@ -324,6 +378,32 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
   );
 }
 
+// ฟังก์ชันคำนวณเวลาโพสต์
+function formatTimeAgo(createdAt) {
+  if (!createdAt) return "--";
+
+  const now = new Date();
+  const postTime = new Date(createdAt);
+  const diffMs = now - postTime; // ส่วนต่างเป็นมิลลิวินาที
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHr = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHr / 24);
+
+  if (diffSec < 60) return `${diffSec} sec ago`;
+  if (diffMin < 60) return `${diffMin} min ago`;
+  if (diffHr < 24) return `${diffHr} hr ago`;
+
+  // ถ้าเกิน 1 วัน → แสดงเป็นวันที่จริง
+  return postTime.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 
 // ============ Main Board ============
 
@@ -333,11 +413,13 @@ export default function Board() {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("university");
   const [commentInputs, setCommentInputs] = useState({});
+  const [commentFiles, setCommentFiles] = useState({});
   const [openComments, setOpenComments] = useState({});
   const [pendingFiles, setPendingFiles] = useState([]);
   const [menuOpen, setMenuOpen] = useState(null);
   const [selectedUni, setSelectedUni] = useState(null);
   const currentKey = localStorage.getItem("currentUserKey");
+  const [previewImage, setPreviewImage] = useState(null);
   const authData = currentKey
     ? JSON.parse(localStorage.getItem(currentKey) || "{}")
     : {};
@@ -356,7 +438,9 @@ export default function Board() {
     return () => console.log("🧹 Board unmounted");
   }, []);
 
-  // 🆕 state สำหรับหน้าต่าง Report
+
+
+  // state สำหรับหน้าต่าง Report
   const [reportOpen, setReportOpen] = useState(false);
   const [reportPostId, setReportPostId] = useState(null);
 
@@ -392,12 +476,15 @@ export default function Board() {
           profile_image: p.profile_image,
           comments:
             p.comments?.map((c) => ({
+              cid: c.cid || c.id || c.comment_id,
               username: c.username,
               content: c.content,
               profile_image: c.profile_image,
               minutes: Math.floor((Date.now() - new Date(c.created_at)) / 60000),
+              files: c.files || [],
             })) || [],
           images: p.images || [],
+          created_at: p.created_at,
           category: "university",
         }));
 
@@ -438,10 +525,15 @@ const handlePost = async () => {
     formData.append("forum_id", forum_id);
     formData.append("user_id", uid);
 
+    // เพิ่มส่วนนี้ (แนบไฟล์ทั้งหมดใน pendingFiles)
+    pendingFiles.forEach((file) => {
+      formData.append("files", file); // "files" ต้องตรงกับ backend
+    });
+
     const res = await fetch(`${API_URL}/posts/`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
-      body: formData,
+      body: formData, // อย่าลืม! ห้ามใส่ Content-Type เอง (browser จัดการ)
     });
 
     if (!res.ok) {
@@ -453,11 +545,12 @@ const handlePost = async () => {
     const created = await res.json();
     console.log("Post created:", created);
 
+    // เคลียร์ state หลังโพสต์เสร็จ
     setPosts((prev) => [
       {
         id: created.pid || Date.now(),
         username: currentUser.username || created.username || "You",
-        displayName: currentUser.name || currentUser.username || "You",
+        displayName: currentUser.username || "You",
         text: created.post_content || newPost,
         profile_image: created.profile_image || "/images/default.jpg",
         minutes: 0,
@@ -465,11 +558,13 @@ const handlePost = async () => {
         liked: false,
         comments: [],
         category: activeTab,
+        images: created.images || [],
       },
       ...prev,
     ]);
 
     setNewPost("");
+    setPendingFiles([]); // ล้างไฟล์ที่เลือกไว้
   } catch (err) {
     console.error("Error posting:", err);
     alert("Post failed — check console for details.");
@@ -514,8 +609,11 @@ const handlePost = async () => {
   // Add comment
   const handleAddComment = async (postId) => {
     const content = commentInputs[postId]?.trim();
-    if (!content) return;
+    const files = commentFiles[postId] || [];
+    if (!content && files.length === 0) return;
+
     setCommentInputs({ ...commentInputs, [postId]: "" });
+    setCommentFiles({ ...commentFiles, [postId]: [] }); // ล้างไฟล์
 
     try {
       const currentKey = localStorage.getItem("currentUserKey");
@@ -524,11 +622,17 @@ const handlePost = async () => {
         : null;
 
       if (!token) return;
+
+      const formData = new FormData();
+      formData.append("content", content);
+      files.forEach((file) => formData.append("files", file)); 
+
       const res = await fetch(`${API_URL}/posts/${postId}/comments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ content }),
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
       });
+
       if (!res.ok) throw new Error("Failed to comment");
       const newComment = await res.json();
 
@@ -540,10 +644,14 @@ const handlePost = async () => {
                 comments: [
                   ...p.comments,
                   {
+                    cid: newComment.cid || newComment.id || newComment.comment_id, 
                     username: newComment.username,
                     content: newComment.content,
                     profile_image: newComment.profile_image,
-                    minutes: Math.floor((Date.now() - new Date(newComment.created_at)) / 60000),
+                    minutes: Math.floor(
+                      (Date.now() - new Date(newComment.created_at)) / 60000
+                    ),
+                    files: newComment.files || [],
                   },
                 ],
               }
@@ -553,6 +661,12 @@ const handlePost = async () => {
     } catch (err) {
       console.error("Error adding comment:", err);
     }
+  };
+
+  // เปิด modal ยืนยันลบคอมเมนต์
+  const handleDeleteComment = (postId, commentIndex, commentId) => {
+    setDeleteCommentTarget({ postId, commentIndex, commentId });
+    setDeleteCommentOpen(true);
   };
   // Edit post
   const [editOpen, setEditOpen] = useState(false);
@@ -607,29 +721,64 @@ const handlePost = async () => {
     setDeleteOpen(true);
     setMenuOpen(null); // ปิดเมนู dropdown
   };
-
+  // สำหรับ modal ลบคอมเมนต์
+  const [deleteCommentOpen, setDeleteCommentOpen] = useState(false);
+  const [deleteCommentTarget, setDeleteCommentTarget] = useState(null); // {postId, commentIndex, commentId}
   // ฟังก์ชันลบจริง (เรียกจากปุ่ม Delete ใน modal)
-const confirmDelete = async () => {
-  try {
-    const currentKey = localStorage.getItem("currentUserKey");
-    const token = currentKey
-      ? JSON.parse(localStorage.getItem(currentKey) || "{}")?.token
-      : null;
+  const confirmDelete = async () => {
+    try {
+      const currentKey = localStorage.getItem("currentUserKey");
+      const token = currentKey
+        ? JSON.parse(localStorage.getItem(currentKey) || "{}")?.token
+        : null;
 
-    if (!token) return;
+      if (!token) return;
 
-    await fetch(`${API_URL}/posts/${deletePostId}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
+      await fetch(`${API_URL}/posts/${deletePostId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    setPosts((prev) => prev.filter((p) => p.id !== deletePostId));
-    setDeleteOpen(false);
-    setDeletePostId(null);
-  } catch (err) {
-    console.error("Error deleting post:", err);
-  }
-};
+      setPosts((prev) => prev.filter((p) => p.id !== deletePostId));
+      setDeleteOpen(false);
+      setDeletePostId(null);
+    } catch (err) {
+      console.error("Error deleting post:", err);
+    }
+  };
+  const confirmDeleteComment = async () => {
+    if (!deleteCommentTarget) return;
+    const { postId, commentIndex, commentId } = deleteCommentTarget;
+
+    try {
+      const currentKey = localStorage.getItem("currentUserKey");
+      const token = currentKey
+        ? JSON.parse(localStorage.getItem(currentKey) || "{}")?.token
+        : null;
+
+      if (!token) return;
+
+      const res = await fetch(`${API_URL}/posts/comments/${commentId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Failed to delete comment");
+
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? { ...p, comments: p.comments.filter((_, i) => i !== commentIndex) }
+            : p
+        )
+      );
+
+      setDeleteCommentOpen(false);
+      setDeleteCommentTarget(null);
+    } catch (err) {
+      console.error("Error deleting comment:", err);
+    }
+  };
 
 
 
@@ -653,8 +802,14 @@ const confirmDelete = async () => {
     setMenuOpen(null);
   };
 
-  // ส่งรีพอร์ตไป backend
-  const submitReport = async ({ postId, reason, details, evidence }) => {
+  // เปิดหน้าต่างรีพอร์ตคอมเมนต์
+  const openReportComment = (commentId) => {
+    setReportPostId(`comment-${commentId}`); // ใช้ prefix แยกจาก post
+    setReportOpen(true);
+  };
+
+  // ส่งรีพอร์ต (รองรับทั้งโพสต์และคอมเมนต์)
+  const submitReport = async ({ postId, reason, details }) => {
     try {
       const currentKey = localStorage.getItem("currentUserKey");
       const token = currentKey
@@ -662,25 +817,29 @@ const confirmDelete = async () => {
         : null;
 
       if (!token) return;
-      // รองรับไฟล์แนบด้วย FormData
+
       const form = new FormData();
       form.append("reason", reason);
       form.append("details", details || "");
-      if (evidence) form.append("evidence", evidence);
 
-      const res = await fetch(`${API_URL}/posts/${postId}/report`, {
+      // ถ้าเป็น comment (prefix comment-)
+      const endpoint = postId.startsWith("comment-")
+        ? `${API_URL}/posts/comments/${postId.replace("comment-", "")}/report`
+        : `${API_URL}/posts/${postId}/report`;
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: form,
       });
 
       if (!res.ok) throw new Error("Failed to submit report");
-      // ปิดโมดอล + แสดงผลลัพธ์เบาๆ
+
       setReportOpen(false);
-      alert("Thanks! Your report has been submitted.");
+      alert("Report submitted successfully!");
     } catch (err) {
       console.error("Error submitting report:", err);
-      alert("Could not submit the report. Please try again.");
+      alert("Failed to submit report.");
     }
   };
 
@@ -744,104 +903,169 @@ const confirmDelete = async () => {
       </div>
 
       {/* new post */}
-      <div className="flex items-center gap-3 mb-6 p-3 rounded-lg shadow bg-[#fdfaf6]">
-        <input
-          type="text"
-          placeholder="Type here what do you think..."
-          value={newPost}
-          onChange={(e) => setNewPost(e.target.value)}
-          className="flex-1 bg-transparent outline-none px-2"
-        />
-        <div className="flex items-center gap-5 pr-2">
-          <button
-            onClick={() => fileInputRef.current.click()}
-            className="text-gray-500 hover:text-green-600"
-          >
-            <Paperclip className="w-5 h-5" />
-          </button>
+      <div
+        className={`flex flex-col gap-2 mb-6 p-4 rounded-lg shadow bg-[#fdfaf6] transition-all duration-300 ${
+          pendingFiles.length > 0 ? "pb-4" : ""
+        }`}
+      >
+        {/* input bar */}
+        <div className="flex items-center gap-3">
           <input
-            ref={fileInputRef}
-            type="file"
-            hidden
-            onChange={handleFileUpload}
+            type="text"
+            placeholder="Type here what do you think..."
+            value={newPost}
+            onChange={(e) => setNewPost(e.target.value)}
+            className="flex-1 bg-transparent outline-none px-2 text-gray-700 placeholder-gray-400"
           />
-          <button
-            onClick={() => imageInputRef.current.click()}
-            className="text-gray-500 hover:text-green-600"
-          >
-            <Image className="w-5 h-5" />
-          </button>
-          <input
-            ref={imageInputRef}
-            type="file"
-            accept="image/*"
-            hidden
-            onChange={handleFileUpload}
-          />
-          <button
-            onClick={() => videoInputRef.current.click()}
-            className="text-gray-500 hover:text-green-600"
-          >
-            <Video className="w-5 h-5" />
-          </button>
-          <input
-            ref={videoInputRef}
-            type="file"
-            accept="video/*"
-            hidden
-            onChange={handleFileUpload}
-          />
-        </div>
-        <button
-          onClick={handlePost}
-          className="bg-green-600 text-white px-4 py-1.5 rounded-full hover:bg-green-700 text-sm font-medium"
-        >
-          POST
-        </button>
-      </div>
 
+          {/* ปุ่มแนบไฟล์ */}
+          <div className="flex items-center gap-5 pr-2">
+            <button
+              onClick={() => fileInputRef.current.click()}
+              className="text-gray-500 hover:text-green-600"
+            >
+              <Paperclip className="w-5 h-5" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              onChange={handleFileUpload}
+            />
+
+            <button
+              onClick={() => imageInputRef.current.click()}
+              className="text-gray-500 hover:text-green-600"
+            >
+              <Image className="w-5 h-5" />
+            </button>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={handleFileUpload}
+            />
+
+            <button
+              onClick={() => videoInputRef.current.click()}
+              className="text-gray-500 hover:text-green-600"
+            >
+              <Video className="w-5 h-5" />
+            </button>
+            <input
+              ref={videoInputRef}
+              type="file"
+              accept="video/*"
+              hidden
+              onChange={handleFileUpload}
+            />
+          </div>
+
+          {/* ปุ่มโพสต์ */}
+          <button
+            onClick={handlePost}
+            className="bg-green-600 text-white px-4 py-1.5 rounded-full hover:bg-green-700 text-sm font-medium"
+          >
+            POST
+          </button>
+        </div>
+
+
+        {pendingFiles.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2 border border-[#32a349] bg-white/60 px-3 py-2 rounded-lg">
+            {pendingFiles.map((file, index) => (
+              <div
+                key={index}
+                className="group flex items-center gap-2 px-3 py-1 bg-white border border-[#32a349]/30 rounded-full text-sm text-gray-700 shadow-sm hover:shadow-md transition-all"
+              >
+                {/* ไอคอนไฟล์ */}
+                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-[#32a349]/15 text-[#32a349]">
+                  {file.type.startsWith("image/") ? (
+                    <Image className="w-3.5 h-3.5" />
+                  ) : file.type.startsWith("video/") ? (
+                    <Video className="w-3.5 h-3.5" />
+                  ) : (
+                    <Paperclip className="w-3.5 h-3.5" />
+                  )}
+                </div>
+
+                {/* ชื่อไฟล์ */}
+                <span className="truncate max-w-[140px] font-medium">
+                  {file.name.length > 20
+                    ? file.name.slice(0, 17) + "..."
+                    : file.name}
+                </span>
+
+                {/* ปุ่มลบ */}
+                <button
+                  onClick={() =>
+                    setPendingFiles((prev) => prev.filter((_, i) => i !== index))
+                  }
+                  className="text-gray-400 hover:text-red-500 transition"
+                  title="Remove file"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
       {/* posts */}
       <div className="space-y-6">
         {filteredPosts.map((p) => (
           <div key={`${p.id}-${p.username}`} className="flex gap-3 items-start">
-            {/* profile */}
-              <div className="flex flex-col items-center justify-start w-20">
-                <Link
-                  to={`/app/user/${p.user_id || p.id || p.username}`} // ถ้ามี user_id ใช้อันนั้น
-                  className="text-xs font-medium mb-2 text-emerald-700 hover:underline"
-                >
-                  {p.displayName}
-                </Link>
+            {/* Profile */}
+            <div className="flex flex-col items-center justify-start w-20">
+              <Link
+                to={
+                  !p?.user_id
+                    ? "/app/account"
+                    : currentUser?.uid === p.user_id
+                    ? "/app/account"
+                    : `/app/user/${p.user_id}`
+                }
+                className="text-xs font-medium mb-2 text-black hover:text-emerald-600 hover:underline"
+              >
+                {p.displayName}
+              </Link>
 
-                <Link
-                  to={`/app/user/${p.user_id || p.id || p.username}`}
-                  className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 hover:opacity-80 transition"
-                >
-                  <img
-                    src={
-                      p.profile_image
-                        ? p.profile_image.startsWith("http") ||
-                          p.profile_image.includes("/uploads/")
-                          ? `${API_URL}${p.profile_image.replace(API_URL, "")}`
-                          : `${API_URL}/uploads/user/${p.profile_image}`
-                        : userProfiles[p.username] || "/images/default.jpg"
-                    }
-                    alt={p.displayName}
-                    className="w-full h-full object-cover"
-                  />
-                </Link>
-              </div>
+              <Link
+                to={
+                  !p?.user_id
+                    ? "/app/account"
+                    : currentUser?.uid === p.user_id
+                    ? "/app/account"
+                    : `/app/user/${p.user_id}`
+                }
+                className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 hover:opacity-80 transition"
+              >
+                <img
+                  src={
+                    p.profile_image
+                      ? p.profile_image.startsWith("http") ||
+                        p.profile_image.includes("/uploads/")
+                        ? `${API_URL}${p.profile_image.replace(API_URL, "")}`
+                        : `${API_URL}/uploads/user/${p.profile_image}`
+                      : userProfiles[p.username] || "/images/default.jpg"
+                  }
+                  alt={p.displayName}
+                  className="w-full h-full object-cover"
+                />
+              </Link>
+            </div>
 
-            {/* card */}
+            {/* Card */}
             <div className="flex-1 rounded-lg shadow p-4 bg-[#fdfaf6] relative">
-              {/* menu */}
+              {/* ⋮ Menu */}
               <div className="absolute top-2 right-2" ref={menuRef}>
                 <button
                   onClick={(e) => {
-                    e.stopPropagation(); // ป้องกันการคลิกทะลุ
-                    setMenuOpen(menuOpen === p.id ? null : p.id); // toggle dropdown เฉพาะโพสต์นี้
-                    }}
-                    className="text-gray-500 hover:text-gray-700"
+                    e.stopPropagation();
+                    setMenuOpen(menuOpen === p.id ? null : p.id);
+                  }}
+                  className="text-gray-500 hover:text-gray-700"
                 >
                   <MoreVertical className="w-5 h-5" />
                 </button>
@@ -879,16 +1103,84 @@ const confirmDelete = async () => {
                 )}
               </div>
 
-              <p className="text-slate-800">{p.text}</p>
+              {/* เนื้อหาโพสต์ */}
+              <p className="text-slate-800 flex flex-wrap gap-1">
+                {p.text.split(/(\s+)/).map((word, i) =>
+                  word.startsWith("#") ? (
+                    <span
+                      key={i}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // 👉 ไปหน้า tag หรือ filter โพสต์
+                        console.log("Clicked tag:", word);
+                        // ถ้ามีหน้า tag แล้วใช้ navigate(`/tags/${word.slice(1)}`)
+                      }}
+                      className="text-green-700 hover:text-green-800 font-medium cursor-pointer"
+                    >
+                      {word}
+                    </span>
+                  ) : (
+                    <span key={i}>{word}</span>
+                  )
+                )}
+              </p>
 
+              {/* รูป/ไฟล์แนบของโพสต์ */}
+              {p.images && p.images.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-3">
+                  {p.images.map((img, i) => {
+                    const type = img.file_type || "";
+                    const isImage =
+                      type.startsWith("image/") ||
+                      /\.(jpg|jpeg|png|gif|webp)$/i.test(img.path);
+                    const isVideo =
+                      type.startsWith("video/") ||
+                      /\.(mp4|mov|webm|ogg)$/i.test(img.path);
+                    const isPdf =
+                      type === "application/pdf" || /\.pdf$/i.test(img.path);
+
+                    return (
+                      <div key={i}>
+                        {isImage && (
+                          <img
+                            src={`${API_URL}${img.path}`}
+                            alt={`attachment-${i}`}
+                            className="w-44 h-44 object-cover rounded-lg border border-gray-200 shadow-sm hover:opacity-80 transition"
+                            onClick={() => setPreviewImage(`${API_URL}${img.path}`)}
+                          />
+                        )}
+                        {isVideo && (
+                          <div className="rounded-lg overflow-hidden border border-gray-200 bg-black shadow-sm">
+                            <video
+                              src={`${API_URL}${img.path}`}
+                              controls
+                              className="w-64 h-40 object-contain"
+                            />
+                          </div>
+                        )}
+                        {isPdf && (
+                          <a
+                            href={`${API_URL}${img.path}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-blue-600 hover:text-blue-700 hover:underline text-sm shadow-sm"
+                          >
+                            📄 {img.path.split("/").pop()}
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/*  Like /  Comment */}
               <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
                 <div className="flex items-center gap-4">
                   <button
                     onClick={() => handleLike(p.id)}
                     className={`flex items-center gap-1 ${
-                      p.liked
-                        ? "text-red-600"
-                        : "hover:text-red-600"
+                      p.liked ? "text-red-600" : "hover:text-red-600"
                     }`}
                   >
                     <Heart
@@ -901,51 +1193,189 @@ const confirmDelete = async () => {
                     onClick={() => handleToggleComment(p.id)}
                     className="flex items-center gap-1 hover:text-blue-600"
                   >
-                    <MessageCircle className="w-4 h-4" />{" "}
-                    {p.comments.length}
+                    <MessageCircle className="w-4 h-4" /> {p.comments.length}
                   </button>
                 </div>
                 <div className="text-slate-400 text-xs">
-                  post {p.minutes} min ago
+                  {formatTimeAgo(p.created_at)}
                 </div>
               </div>
 
+              {/* ส่วนคอมเมนต์ */}
               {openComments[p.id] && (
                 <div className="mt-3 space-y-2">
                   {p.comments.map((c, i) => (
-                    <div key={i} className="flex gap-2 ml-6 items-center">
+                    <div key={i} className="flex gap-2 ml-6 items-start">
                       <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
                         <img
                           src={
                             c.profile_image
                               ? c.profile_image.startsWith("http") ||
                                 c.profile_image.includes("/uploads/")
-                                ? `${API_URL}${c.profile_image.replace(
-                                    API_URL,
-                                    ""
-                                  )}`
+                                ? `${API_URL}${c.profile_image.replace(API_URL, "")}`
                                 : `${API_URL}/uploads/user/${c.profile_image}`
-                              : userProfiles[c.username] ||
-                                "/images/default.jpg"
+                              : userProfiles[c.username] || "/images/default.jpg"
                           }
                           alt={c.username}
                           className="w-full h-full object-cover"
                         />
                       </div>
+
                       <div className="flex-1 p-2 rounded-lg bg-[#fff6ee] relative">
-                        <span className="font-medium text-xs block">
-                          {c.username}
-                        </span>
-                        <p className="text-sm text-slate-800">
-                          {c.content}
-                        </p>
+                        {/* ปุ่มลบหรือรีพอร์ตคอมเมนต์ */}
+                        {c.username === currentUser?.username ? (
+                          <button
+                            onClick={() => handleDeleteComment(p.id, i, c.cid)}
+                            className="absolute top-1 right-1 text-gray-400 hover:text-red-600"
+                            title="Delete comment"
+                          >
+                            <Trash className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => openReportComment(c.cid)}
+                            className="absolute top-1 right-1 text-gray-400 hover:text-amber-600"
+                            title="Report comment"
+                          >
+                            <Flag className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+
+                        <span className="font-medium text-xs block">{c.username}</span>
+                        <p className="text-sm text-slate-800">{c.content}</p>
+
+                        {/* รูป / วิดีโอ / PDF */}
+                        {c.files && c.files.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {c.files.map((file, j) => {
+                              const type = file.file_type || "";
+                              const path = `${API_URL}${file.path}`;
+                              const isImage =
+                                type.startsWith("image") || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.path);
+                              const isVideo =
+                                type.startsWith("video") || /\.(mp4|mov|webm|ogg)$/i.test(file.path);
+                              const isPdf =
+                                type === "pdf" ||
+                                type === "application/pdf" ||
+                                /\.pdf$/i.test(file.path);
+
+                              return (
+                                <div key={j}>
+                                  {isImage && (
+                                    <img
+                                      src={path}
+                                      alt={`comment-img-${j}`}
+                                      className="w-28 h-28 object-cover rounded-md border border-gray-200 hover:opacity-80 transition"
+                                      onClick={() => setPreviewImage(path)}
+                                    />
+                                  )}
+                                  {isVideo && (
+                                    <video
+                                      src={path}
+                                      controls
+                                      className="w-40 h-28 rounded-md border border-gray-200"
+                                    />
+                                  )}
+                                  {isPdf && (
+                                    <a
+                                      href={path}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1 text-blue-600 hover:underline text-xs"
+                                    >
+                                      📄 {file.path.split("/").pop()}
+                                    </a>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
                         <span className="absolute bottom-1 right-2 text-xs text-gray-400">
                           {c.minutes} min ago
                         </span>
                       </div>
                     </div>
                   ))}
-                  <div className="flex gap-2 ml-6">
+
+                  {/* กล่องเขียนคอมเมนต์ + แนบไฟล์ */}
+                  <div className="flex gap-2 ml-6 items-center">
+                    {/* ปุ่มแนบไฟล์ */}
+                    <div className="flex items-center gap-3">
+                      {/* ไฟล์ */}
+                      <button
+                        onClick={() =>
+                          document.getElementById(`comment-file-${p.id}`).click()
+                        }
+                        className="text-gray-500 hover:text-green-600"
+                      >
+                        <Paperclip className="w-4 h-4" />
+                      </button>
+                      <input
+                        id={`comment-file-${p.id}`}
+                        type="file"
+                        hidden
+                        multiple
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files);
+                          setCommentFiles((prev) => ({
+                            ...prev,
+                            [p.id]: [...(prev[p.id] || []), ...files],
+                          }));
+                        }}
+                      />
+
+                      {/* รูป */}
+                      <button
+                        onClick={() =>
+                          document.getElementById(`comment-image-${p.id}`).click()
+                        }
+                        className="text-gray-500 hover:text-green-600"
+                      >
+                        <Image className="w-4 h-4" />
+                      </button>
+                      <input
+                        id={`comment-image-${p.id}`}
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files);
+                          setCommentFiles((prev) => ({
+                            ...prev,
+                            [p.id]: [...(prev[p.id] || []), ...files],
+                          }));
+                        }}
+                      />
+
+                      {/* วิดีโอ */}
+                      <button
+                        onClick={() =>
+                          document.getElementById(`comment-video-${p.id}`).click()
+                        }
+                        className="text-gray-500 hover:text-green-600"
+                      >
+                        <Video className="w-4 h-4" />
+                      </button>
+                      <input
+                        id={`comment-video-${p.id}`}
+                        type="file"
+                        hidden
+                        accept="video/*"
+                        multiple
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files);
+                          setCommentFiles((prev) => ({
+                            ...prev,
+                            [p.id]: [...(prev[p.id] || []), ...files],
+                          }));
+                        }}
+                      />
+                    </div>
+
+                    {/* กล่องข้อความ */}
                     <input
                       type="text"
                       placeholder="Write a comment..."
@@ -958,6 +1388,8 @@ const confirmDelete = async () => {
                       }
                       className="flex-1 border rounded-full px-3 py-1 text-sm"
                     />
+
+                    {/* ปุ่มส่ง */}
                     <button
                       onClick={() => handleAddComment(p.id)}
                       className="bg-green-600 text-white px-3 py-1 rounded-full text-sm hover:bg-green-700"
@@ -965,6 +1397,46 @@ const confirmDelete = async () => {
                       Send
                     </button>
                   </div>
+
+                  {/* แสดงไฟล์แนบก่อนส่ง */}
+                  {commentFiles[p.id]?.length > 0 && (
+                    <div className="ml-6 mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
+                      {commentFiles[p.id].map((file, index) => {
+                        const isImage = file.type.startsWith("image/");
+                        const isVideo = file.type.startsWith("video/");
+                        const isPdf = file.type === "application/pdf";
+
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center gap-1 bg-gray-50 border px-2 py-1 rounded-full shadow-sm"
+                          >
+                            {isImage ? (
+                              <Image className="w-3.5 h-3.5 text-green-600" />
+                            ) : isVideo ? (
+                              <Video className="w-3.5 h-3.5 text-green-600" />
+                            ) : (
+                              <Paperclip className="w-3.5 h-3.5 text-green-600" />
+                            )}
+                            <span className="truncate max-w-[120px]">
+                              {file.name}
+                            </span>
+                            <button
+                              onClick={() =>
+                                setCommentFiles((prev) => ({
+                                  ...prev,
+                                  [p.id]: prev[p.id].filter((_, i) => i !== index),
+                                }))
+                              }
+                              className="text-gray-400 hover:text-red-500"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -975,6 +1447,21 @@ const confirmDelete = async () => {
           <p className="text-center text-gray-500">No posts found.</p>
         )}
       </div>
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setPreviewImage(null)}
+        >
+          <img
+            src={previewImage}
+            alt="preview"
+            className="max-w-[90%] max-h-[90%] rounded-xl shadow-2xl border border-white/30"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
 
       {/* Modals */}
       {reportOpen && (
@@ -999,6 +1486,12 @@ const confirmDelete = async () => {
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={confirmDelete}
+      />
+
+      <DeleteCommentModal
+        open={deleteCommentOpen}
+        onClose={() => setDeleteCommentOpen(false)}
+        onConfirm={confirmDeleteComment}
       />
     </div>
   );
