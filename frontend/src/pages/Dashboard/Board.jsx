@@ -187,7 +187,8 @@ function DeleteCommentModal({ open, onClose, onConfirm }) {
     </div>
   );
 }
-// ============ Report Modal ============
+// ============ Report Summit/ Modal ============
+
 
 function ReportModal({ open, onClose, postId, onSubmit }) {
   const [reason, setReason] = useState("");
@@ -195,6 +196,42 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
   const [details, setDetails] = useState("");
   const mountedRef = useRef(false); // ใช้กัน render ซ้ำ
 
+  async function handleReportSubmit({ postId, reason, details }) {
+    const currentKey = localStorage.getItem("currentUserKey");
+    const authData = currentKey
+      ? JSON.parse(localStorage.getItem(currentKey) || "{}")
+      : null;
+
+    if (!authData?.token) {
+      console.error("No auth token found");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/posts/${postId}/report`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authData.token}`
+        },
+        body: JSON.stringify({
+          reason,
+          details,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to report post: ${response.status}`);
+      }
+
+      console.log("Report submitted successfully");
+      onClose();
+      // Optionally show a toast or close modal
+    } catch (err) {
+      console.error("Error submitting report:", err);
+      // Optionally show error feedback
+    }
+  }
   // ตรวจจับ mount / unmount
   useEffect(() => {
     if (open && !mountedRef.current) {
@@ -257,10 +294,9 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
   const handleSubmit = () => {
     const finalReason =
       reason === "Other" ? customReason.trim() || "Other" : reason;
-    onSubmit({
+    handleReportSubmit({
       postId,
       reason: finalReason,
-      details: details.trim(),
     });
   };
 

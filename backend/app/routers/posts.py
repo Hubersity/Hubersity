@@ -4,7 +4,8 @@ from typing import List, Optional
 from sqlalchemy.orm import joinedload
 import os
 import shutil
-from .. import models, schemas, database, oauth2
+from .notification import create_notification_template
+from .. import models, schemas, database, oauth2, utils
 
 router = APIRouter(
     prefix="/posts",
@@ -26,7 +27,7 @@ def create_post(
     tags: Optional[str] = Form(None),
     files: List[UploadFile] = File([]),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
+    current_user: models.User = Depends(utils.check_ban_status)
 ):
     forum = db.query(models.Forum).filter(models.Forum.fid == forum_id).first()
     if not forum:
@@ -108,8 +109,9 @@ def create_post(
         forum_id=refreshed_post.forum_id,
         user_id=refreshed_post.user_id,
         username=current_user.username,
-        profile_image=current_user.profile_image,
         like_count=0,
+        liked=False,
+        profile_image=current_user.profile_image,
         tags=refreshed_post.tags,
         images=refreshed_post.images, 
         comments=refreshed_post.comments,
@@ -392,6 +394,19 @@ def get_post(
 
     like_count = db.query(models.Like).filter(models.Like.post_id == post_id).count()
 
+    # ✅ Serialize comments
+    serialized_comments = [
+    schemas.CommentResponse(
+        cid=comment.cid,
+        user_id=comment.user_id,
+        username=comment.user.username if comment.user else "Unknown",
+        profile_image=comment.user.profile_image if comment.user else None,
+        content=comment.content,
+        created_at=comment.created_at
+    )
+    for comment in post.comments
+]
+
     return schemas.PostResponse(
         pid=post.pid,
         post_content=post.post_content,
@@ -402,7 +417,7 @@ def get_post(
         like_count=like_count,
         tags=post.tags,
         images=post.images,
-        comments=post.comments
+        comments=serialized_comments
     )
 
 
@@ -411,7 +426,7 @@ def update_post(
     post_id: int,
     updated_post: schemas.PostUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
+    current_user: models.User = Depends(utils.check_ban_status)
 ):
     post = db.query(models.Post).filter(models.Post.pid == post_id).first()
 
@@ -502,7 +517,7 @@ async def create_comment(
     content: str = Form(""), 
     files: List[UploadFile] = File(None),
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
+    current_user: models.User = Depends(utils.check_ban_status)
 ):
     # ตรวจสอบว่าโพสต์มีอยู่จริงไหม
     post = db.query(models.Post).filter(models.Post.pid == post_id).first()
@@ -562,6 +577,25 @@ async def create_comment(
                 file_type=f.file_type
             )
         )
+
+    if post.user_id != current_user.uid:
+        print(post.user_id, current_user.uid)
+        noti_payload = {
+            "title": "Comment",
+            "receiver_id": post.user_id,
+            "target_role": "user",
+            "message": f"{current_user.username} commented on your post ID {post_id}"
+        }
+        print(noti_payload)
+        try:
+            create_notification_template(
+                db=db,
+                current_user=current_user,
+                payload_data=noti_payload
+            )
+            db.commit()
+        except Exception as e:
+            print(f"Error creating comment notification: {e}")
 
     # เตรียมส่งกลับไปให้ Frontend
     return schemas.CommentResponse(
@@ -623,7 +657,7 @@ def get_comments_for_post(
 
 
 @router.post("/{post_id}/like")
-def like_post(
+def toggle_like_post(
     post_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
@@ -633,25 +667,81 @@ def like_post(
         raise HTTPException(status_code=404, detail="Post not found")
 
     like = db.query(models.Like).filter_by(post_id=post_id, user_id=current_user.uid).first()
+
     if like:
         db.delete(like)
+        noti = db.query(models.Notification).filter_by(
+            title="Like",
+            sender_id=current_user.uid,
+            receiver_id=post.user_id,
+        ).first()
+        if noti:
+            db.delete(noti)
         db.commit()
         return {"message": "Like removed"}
 
     new_like = models.Like(post_id=post_id, user_id=current_user.uid)
     db.add(new_like)
+
+    if post.user_id != current_user.uid:
+        noti_payload = {
+            "title": "Like",
+            "receiver_id": post.user_id,
+            "target_role": "user",
+            "message": f"{current_user.username} liked your post ID {post_id}"
+        }
+
+        try:
+            create_notification_template(
+                db=db,
+                current_user=current_user,
+                payload_data=noti_payload
+            )
+        except Exception as e:
+            print(f"Error creating like notification: {e}")
+
     db.commit()
     return {"message": "Post liked successfully"}
 
-@router.delete("/{post_id}/like")
-def unlike_post(
+
+@router.post("/{post_id}/report", status_code=status.HTTP_201_CREATED)
+def report_post(
     post_id: int,
-    db: Session = Depends(get_db),
+    report_data: schemas.ReportRequest,
+    db: Session = Depends(database.get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    like = db.query(models.Like).filter_by(post_id=post_id, user_id=current_user.uid).first()
-    if not like:
-        raise HTTPException(status_code=404, detail="You haven’t liked this post yet")
+    post = db.query(models.Post).filter(models.Post.pid == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    report = models.Report(
+        post_id=post_id,
+        reporter_id=current_user.uid,
+        report_type="post",
+        reason=report_data.reason
+    )
+    db.add(report)
+
+    noti_payload = {
+        "title": "ReportPost",
+        "receiver_id": post_id,
+        "target_role": "admin"
+    }
+
+    try:
+        create_notification_template(
+            db=db,
+            current_user=current_user,
+            payload_data=noti_payload
+        )
+    except Exception as e:
+        print(f"Error creating internal notification: {e}")
+
+    db.commit()
+    return {"message": "Post report submitted"}
+
+
 
     
 @router.get("/{id}/posts", response_model=List[schemas.PostResponse])
@@ -740,6 +830,14 @@ def delete_comment(
         raise HTTPException(status_code=404, detail="Comment not found")
     if comment.user_id != current_user.uid:
         raise HTTPException(status_code=403, detail="You can only delete your own comments")
+
+    noti = db.query(models.Notification).filter_by(
+        title="Comment",
+        sender_id=current_user.uid,
+    ).first()
+    if noti:
+        db.delete(noti)
+
     db.delete(comment)
     db.commit()
     return {"detail": "Comment deleted"}

@@ -56,33 +56,44 @@ export default function UserProfile() {
   };
 
   const submitReport = async (reason, details = "") => {
-    if (!authData?.token) return;
-    try {
-      const form = new FormData();
-      form.append("reason", reason);
-      form.append("details", details);
+  const currentKey = localStorage.getItem("currentUserKey");
+  const authData = currentKey
+    ? JSON.parse(localStorage.getItem(currentKey) || "{}")
+    : null;
 
-      // ตรวจว่าเป็น report post หรือ report account
+    if (!authData?.token) {
+      console.error("No auth token found");
+      alert("Please log in to submit a report.");
+      return;
+    }
+
+    try {
       const url = reportPostId
         ? `${API_URL}/posts/${reportPostId}/report`
-        : `${API_URL}/users/${userId}/report`;
+        : `${API_URL}/users/${userId}/report`; // ✅ matches backend
 
       const res = await fetch(url, {
         method: "POST",
-        headers: { Authorization: `Bearer ${authData.token}` },
-        body: form,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authData.token}`,
+        },
+        body: JSON.stringify({ reason, details }), // ✅ match schema
       });
 
       if (!res.ok) throw new Error("Failed to submit report");
+
       alert("Report submitted successfully!");
       setReportOpen(false);
-      setReportAccountOpen(false); // ปิด popup ของ account ด้วย
-      setReportPostId(null); // reset ค่า
+      setReportAccountOpen(false); // ✅ close user report modal
+      setReportPostId(null); // ✅ reset post report state
     } catch (err) {
       console.error("Error submitting report:", err);
       alert("Failed to submit report");
     }
   };
+
+
 
   // โหลด token จาก localStorage
   useEffect(() => {
@@ -162,6 +173,8 @@ export default function UserProfile() {
 
     checkFollowing();
   }, [authData, user]);
+
+  
 
   if (error)
     return <div className="p-10 text-center text-red-500">Failed to load user: {error}</div>;

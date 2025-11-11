@@ -28,13 +28,19 @@ class User(Base):
     )
     profile_image = Column(String, nullable=True)
     description = Column(String, nullable=True)  # bio
+    is_admin = Column(Boolean, nullable=False, default=False)
+    is_banned = Column(Boolean, default=False)
+    ban_until = Column(DateTime, nullable=True)
 
-    likes = relationship("Like", back_populates="user")
-    posts = relationship("Post", back_populates="user")
-    sessions = relationship("StudySession", back_populates="user")
-    progress = relationship("DailyProgress", back_populates="user")
-    following = relationship("Follow", foreign_keys="[Follow.follower_id]", backref="follower")
-    followers = relationship("Follow", foreign_keys="[Follow.following_id]", backref="following")
+    likes = relationship("Like", back_populates="user", cascade="all, delete-orphan")
+    posts = relationship("Post", back_populates="user", cascade="all, delete-orphan")
+    sessions = relationship("StudySession", back_populates="user", cascade="all, delete-orphan")
+    progress = relationship("DailyProgress", back_populates="user", cascade="all, delete-orphan")
+    following = relationship("Follow", foreign_keys="[Follow.follower_id]", backref="follower", cascade="all, delete-orphan")
+    followers = relationship("Follow", foreign_keys="[Follow.following_id]", backref="following", cascade="all, delete-orphan")
+    reports = relationship("Report", back_populates="reporter", foreign_keys="[Report.reporter_id]")
+    comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
+
 
     @hybrid_property
     def follower_count(self):
@@ -43,7 +49,6 @@ class User(Base):
     @hybrid_property
     def following_count(self):
         return len(self.following)
-
 
 forum_tags = Table(
     "forum_tags",
@@ -109,9 +114,15 @@ class Post(Base):
         secondary=post_post_tags,
         back_populates="posts"
     )
-    images = relationship("PostImage", back_populates="post")
-    likes = relationship("Like", back_populates="post")
+    created_at = Column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=text('now()')
+    )
+    images = relationship("PostImage", back_populates="post", cascade="all, delete-orphan")
+    likes = relationship("Like", back_populates="post", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
+    reports = relationship("Report", back_populates="post", cascade="all, delete-orphan")
 
 class PostImage(Base):
     __tablename__ = "post_images"
@@ -175,10 +186,34 @@ class Comment(Base):
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
     post_id = Column(Integer, ForeignKey("post.pid", ondelete="CASCADE"), nullable=False)
     username = Column(String, nullable=False)
-    user = relationship("User")
+    user = relationship("User", back_populates="comments")
     post = relationship("Post", back_populates="comments")
-
     files = relationship("CommentFile", back_populates="comment", cascade="all, delete-orphan")
+
+class Report(Base):
+    __tablename__ = "reports"
+
+    rid = Column(Integer, primary_key=True, index=True)
+
+    post_id = Column(Integer, ForeignKey("post.pid"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.uid"), nullable=True)
+
+    reporter_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
+    report_type = Column(String, nullable=False)
+    reason = Column(String, nullable=False)
+    status = Column(String, default="pending")
+
+    created_at = Column(
+        TIMESTAMP(timezone=True),
+        nullable=False,
+        server_default=text('now()')
+    )
+
+    post = relationship("Post", back_populates="reports", foreign_keys=[post_id])
+    reported_user = relationship("User", foreign_keys=[user_id])
+    reporter = relationship("User", back_populates="reports", foreign_keys=[reporter_id])
+
+
     
 class CommentFile(Base):
     __tablename__ = "comment_files"
@@ -237,3 +272,26 @@ class ChatAttachment(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     message = relationship("ChatMessage", back_populates="attachments")
     
+class Notification(Base):
+    __tablename__ = "notifications"
+    id = Column(Integer, primary_key=True)
+    title = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    sender_id = Column(Integer, ForeignKey("users.uid"), nullable=True)
+    receiver_id = Column(Integer, nullable=True)
+    target_role = Column(String, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+    is_read = Column(Boolean, default=False)
+
+
+class NotificationRead(Base):
+    __tablename__ = "notification_reads"
+
+    id = Column(Integer, primary_key=True)
+    notification_id = Column(Integer, ForeignKey("notifications.id"))
+    user_id = Column(Integer, ForeignKey("users.uid"))
+    read_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    notification = relationship("Notification", backref="reads")
+    user = relationship("User")
+

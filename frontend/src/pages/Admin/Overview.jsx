@@ -25,74 +25,48 @@ export default function Overview() {
     // เก็บจำนวนผู้ใช้
     const [userCount, setUserCount] = useState(0);
     const [numPosts, setNumPosts] = useState(0);
-    const [numReports, setNumReports] = useState(0);
-    const [numRepostsPost, setNumRepostsPost] = useState(0); 
+    const [reportedPosts, setReportedPosts] = useState(0);
+    const [reportedUsers, setReportedUsers] = useState(0);
+    const [universityData, setUniversityData] = useState([]);
     // State สำหรับจัดการ Loading
     const [isLoading, setIsLoading] = useState(true);
-    // use useEffect for call API Backend
-
-    // useEffect(() => {
-    //     // assume http://backend-api.com/users  is url of API our wed
-    //     const API_URL = "http://backend-api.com/users";
-
-    //     async function fetchUsers() {
-    //         try{
-    //             // หยุดรอ ให้การแปลงข้อมูลเสร็จสมบูรณ์เสียก่อน
-    //             const response = await fetch(API_URL);
-                 
-    //             // check that response it OK (ได้ข้อมูลกับมาแล้ว) or not
-    //             if (!response.ok) {
-    //                 throw new Error(`HTTP error! Status: ${response.status}`);
-    //             }
-
-    //             const data = await response.json();
-
-    //             setNumUsers(data.totalUser || 0);
-    //             // || 0 if result not be num > 0 the output will show
-    //             setNumPosts(data.totalPosts || 0);
-    //             setNumReports(data.reportedPostsCount || 0);
-    //             setNumRepostsPost(data.totalReposts || 0);
-    //         }
-    //         catch (error) {
-    //             // แจ้งเตือนเมื่อเกิดข้อผิดพลาด
-    //             // console.error("Error fetching user data:", error);
-    //             console.error("Error fetching metrics data:", error);
-    //             setUserCount('Error');
-    //             setNumPosts('Error');
-    //             setNumReports('Error');
-    //             setNumRepostsPost('Error');
-    //         }
-    //         finally{
-    //             // สิ้นสุดสถานะ Loading ไม่ว่าจะสำเร็จหรือล้มเหลว
-    //             setIsLoading(false);
-    //         }
-    //     }
-    //     fetchUsers();
-    // }, []); // Array ว่าง [] หมายถึงให้รัน Effect นี้เพียงครั้งเดียวหลังการ Render ครั้งแรก
 
     useEffect(() => {
-        const fetchMetrics = async () => {
-          try {
-            // mock data for dev
-            await new Promise(r => setTimeout(r, 200));
-            const data = { totalUser: 1280, totalPosts: 340, reportedPostsCount: 22, totalReposts: 58 };
-    
-            setUserCount(data.totalUser);
-            setNumPosts(data.totalPosts);
-            setNumReports(data.reportedPostsCount);
-            setNumRepostsPost(data.totalReposts);
-          } catch (e) {
-            console.error("Error fetching metrics data:", e);
+        const fetchStats = async () => {
+        try {
+            const response = await fetch("http://127.0.0.1:8000/admin/stats");
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            setUserCount(data.user_count || 0);
+            setNumPosts(data.post_count || 0);
+            setReportedPosts(data.reported_post_count || 0);
+            setReportedUsers(data.reported_user_count || 0);
+
+            const formatted = data.users_by_university.map((entry) => ({
+            name: entry.university || "Unknown",
+            value: entry.count
+            }));
+
+            setUniversityData(formatted);
+        } catch (error) {
+            console.error("Error fetching stats:", error);
             setUserCount("Error");
             setNumPosts("Error");
-            setNumReports("Error");
-            setNumRepostsPost("Error");
-          } finally {
+            setReportedPosts("Error");
+            setReportedUsers("Error");
+            setUniversityData([]);
+        } finally {
             setIsLoading(false);
-          }
-        };
-        fetchMetrics();
-      }, []);
+        }
+    };
+
+    fetchStats();
+  }, []);
+
 
     return(
         <div className="flex p-2 gap-4">
@@ -178,10 +152,10 @@ export default function Overview() {
 
                     <div className="w-[28vw] h-[20vh] bg-[#fdfaf6] rounded-xl shadow-2xl">
                         <div className="flex flex-col h-full mb-4 ml-4">
-                            <h1 className="mt-4 text-xl">Number of report posts</h1>
+                            <h1 className="mt-4 text-xl">Number of reported posts</h1>
                             <div className="flex justify-center items-center h-full -mt-6">
                                 <div className="text-6xl font-bold">
-                                    {isLoading ? "..." : numRepostsPost}
+                                    {isLoading ? "..." : reportedPosts}
                                 </div>
                             </div>
                         </div>
@@ -189,10 +163,10 @@ export default function Overview() {
 
                     <div className="w-[28vw] h-[20vh] bg-[#fdfaf6] rounded-xl shadow-2xl">
                         <div className="flex flex-col h-full mt-4 ml-4">
-                            <h1 className="mt-4 text-xl">Number of report users</h1>
+                            <h1 className="mt-4 text-xl">Number of reported users</h1>
                             <div className="flex justify-center items-center h-full -mt-6">
                                 <div className="text-6xl font-bold">
-                                    {isLoading ? "..." : numReports}
+                                    {isLoading ? "..." : reportedUsers}
                                 </div>
                             </div>
                         </div>
