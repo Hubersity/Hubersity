@@ -1,13 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..models import Follow, User
+from ..models import Follow, User, Notification
 from ..oauth2 import get_current_user 
+from .notification import create_notification_template
 
 router = APIRouter(prefix="/follow", tags=["follow"])
 
 @router.post("/{user_id}")
-def follow_user(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def follow_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     if user_id == current_user.uid:
         raise HTTPException(status_code=400, detail="You cannot follow yourself")
 
@@ -21,8 +26,26 @@ def follow_user(user_id: int, db: Session = Depends(get_db), current_user: User 
 
     new_follow = Follow(follower_id=current_user.uid, following_id=user_id)
     db.add(new_follow)
+
+    noti_payload = {
+        "title": "Follow",
+        "receiver_id": user_id,
+        "target_role": "user",
+        "message": f"{current_user.username} started following you"
+    }
+
+    try:
+        create_notification_template(
+            db=db,
+            current_user=current_user,
+            payload_data=noti_payload
+        )
+    except Exception as e:
+        print(f"Error creating follow notification: {e}")
+
     db.commit()
     return {"message": "Followed successfully"}
+
 
 @router.delete("/{user_id}")
 def unfollow_user(user_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -31,6 +54,15 @@ def unfollow_user(user_id: int, db: Session = Depends(get_db), current_user: Use
         raise HTTPException(status_code=404, detail="You are not following this user")
 
     db.delete(follow)
+
+    noti = db.query(Notification).filter_by(
+        title="Follow",
+        sender_id=current_user.uid,
+        receiver_id=user_id
+    ).first()
+    if noti:
+        db.delete(noti)
+
     db.commit()
     return {"message": "Unfollowed successfully"}
 

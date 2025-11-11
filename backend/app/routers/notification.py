@@ -1,6 +1,6 @@
 from fastapi import status, HTTPException, Depends, APIRouter, UploadFile, File
 from datetime import timedelta
-from sqlalchemy import func, distinct, desc
+from sqlalchemy import func, distinct, desc, or_, and_
 from sqlalchemy.orm import Session
 from .. import models, schemas, utils, oauth2
 from ..database import get_db
@@ -163,10 +163,15 @@ def get_my_notifications(
         ).order_by(models.Notification.created_at.desc()).all()
     else:
         notifications = db.query(models.Notification).filter(
-            (models.Notification.target_role == target_role) and
-            (models.Notification.receiver_id == current_user.uid) |
-            (models.Notification.title == "All")
-        ).order_by(models.Notification.created_at.desc()).all()
+        or_(
+            and_(
+                models.Notification.target_role == target_role,
+                models.Notification.receiver_id == current_user.uid
+            ),
+            models.Notification.title == "All"
+        )
+    ).order_by(models.Notification.created_at.desc()).all()
+
 
     # Annotate each with is_read
     result = []
