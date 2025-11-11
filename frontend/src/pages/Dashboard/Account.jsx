@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Camera, GraduationCap, Lock, Globe, Calendar } from "lucide-react";
+import { Camera, GraduationCap, Lock, Globe, Calendar, Edit2, Trash2 } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker-fix.css";
@@ -16,31 +16,29 @@ export default function Account() {
   const [username, setUsername] = useState("");
   const [followers, setFollowers] = useState(0);
   const [following, setFollowing] = useState(0);
-
   const [file, setFile] = useState(null);
+  const [myPosts, setMyPosts] = useState([]);
+  const [editingPost, setEditingPost] = useState(null);
+  const [deletingPost, setDeletingPost] = useState(null);
+  const [editContent, setEditContent] = useState("");
 
-  // 🧠 ดึงข้อมูลผู้ใช้จาก backend
+  // ดึงข้อมูลผู้ใช้ + โพสต์ของตัวเอง
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchData = async () => {
       try {
         const currentKey = localStorage.getItem("currentUserKey");
         const authData = currentKey
           ? JSON.parse(localStorage.getItem(currentKey) || "{}")
           : {};
 
-        if (!authData?.token) {
-          console.warn("No token found. Please log in again.");
-          return;
-        }
+        if (!authData?.token) return;
 
+        // โหลดข้อมูล user
         const res = await fetch(`${API_URL}/users/me`, {
           headers: { Authorization: `Bearer ${authData.token}` },
         });
-
         if (!res.ok) throw new Error("Failed to fetch user data");
-
         const data = await res.json();
-        console.log("Loaded user:", data);
 
         setUsername(data.username);
         setName(data.name || "");
@@ -55,15 +53,27 @@ export default function Account() {
             ? `${API_URL}${data.profile_image}`
             : "/images/default-avatar.png"
         );
+
+        // โหลดโพสต์ของตัวเอง (ยกเว้นพวกจับเวลา)
+        const postsRes = await fetch(`${API_URL}/posts/me`, {
+          headers: { Authorization: `Bearer ${authData.token}` },
+        });
+        if (postsRes.ok) {
+          const postsData = await postsRes.json();
+          const filtered = postsData.filter(
+            (p) => !p.category?.toLowerCase().includes("time")
+          );
+          setMyPosts(filtered);
+        }
       } catch (err) {
         console.error("Error loading profile:", err);
       }
     };
 
-    fetchUser();
+    fetchData();
   }, []);
 
-  // 🧮 คำนวณอายุ
+  // คำนวณอายุ
   const calculateAge = (birth) => {
     if (!birth) return "";
     const b = new Date(birth);
@@ -74,7 +84,7 @@ export default function Account() {
     return isNaN(age) ? "" : age;
   };
 
-  // 📸 เปลี่ยนรูปโปรไฟล์ (preview ก่อน)
+  // เปลี่ยนรูปโปรไฟล์ (preview ก่อน)
   const handleImageChange = (e) => {
     const f = e.target.files?.[0];
     if (f) {
@@ -83,7 +93,7 @@ export default function Account() {
     }
   };
 
-  // ✅ อัปเดตโปรไฟล์
+  // อัปเดตโปรไฟล์
   const handleSave = async () => {
     try {
       const currentKey = localStorage.getItem("currentUserKey");
@@ -109,12 +119,10 @@ export default function Account() {
           body: formData,
         });
 
-        if (!uploadRes.ok)
-          throw new Error("Image upload failed. Please try again.");
+        if (!uploadRes.ok) throw new Error("Image upload failed.");
 
         const uploadData = await uploadRes.json();
         uploadedImagePath = uploadData.file_path;
-        console.log("Uploaded image:", uploadedImagePath);
       }
 
       // 🔹 ส่งข้อมูลอัปเดตทั่วไป
@@ -135,28 +143,120 @@ export default function Account() {
       });
 
       if (!res.ok) throw new Error("Failed to update profile");
-
-      // ✅ อัปเดตใน localStorage
-      const updatedUser = {
-        ...authData,
-        name,
-        university,
-        profile_image: uploadedImagePath || authData.profile_image,
-      };
-
-      localStorage.setItem(currentKey, JSON.stringify(updatedUser));
-
-      alert("✅ Profile updated successfully!");
+      alert("Profile updated successfully!");
       window.location.reload();
     } catch (err) {
       console.error("Error updating profile:", err);
-      alert("❌ Failed to update profile.");
+      alert("Failed to update profile.");
     }
   };
 
+  // ลบโพสต์
+  const handleDeletePost = async (pid) => {
+    if (!window.confirm("Are you sure you want to delete this post?")) return;
+    try {
+      const currentKey = localStorage.getItem("currentUserKey");
+      const authData = JSON.parse(localStorage.getItem(currentKey) || "{}");
+      const res = await fetch(`${API_URL}/posts/${pid}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${authData.token}` },
+      });
+      if (res.ok) {
+        setMyPosts((prev) => prev.filter((p) => p.pid !== pid));
+      }
+    } catch (err) {
+      console.error("Error deleting post:", err);
+    }
+  };
+
+  // แก้ไขโพสต์
+  const handleEditPost = async (post) => {
+    const newContent = prompt("Edit your post:", post.post_content);
+    if (!newContent || newContent.trim() === "") return;
+    try {
+      const currentKey = localStorage.getItem("currentUserKey");
+      const authData = JSON.parse(localStorage.getItem(currentKey) || "{}");
+      const res = await fetch(`${API_URL}/posts/${post.pid}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authData.token}`,
+        },
+        body: JSON.stringify({
+          post_content: newContent,
+          forum_id: post.forum_id,
+          tags: post.tags?.map((t) => t.ptid) || [],
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMyPosts((prev) =>
+          prev.map((p) => (p.pid === data.pid ? data : p))
+        );
+      }
+    } catch (err) {
+      console.error("Error editing post:", err);
+    }
+  };
+
+  const formatTimeAgo = (dateStr) => {
+    const diff = (new Date() - new Date(dateStr)) / 1000;
+    if (diff < 60) return `${Math.floor(diff)} sec ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
+    return `${Math.floor(diff / 86400)} days ago`;
+  };
+
+  const openEditModal = (post) => {
+    setEditingPost(post);
+    setEditContent(post.post_content);
+  };
+
+  const openDeleteModal = (post) => {
+    setDeletingPost(post);
+  };
+
+  const confirmEdit = async () => {
+    if (!editContent.trim()) return alert("Please enter content.");
+    try {
+      const currentKey = localStorage.getItem("currentUserKey");
+      const authData = JSON.parse(localStorage.getItem(currentKey) || "{}");
+      await fetch(`${API_URL}/posts/${editingPost.pid}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authData.token}`,
+        },
+        body: JSON.stringify({ post_content: editContent }),
+      });
+      alert("Post updated!");
+      setEditingPost(null);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const currentKey = localStorage.getItem("currentUserKey");
+      const authData = JSON.parse(localStorage.getItem(currentKey) || "{}");
+      await fetch(`${API_URL}/posts/${deletingPost.pid}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authData.token}`,
+        },
+      });
+      alert("Post deleted!");
+      setDeletingPost(null);
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    }
+  };
   return (
-    <div className="w-full h-[calc(100vh-64px)] flex justify-center items-center bg-[#fff9ef] overflow-hidden">
-      <div className="bg-[#fff3e6] w-[80%] max-w-5xl rounded-2xl shadow-lg p-10 flex flex-row gap-10 items-center justify-center relative">
+    <div className="w-full min-h-[calc(100vh-64px)] flex flex-col items-center bg-[#fff9ef] overflow-y-auto pb-20">
+      <div className="bg-[#fff3e6] w-[80%] max-w-5xl rounded-2xl shadow-lg p-10 flex flex-row gap-10 items-center justify-center relative mt-10">
         {/* โปรไฟล์ */}
         <div className="flex flex-col items-center justify-center w-[40%] relative">
           <div className="w-44 h-44 rounded-full overflow-hidden border-4 border-[#d1d1d1] bg-white relative">
@@ -186,8 +286,8 @@ export default function Account() {
             User Name : {username || "Loading..."}
           </p>
           <p className="text-sm text-gray-600 mt-1">
-            Following :{" "}
-            <span className="font-medium text-black">{following}</span> | Follower :{" "}
+            Following:{" "}
+            <span className="font-medium text-black">{following}</span> | Follower:{" "}
             <span className="font-medium text-black">{followers}</span>
           </p>
         </div>
@@ -212,9 +312,7 @@ export default function Account() {
           {/* Birthdate */}
           <div className="flex items-end gap-1">
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">
-                Birthdate :
-              </label>
+              <label className="block text-sm font-medium mb-1">Birthdate :</label>
               <div className="relative">
                 <DatePicker
                   selected={birthdate}
@@ -311,6 +409,237 @@ export default function Account() {
           </div>
         </div>
       </div>
+
+      {/* My Posts Section */}
+      <div className="mt-10 bg-[#fff3e6] rounded-2xl w-[80%] max-w-5xl p-8 shadow-lg border border-[#f1dcc9]">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">My Posts</h3>
+
+        {myPosts.length === 0 ? (
+          <p className="text-gray-500 italic">You haven’t posted anything yet.</p>
+        ) : (
+          myPosts.map((p) => (
+        <div
+          key={p.pid}
+          className="bg-white/80 rounded-lg p-4 border border-[#f7e8c2] shadow-sm mb-4"
+        >
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-gray-800 font-medium">{p.post_content}</p>
+              <p className="text-[12px] text-gray-500 mt-1">
+                {new Date(p.created_at).toLocaleString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
+            <div className="flex justify-end gap-3 mt-2">
+              <button
+                onClick={() => openEditModal(p)}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm bg-[#E3F2FD] hover:bg-[#BBDEFB] text-[#1976D2] rounded-lg transition"
+              >
+                <Edit2 size={14} />
+                Edit
+              </button>
+              <button
+                onClick={() => openDeleteModal(p)}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm bg-[#FDECEA] hover:bg-[#F8D7DA] text-[#D32F2F] rounded-lg transition"
+              >
+                <Trash2 size={14} />
+                Delete
+              </button>
+            </div>
+          </div>
+
+              {/* รูปภาพ / ไฟล์แนบ */}
+              {p.images && p.images.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {p.images.map((img, i) =>
+                    img.path.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                      <img
+                        key={i}
+                        src={`${API_URL}${img.path}`}
+                        alt="attachment"
+                        className="w-24 h-24 object-cover rounded-md border"
+                      />
+                    ) : (
+                      <a
+                        key={i}
+                        href={`${API_URL}${img.path}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded hover:bg-gray-200"
+                      >
+                        📎 {img.path.split("/").pop()}
+                      </a>
+                    )
+                  )}
+                </div>
+              )}
+
+              {/* คอมเมนต์ */}
+              {p.comments && p.comments.length > 0 && (
+                <div className="mt-3 border-t border-[#f0e0c8] pt-2">
+                  <h4 className="text-sm font-semibold text-gray-800 mb-2">
+                    Comments
+                  </h4>
+                  <div className="flex flex-col gap-2">
+                    {p.comments.map((c) => (
+                      <div
+                        key={c.cid}
+                        className="flex items-start gap-2 bg-white/60 rounded-md p-2 border border-[#f7e8c2]"
+                      >
+                        <img
+                          src={
+                            c.profile_image
+                              ? `${API_URL}${c.profile_image}`
+                              : "/images/default-avatar.png"
+                          }
+                          alt={c.username}
+                          className="w-7 h-7 rounded-full border border-gray-200"
+                        />
+                        <div>
+                          <p className="text-sm text-gray-800">
+                            <span className="font-semibold text-black mr-1">
+                              {c.username}
+                            </span>
+                            {c.content}
+                          </p>
+
+                          {/* ไฟล์แนบในคอมเมนต์ */}
+                          {c.files && c.files.length > 0 && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {c.files.map((f, i) =>
+                                f.file_type === "image" ? (
+                                  <img
+                                    key={i}
+                                    src={`${API_URL}${f.path}`}
+                                    alt="comment file"
+                                    className="w-14 h-14 object-cover rounded-md border"
+                                  />
+                                ) : (
+                                  <a
+                                    key={i}
+                                    href={`${API_URL}${f.path}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-gray-600 hover:underline"
+                                  >
+                                    📎 {f.path.split("/").pop()}
+                                  </a>
+                                )
+                              )}
+                            </div>
+                          )}
+                          <p className="text-[11px] text-gray-500">
+                            {formatTimeAgo(c.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+      {/* Edit Modal (เหมือนหน้า Board เป๊ะ) */}
+      {editingPost && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* overlay */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+            onClick={() => setEditingPost(null)}
+          />
+          {/* modal */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 border border-gray-100 overflow-hidden animate-fadeIn">
+            <div className="px-5 py-4 border-b bg-gradient-to-r from-green-50 to-amber-50 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-800">Edit Post</h3>
+              <button
+                onClick={() => setEditingPost(null)}
+                className="text-gray-500 hover:text-red-500 p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5">
+              <textarea
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                rows={4}
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-400"
+              />
+            </div>
+
+            <div className="px-5 py-3 bg-gray-50 border-t flex justify-end gap-3">
+              <button
+                onClick={() => setEditingPost(null)}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmEdit}
+                className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal (เหมือนหน้า Board เป๊ะ) */}
+      {deletingPost && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* overlay */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+            onClick={() => setDeletingPost(null)}
+          />
+          {/* modal */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 border border-gray-100 overflow-hidden animate-fadeIn">
+            <div className="px-5 py-4 border-b bg-gradient-to-r from-rose-50 to-amber-50 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-800">Delete Post</h3>
+              <button
+                onClick={() => setDeletingPost(null)}
+                className="text-gray-500 hover:text-red-500 p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-5 text-center">
+              <p className="text-gray-700 mb-5">
+                Are you sure you want to delete this post?
+                <br />
+                <span className="text-gray-500 text-sm">
+                  This action cannot be undone.
+                </span>
+              </p>
+            </div>
+
+            <div className="px-5 py-4 bg-gray-50 border-t flex justify-end gap-3">
+              <button
+                onClick={() => setDeletingPost(null)}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

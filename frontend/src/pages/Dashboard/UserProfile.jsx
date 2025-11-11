@@ -1,12 +1,13 @@
-// ✅ UserProfile.jsx (เวอร์ชันแก้ไขไฟนอล)
+// UserProfile.jsx (เวอร์ชันแก้ไขไฟนอล)
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Lock, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Flag } from "lucide-react";
 
 const API_URL = "http://localhost:8000";
 
-// 🕒 ฟังก์ชันแสดงเวลาแบบ Board
+// ฟังก์ชันแสดงเวลาแบบ Board
 function formatTimeAgo(createdAt) {
   if (!createdAt) return "--";
 
@@ -43,8 +44,38 @@ export default function UserProfile() {
   const [authData, setAuthData] = useState(null);
   const [selectedPost, setSelectedPost] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportPostId, setReportPostId] = useState(null);
+  const [selectedReason, setSelectedReason] = useState("");
+  const [extraDetails, setExtraDetails] = useState("");
 
-  // ✅ โหลด token จาก localStorage
+  const openReport = (pid) => {
+    setReportPostId(pid);
+    setReportOpen(true);
+  };
+
+  const submitReport = async (reason) => {
+    if (!authData?.token) return;
+    try {
+      const form = new FormData();
+      form.append("reason", reason);
+
+      const res = await fetch(`${API_URL}/posts/${reportPostId}/report`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${authData.token}` },
+        body: form,
+      });
+
+      if (!res.ok) throw new Error("Failed to submit report");
+      alert("Report submitted successfully!");
+      setReportOpen(false);
+    } catch (err) {
+      console.error("Error submitting report:", err);
+      alert("Failed to submit report");
+    }
+  };
+
+  // โหลด token จาก localStorage
   useEffect(() => {
     const loadAuth = () => {
       const currentKey = localStorage.getItem("currentUserKey");
@@ -65,7 +96,7 @@ export default function UserProfile() {
     loadAuth();
   }, [userId, navigate]);
 
-  // ✅ ดึงข้อมูล user + posts
+  // ดึงข้อมูล user + posts
   useEffect(() => {
     if (!authData?.token) return;
 
@@ -94,7 +125,7 @@ export default function UserProfile() {
           setStudyTime(localStudy);
         }
       } catch (err) {
-        console.error("❌ Error fetching user data:", err);
+        console.error("Error fetching user data:", err);
         setError("Failed to load user data.");
       }
     };
@@ -119,7 +150,7 @@ export default function UserProfile() {
 
   return (
     <div className="flex flex-col items-center bg-white min-h-[calc(100vh-64px)] py-10 relative">
-      {/* 🟩 กล่องโปรไฟล์ */}
+      {/* กล่องโปรไฟล์ */}
       <div className="bg-white shadow-lg rounded-[24px] w-[90%] max-w-6xl px-12 py-12 text-center">
         <div className="flex justify-center gap-5 mb-6">
           {["Follow", "Block", "Report"].map((btn, i) => (
@@ -166,7 +197,7 @@ export default function UserProfile() {
         </div>
       </div>
 
-      {/* 🟨 ส่วนล่าง */}
+      {/* ส่วนล่าง */}
       {user.privacy === "private" ? (
         <div className="mt-10 flex flex-col items-center justify-center bg-[#efecec] p-14 rounded-[22px] text-gray-700 shadow-inner w-[92%] max-w-6xl min-h-[200px]">
           <Lock size={56} className="text-gray-500 mb-3" />
@@ -186,12 +217,27 @@ export default function UserProfile() {
                     className="bg-[#fffaf3] p-4 rounded-lg mb-3 border border-[#f2e0ca] hover:shadow-md transition-all cursor-pointer"
                     onClick={() => setSelectedPost(p)}
                   >
-                    <div className="flex justify-between items-start">
-                      <p className="text-gray-800 font-medium">{p.post_content}</p>
-                      <span className="text-sm text-gray-500 mt-[2px]">
-                        {formatTimeAgo(p.created_at)}
-                      </span>
-                    </div>
+                <div className="flex justify-between items-start">
+                  <p className="text-gray-800 font-medium">{p.post_content}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-500 mt-[2px]">
+                      {formatTimeAgo(p.created_at)}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openReport(p.pid);
+                      }}
+                      className="flex items-center gap-1 px-3 py-[4px] rounded-full border border-gray-300 
+                                bg-white/80 text-gray-700 text-sm font-medium shadow-sm 
+                                hover:bg-[#fff4e5] hover:text-[#b45309] hover:border-[#facc15] 
+                                transition-all duration-200"
+                    >
+                      <Flag size={14} strokeWidth={2} />
+                      Report
+                    </button>
+                  </div>
+                </div>
 
                     {/* แสดงรูปหรือไฟล์แนบ */}
                     {p.images && p.images.length > 0 && (
@@ -223,6 +269,80 @@ export default function UserProfile() {
                         )}
                       </div>
                     )}
+                    {/* แสดงคอมเมนต์ใต้โพสต์ */}
+                    {p.comments && p.comments.length > 0 && (
+                      <div className="mt-3 border-t border-[#f0e0c8] pt-3">
+                        <h4 className="text-sm font-semibold text-gray-800 mb-2">Comments</h4>
+
+                        <div className="flex flex-col gap-3">
+                          {p.comments.map((c, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-start gap-3 bg-white/80 rounded-lg p-3 border border-[#f7e8c2] shadow-sm"
+                            >
+                              {/* โปรไฟล์คอมเมนต์ */}
+                              <img
+                                src={
+                                  c.profile_image
+                                    ? `${API_URL}${c.profile_image}`
+                                    : "/images/default-avatar.png"
+                                }
+                                alt={c.username}
+                                className="w-8 h-8 rounded-full object-cover border border-gray-200 cursor-pointer"
+                                onClick={() => navigate(`/user/${c.user_id}`)}
+                              />
+
+                              {/* เนื้อหาคอมเมนต์ */}
+                              <div className="flex-1">
+                                <p className="text-sm text-gray-800">
+                                  <span
+                                    className="font-semibold text-black mr-1 hover:underline cursor-pointer"
+                                    onClick={() => navigate(`/user/${c.user_id}`)}
+                                  >
+                                    {c.username}
+                                  </span>
+                                  {c.content}
+                                </p>
+
+                                {/* แสดงไฟล์แนบในคอมเมนต์ */}
+                                {c.files && c.files.length > 0 && (
+                                  <div className="mt-2 flex flex-wrap gap-2">
+                                    {c.files.map((f, i) =>
+                                      f.file_type === "image" ? (
+                                        <img
+                                          key={i}
+                                          src={`${API_URL}${f.path}`}
+                                          alt="comment attachment"
+                                          className="w-24 h-24 object-cover rounded-md border border-gray-200 cursor-pointer hover:scale-[1.05] transition"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setPreviewImage(`${API_URL}${f.path}`);
+                                          }}
+                                        />
+                                      ) : (
+                                        <a
+                                          key={i}
+                                          href={`${API_URL}${f.path}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded hover:bg-gray-200"
+                                        >
+                                          📎 {f.path.split("/").pop()}
+                                        </a>
+                                      )
+                                    )}
+                                  </div>
+                                )}
+
+                                <p className="text-[11px] text-gray-500 mt-[4px] ml-[2px]">
+                                  {formatTimeAgo(c.created_at)}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </motion.div>
                 ))
               ) : (
@@ -248,7 +368,7 @@ export default function UserProfile() {
         </div>
       )}
 
-      {/* 🪩 Modal ขยายรูปโปรไฟล์ */}
+      {/* Modal ขยายรูปโปรไฟล์ */}
       <AnimatePresence>
         {showModal && (
           <motion.div
@@ -286,7 +406,7 @@ export default function UserProfile() {
         )}
       </AnimatePresence>
 
-      {/* 🪩 Modal แสดงรายละเอียดโพสต์ */}
+      {/* Modal แสดงรายละเอียดโพสต์ */}
       <AnimatePresence>
         {selectedPost && (
           <motion.div
@@ -302,37 +422,39 @@ export default function UserProfile() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.8, opacity: 0, y: 20 }}
               transition={{ type: "spring", stiffness: 150, damping: 15 }}
-              className="relative bg-white/90 backdrop-blur-xl border border-[#e0e0e0]/60 rounded-[24px] shadow-2xl w-[460px] p-8 overflow-hidden"
+              className="relative bg-white/90 backdrop-blur-xl border border-[#e0e0e0]/60 rounded-[24px] shadow-2xl w-[520px] max-h-[85vh] overflow-y-auto p-8"
             >
-              <div className="absolute inset-0 rounded-[24px] bg-gradient-to-br from-[#a6f5c2]/30 via-[#fff5d6]/30 to-[#ffd6d6]/30 pointer-events-none blur-xl opacity-70"></div>
+              <div className="absolute inset-0 rounded-[24px] bg-gradient-to-br from-[#a6f5c2]/30 via-[#fff5d6]/30 to-[#ffd6d6]/30 blur-xl opacity-70 pointer-events-none"></div>
 
-              <motion.div className="relative z-10 text-center">
+              <div className="relative z-10 text-center">
                 <h3 className="text-xl font-semibold text-[#333] mb-4 flex items-center justify-center gap-2">
-                  🪶 Post Detail
+                  Post Detail
                 </h3>
 
-                <p className="text-gray-800 leading-relaxed text-base bg-white/50 rounded-xl px-4 py-3 border border-[#f0e8d8]/70 shadow-inner">
+                {/* เนื้อหาโพสต์ */}
+                <p className="text-gray-800 leading-relaxed text-base bg-white/70 rounded-xl px-4 py-3 border border-[#f0e8d8]/70 shadow-inner">
                   {selectedPost.post_content}
                 </p>
 
+                {/* รูปภาพ / ไฟล์แนบ */}
                 {selectedPost.images && selectedPost.images.length > 0 && (
-                  <div className="mt-4 flex flex-col items-center gap-3">
-                    {selectedPost.images.map((img, idx) =>
+                  <div className="mt-4 flex flex-wrap justify-center gap-3">
+                    {selectedPost.images.map((img, i) =>
                       img.path.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                         <img
-                          key={idx}
+                          key={i}
                           src={`${API_URL}${img.path}`}
                           alt="attachment"
-                          className="w-60 h-60 object-cover rounded-lg shadow-md border cursor-pointer"
+                          className="w-32 h-32 object-cover rounded-md border cursor-pointer hover:scale-[1.05] transition"
                           onClick={() => setPreviewImage(`${API_URL}${img.path}`)}
                         />
                       ) : (
                         <a
-                          key={idx}
+                          key={i}
                           href={`${API_URL}${img.path}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 underline flex items-center gap-2"
+                          className="flex items-center gap-2 px-2 py-1 bg-gray-100 rounded-md text-sm hover:bg-gray-200"
                         >
                           📎 {img.path.split("/").pop()}
                         </a>
@@ -341,6 +463,75 @@ export default function UserProfile() {
                   </div>
                 )}
 
+                {/* คอมเมนต์ */}
+                {selectedPost.comments && selectedPost.comments.length > 0 && (
+                  <div className="mt-6 text-left">
+                    <h4 className="text-sm font-semibold text-gray-800 mb-3">Comments</h4>
+                    <div className="flex flex-col gap-3">
+                      {selectedPost.comments.map((c, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-start gap-3 bg-white/70 rounded-lg p-3 border border-[#f7e8c2] shadow-sm"
+                        >
+                          <img
+                            src={
+                              c.profile_image
+                                ? `${API_URL}${c.profile_image}`
+                                : "/images/default-avatar.png"
+                            }
+                            alt={c.username}
+                            className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                          />
+
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-800">
+                              <span className="font-semibold text-black mr-1">
+                                {c.username}
+                              </span>
+                              {c.content}
+                            </p>
+
+                            {/* ไฟล์แนบในคอมเมนต์ */}
+                            {c.files && c.files.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {c.files.map((f, i) =>
+                                  f.file_type === "image" ? (
+                                    <img
+                                      key={i}
+                                      src={`${API_URL}${f.path}`}
+                                      alt="comment file"
+                                      className="w-20 h-20 object-cover rounded-md border cursor-pointer hover:scale-[1.05] transition"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setPreviewImage(`${API_URL}${f.path}`);
+                                      }}
+                                    />
+                                  ) : (
+                                    <a
+                                      key={i}
+                                      href={`${API_URL}${f.path}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded hover:bg-gray-200"
+                                    >
+                                      📎 {f.path.split("/").pop()}
+                                    </a>
+                                  )
+                                )}
+                              </div>
+                            )}
+
+                            <p className="text-[11px] text-gray-500 mt-[3px] ml-[2px]">
+                              {formatTimeAgo(c.created_at)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* เวลาโพสต์ */}
                 <p className="text-xs text-gray-500 mt-4 italic">
                   {formatTimeAgo(selectedPost.created_at)}
                 </p>
@@ -359,13 +550,13 @@ export default function UserProfile() {
                     Close
                   </motion.button>
                 </motion.div>
-              </motion.div>
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* 🖼️ Modal Zoom รูปภาพ */}
+      {/* Modal Zoom รูปภาพ */}
       <AnimatePresence>
         {previewImage && (
           <motion.div
@@ -391,6 +582,130 @@ export default function UserProfile() {
             >
               <X size={24} />
             </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {reportOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-[3px]"
+              onClick={() => setReportOpen(false)}
+            />
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 20 }}
+              transition={{ type: "spring", stiffness: 150, damping: 20 }}
+              className="relative w-full max-w-lg mx-4 rounded-2xl bg-white shadow-2xl border border-gray-100 overflow-hidden flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-emerald-50 to-amber-50 border-b">
+                <div className="flex items-center gap-2 text-gray-800 font-semibold text-lg">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-5 h-5 text-green-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 3h18M9 3v18m6-18v18"
+                    />
+                  </svg>
+                  Report Post
+                </div>
+                <button
+                  onClick={() => setReportOpen(false)}
+                  className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 space-y-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  Please select a reason for reporting this post:
+                </p>
+
+                {[
+                  {
+                    key: "Harassment",
+                    text: "Harassment (Bullying, discrimination, or targeting a religion, gender, or group.)",
+                  },
+                  {
+                    key: "Sexual Content",
+                    text: "Sexual Content (Sexual, pornographic, or inappropriate material.)",
+                  },
+                  {
+                    key: "Illegal Activity",
+                    text: "Illegal Activity (Promoting illegal actions or services.)",
+                  },
+                  {
+                    key: "Spam",
+                    text: "Spam (Reposting or irrelevant content repeatedly.)",
+                  },
+                  {
+                    key: "Privacy Violation",
+                    text: "Privacy Violation (Sharing personal information or photos of others without consent.)",
+                  },
+                  { key: "Other", text: "Other (Please specify.)" },
+                ].map((r) => (
+                  <label
+                    key={r.key}
+                    className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:border-emerald-300 hover:bg-emerald-50 cursor-pointer transition-all"
+                  >
+                    <input
+                      type="radio"
+                      name="report_reason"
+                      value={r.key}
+                      onChange={() => setSelectedReason(r.key)}
+                      className="mt-1 accent-emerald-500"
+                    />
+                    <span className="text-sm text-gray-700">{r.text}</span>
+                  </label>
+                ))}
+
+                {/* Extra details */}
+                <div className="mt-4">
+                  <label className="block text-sm text-gray-600 mb-1">
+                    Additional details (optional)
+                  </label>
+                  <textarea
+                    rows="3"
+                    placeholder="Describe what happened or any context that helps us review this report."
+                    className="w-full rounded-lg border border-gray-300 p-2 text-sm focus:border-emerald-400 focus:ring-emerald-200 outline-none"
+                    onChange={(e) => setExtraDetails(e.target.value)}
+                  ></textarea>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-3 px-6 py-4 border-t bg-gray-50">
+                <button
+                  onClick={() => setReportOpen(false)}
+                  className="px-5 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-100 text-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => submitReport(selectedReason, extraDetails)}
+                  className="px-5 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow"
+                >
+                  Submit Report
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
