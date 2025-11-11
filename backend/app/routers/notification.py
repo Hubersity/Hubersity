@@ -76,7 +76,23 @@ def get_all_notifications(db: Session = Depends(get_db)):
 
 @router.get("/admin", response_model=List[schemas.NotificationResponse])
 def get_admin_notifications(db: Session = Depends(get_db)):
-    return db.query(models.Notification).filter(models.Notification.target_role == "admin").order_by(models.Notification.created_at.desc()).all()
+    notifications = db.query(models.Notification).filter(
+        models.Notification.target_role == "admin"
+    ).order_by(models.Notification.created_at.desc()).all()
+
+    result = []
+    for noti in notifications:
+        sender = db.query(models.User).filter(models.User.uid == noti.sender_id).first()
+
+        result.append(
+            schemas.NotificationResponse.from_orm(noti).copy(update={
+                "is_read": False,  # Admin view doesn't track read status per user
+                "sender_username": sender.username if sender else None,
+                "sender_avatar": sender.profile_image if sender else None
+            })
+        )
+    return result
+
 
 @router.get("/user/{uid}", response_model=List[schemas.NotificationResponse])
 def get_user_notifications(uid: int, db: Session = Depends(get_db)):
@@ -107,10 +123,20 @@ def get_user_notifications(uid: int, db: Session = Depends(get_db)):
         ).order_by(models.Notification.created_at.desc()).all()
 
     # Annotate each with is_read
-    return [
-        schemas.NotificationResponse.from_orm(noti).copy(update={"is_read": noti.id in read_ids_set})
-        for noti in notifications
-    ]
+    result = []
+    for noti in notifications:
+        sender = db.query(models.User).filter(models.User.uid == noti.sender_id).first()
+
+        result.append(
+            schemas.NotificationResponse.from_orm(noti).copy(update={
+                "is_read": noti.id in read_ids_set,
+                "sender_username": sender.username if sender else None,
+                "sender_avatar": sender.profile_image if sender else None
+            })
+        )
+    return result
+
+
 
 @router.get("/me", response_model=List[schemas.NotificationResponse])
 def get_my_notifications(
@@ -132,20 +158,29 @@ def get_my_notifications(
     if target_role == "admin":
         notifications = db.query(models.Notification).filter(
             (models.Notification.target_role == target_role) |
-            (models.Notification.receiver_id == current_user.uid)
+            (models.Notification.receiver_id == current_user.uid) |
+            (models.Notification.title == "All")
         ).order_by(models.Notification.created_at.desc()).all()
     else:
         notifications = db.query(models.Notification).filter(
             (models.Notification.target_role == target_role) and
             (models.Notification.receiver_id == current_user.uid) |
-            (models.Notification.title == "all")
+            (models.Notification.title == "All")
         ).order_by(models.Notification.created_at.desc()).all()
 
     # Annotate each with is_read
-    return [
-        schemas.NotificationResponse.from_orm(noti).copy(update={"is_read": noti.id in read_ids_set})
-        for noti in notifications
-    ]
+    result = []
+    for noti in notifications:
+        sender = db.query(models.User).filter(models.User.uid == noti.sender_id).first()
+
+        result.append(
+            schemas.NotificationResponse.from_orm(noti).copy(update={
+                "is_read": noti.id in read_ids_set,
+                "sender_username": sender.username if sender else None,
+                "sender_avatar": sender.profile_image if sender else None
+            })
+        )
+    return result
 
 
 

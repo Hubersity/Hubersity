@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
+const API_URL = "http://localhost:8000";
 
 export default function NotificationsAdmin() {
   // mock data สำหรับการแจ้งเตือน (แก้ smart-quote/ให้เป็น string ปกติ)
@@ -7,50 +9,114 @@ export default function NotificationsAdmin() {
       id: 1,
       name: "Skibidi",
       avatar: "/images/Skibidi.png",
-      time: "today",
+      created_at: "2020-11-11T08:30:00Z",
       text: "Skibidi report post user zaza123.",
     },
     {
       id: 2,
       name: "Skibidi",
       avatar: "/images/Skibidi.png",
-      time: "today",
+      created_at: "2025-11-09T09:00:00Z",
       text: "Skibidi and 47 others report post ID 203.",
     },
     {
       id: 3,
       name: "DogDogbodbod34",
       avatar: "/images/dogneverdie.png",
-      time: "yesterday",
+      created_at: "2025-11-10T15:00:00Z",
       text: "DogDogbodbod34 report post ID 205.",
     },
     {
       id: 4,
       name: "Aong12345",
       avatar: "/images/Aong12345.png",
-      time: "this week",
+      created_at: "2025-11-08T12:00:00Z",
       text: "Aong12345 and 102 others report user eiei56.",
     },
     {
       id: 5,
       name: "Pysart",
       avatar: "/images/Pysart.png",
-      time: "this week",
+      created_at: "2025-11-07T18:00:00Z",
+      text: "Pysart and 23 others report post ID 202.",
+    },
+    {
+      id: 6,
+      name: "Gege",
+      avatar: "/images/Pysart.png",
+      created_at: "2025-11-10T18:00:00Z",
       text: "Pysart and 23 others report post ID 202.",
     },
   ]);
 
-  // แยกกลุ่มตามเวลา
-  const grouped = notifications.reduce((acc, cur) => {
-    acc[cur.time] = acc[cur.time] ? [...acc[cur.time], cur] : [cur];
-    return acc;
-  }, {});
+  function groupByDate(notifications) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
 
-  // กำหนดลำดับที่ต้องการแสดง (optional)
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
+
+    const formatDate = (date) => date.toISOString().split("T")[0];
+
+    const grouped = {};
+
+    notifications.forEach((n) => {
+      const created = new Date(n.created_at);
+      const dateStr = formatDate(created);
+
+      if (created >= today && created < new Date(today.getTime() + 86400000)) {
+        grouped["today"] = grouped["today"] ? [...grouped["today"], n] : [n];
+      } else if (created >= yesterday && created < today) {
+        grouped["yesterday"] = grouped["yesterday"] ? [...grouped["yesterday"], n] : [n];
+      } else if (created >= startOfWeek && created <= endOfWeek) {
+        grouped["this week"] = grouped["this week"] ? [...grouped["this week"], n] : [n];
+      } else {
+        grouped[dateStr] = grouped[dateStr] ? [...grouped[dateStr], n] : [n];
+      }
+    });
+
+    return grouped;
+  }
+
+  // แยกกลุ่มตามเวลา
+  const grouped = groupByDate(notifications);
   const order = ["today", "yesterday", "this week"];
-  const sections = order.filter((k) => grouped[k]).concat(
-    Object.keys(grouped).filter((k) => !order.includes(k))
-  );
+  const sections = order
+    .filter((k) => grouped[k])
+    .concat(Object.keys(grouped).filter((k) => !order.includes(k)).sort().reverse());
+
+
+  useEffect(() => {
+    async function fetchAdminNotifications() {
+      try {
+        const response = await fetch(`${API_URL}/notification/admin`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const raw = await response.json();
+
+        const formatted = raw.map((n) => ({
+          id: n.id,
+          name: n.sender_username,
+          avatar: n.sender_avatar ? `${API_URL}${n.sender_avatar}` : "/images/default-avatar.png",
+          created_at: n.created_at,
+          text: n.message,
+          is_read: n.is_read || false
+        }));
+
+        setNotifications(formatted);
+      } catch (err) {
+        console.error("Error fetching notifications:", err);
+      }
+    }
+
+    fetchAdminNotifications();
+  }, []);
 
   return (
     <div className="flex flex-col w-full h-[calc(100vh-64px)] bg-white overflow-hidden">

@@ -179,6 +179,8 @@ class NotificationResponse(BaseModel):
     message: Optional[str]
     sender_id: Optional[int]
     receiver_id: Optional[int]
+    sender_username: Optional[str] = None
+    sender_avatar: Optional[str] = None
     target_role: Optional[str]
     created_at: datetime
     is_read: Optional[bool] = False
