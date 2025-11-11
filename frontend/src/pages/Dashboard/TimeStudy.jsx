@@ -117,19 +117,19 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
         headers: { Authorization: `Bearer ${token}` },
       });
   
-      if (res.ok) {
-        const data = await res.json(); // รวม commit แล้ว
-        const secs = data.total_seconds ?? (data.total_minutes || 0) * 60;
-        setTime(secs); // แค่ setTime; effect จะ sync ให้เอง
-      } else {
-        console.error("Stop failed", res.status);
+      if (!res.ok) {
+        const txt = await res.text(); // เผื่อดู error
+        console.error("Stop failed", res.status, txt);
+        return;
       }
+  
+      const data = await res.json();                       // ← ยอดที่ commit แล้ว
+      const secs = data.total_seconds ?? (data.total_minutes || 0) * 60;
+      setTime(secs);                                      // ← time ใหม่จะยิง onSyncSeconds ให้อัตโนมัติ
+      await onAfterStop?.();                              // ← เรียกให้ parent รีโหลด calendar ทันที
     } catch (e) {
       console.error("Pause error:", e);
     }
-  
-    // ✅ ดีเฟอร์เพื่อเลี่ยง warning update ข้าม component
-    setTimeout(() => onAfterStop?.(), 0);
   };
 
   // picture system
@@ -218,6 +218,15 @@ function Text_InfoHour() {
   );
 }
 
+// helpers
+const getTodayStr = () => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
 function Calendar() {
   const currentDate = new Date();
   const [month, setMonth] = useState(currentDate.getMonth() + 1);
@@ -228,6 +237,9 @@ function Calendar() {
   const [userObj, setUserObj] = useState(null);
   const [token, setToken] = useState(null);
 
+  // const [todaySeconds, setTodaySeconds] = useState(0);
+
+  const [todayStr, setTodayStr] = useState(getTodayStr());
   const [todaySeconds, setTodaySeconds] = useState(0);
 
   useEffect(() => {
@@ -237,24 +249,6 @@ function Calendar() {
     setUserObj(u);
     setToken(t);
   }, []);
-
-  useEffect(() => {
-    const tickToMidnight = () => {
-      const now = new Date();
-      const next = new Date(now);
-      next.setHours(24, 0, 0, 0); // เที่ยงคืนถัดไป
-      return next.getTime() - now.getTime();
-    };
-  
-    let t = setTimeout(async () => {
-      // 1) ถ้ามี session กำลังวิ่ง → ให้ CountTime หยุดอัตโนมัติ
-      // (ถ้ายังไม่มีระบบ onAutoStop ก็แค่ reload calendar พอ)
-      await fetchCalendar(); // รีโหลดสีทั้งเดือน (วันที่เก่า update)
-      setTodaySeconds(0);    // รีเซ็ต counter ของวันใหม่
-    }, tickToMidnight());
-  
-    return () => clearTimeout(t);
-  }, [userObj?.uid, token, month, year]);
 
   const monthNames = [
     "January", "February", "March", "April", "May", "June",
@@ -276,6 +270,27 @@ function Calendar() {
   };
 
   useEffect(() => {
+    const msToNextMidnight = () => {
+      const now = new Date();
+      const next = new Date(now);
+      next.setHours(24, 0, 0, 0);
+      return next.getTime() - now.getTime();
+    };
+    const t = setTimeout(() => {
+      setTodayStr(getTodayStr());
+      setTodaySeconds(0);
+      fetchCalendar();
+    }, msToNextMidnight());
+    return () => clearTimeout(t);
+  }, [userObj?.uid, token, month, year]);
+
+  // กันเครื่องนอน/แท็บแช่ยาว: sync todayStr ทุก ๆ 1 นาที
+  useEffect(() => {
+    const id = setInterval(() => setTodayStr(getTodayStr()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  useEffect(() => {
     fetchCalendar();
   }, [month, year, userObj?.uid, token]);
 
@@ -285,11 +300,14 @@ function Calendar() {
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDay = new Date(year, month - 1, 1).getDay();
 
+
+  // ใช้ todayStr ในการระบายสี
   const getColorForDay = (day) => {
     const dayStr = `${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
-    if (dayStr > currentDayStr) return "bg-transparent"; // อนาคต
 
-    if (dayStr === currentDayStr) {
+    if (dayStr > todayStr) return "bg-transparent"; // อนาคต
+
+    if (dayStr === todayStr) {
       const hoursLive = todaySeconds / 3600;
       if (hoursLive <= 0) return "bg-[#a6a6a6]";
       if (hoursLive < 3) return "bg-[#38b6ff]";
@@ -378,7 +396,13 @@ function Calendar() {
         </div>
         <div className="w-1/2 h-[87vh] sticky top-0 bg-[#fffbf5] rounded-xl shadow-2xl p-4 overflow-auto">
           {userObj?.uid && token ? (
-            <CountTime onAfterStop={fetchCalendar} onSyncSeconds={setTodaySeconds} userObj={userObj} token={token} />
+            // <CountTime onAfterStop={fetchCalendar} onSyncSeconds={setTodaySeconds} userObj={userObj} token={token} />
+            <CountTime
+              userObj={userObj}
+              token={token}
+              onSyncSeconds={(s) => setTodaySeconds(s)}   // ให้สีของ “วันนี้” เปลี่ยนแบบเรียลไทม์
+              onAfterStop={fetchCalendar}                 // ← ให้รีโหลดสีทั้งเดือนหลัง stop
+            />
           ) : (
             <div className="text-sm text-gray-500">Loading user...</div>
           )}

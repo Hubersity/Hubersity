@@ -1,7 +1,7 @@
 # app/routers/study_calendar.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from datetime import datetime, timezone, date as dt_date
+from datetime import datetime, timezone, date as dt_date, timedelta
 from .. import models, database
 from sqlalchemy import Date
 from ..database import get_db
@@ -11,13 +11,21 @@ from sqlalchemy import func, text
 from zoneinfo import ZoneInfo
 
 LOCAL_TZ = "Asia/Bangkok"
+TZ = ZoneInfo("Asia/Bangkok")
 
 router = APIRouter(
     prefix="/study",
     tags=["Study Timer"]
 )
 
+
 def upsert_daily_progress(db, user_id: int, add_seconds: int, badge: int, target_day_utc: datetime):
+        # กันค่าผิด ๆ หลุดมา
+    if add_seconds < 0:
+        add_seconds = 0
+    if add_seconds > 24*3600:
+        add_seconds = 24*3600
+
     q = text("""
     INSERT INTO daily_progress (user_id, date, total_seconds, total_minutes, badge_level)
     VALUES (:uid, :day_utc, :secs, :secs/60, :badge)
@@ -82,59 +90,40 @@ def stop_session(sid: int, db: Session = Depends(get_db)):
 @router.get("/calendar/{user_id}/{year}/{month}")
 def get_calendar(user_id: int, year: int, month: int, db: Session = Depends(get_db)):
     last_day = monthrange(year, month)[1]
-    start = dt_date(year, month, 1)
-    end = dt_date(year, month, last_day)
 
-    # ⬇️ ใช้ func.date(timezone('UTC', ...)) เพื่อเทียบเป็น “วันที่ (UTC)”
-    # /calendar
     records = (
-    db.query(models.DailyProgress)
-    .filter(models.DailyProgress.user_id == user_id)
-    .filter(func.date(text("timezone(:tz, daily_progress.date)")).between(
-        dt_date(year, month, 1), dt_date(year, month, last_day)
-    ))
-    .params(tz=LOCAL_TZ)
-    .all()
+        db.query(models.DailyProgress)
+        .filter(models.DailyProgress.user_id == user_id)
+        .filter(text("date(timezone('Asia/Bangkok', daily_progress.date)) BETWEEN :d1 AND :d2"))
+        .params(d1=dt_date(year, month, 1), d2=dt_date(year, month, last_day))
+        .all()
     )
 
-
-    return {
-        r.date.strftime("%Y-%m-%d"): {
+    out = {}
+    for r in records:
+        # แปลง timestamp ที่เก็บเป็น UTC ให้เป็น “วันที่ตามไทย” ก่อนทำ key
+        local_key = r.date.astimezone(TZ).strftime("%Y-%m-%d")
+        total_seconds = getattr(r, "total_seconds", (r.total_minutes or 0) * 60)
+        out[local_key] = {
             "total_minutes": r.total_minutes or 0,
-            "total_seconds": getattr(r, "total_seconds", (r.total_minutes or 0) * 60),
+            "total_seconds": total_seconds,
             "badge": r.badge_level or 0,
         }
-        for r in records
-    }
+    return out
 
 @router.get("/progress/{user_id}/{year}/{month}/{day}")
 def get_daily_progress(user_id: int, year: int, month: int, day: int, db: Session = Depends(get_db)):
     target_date = dt_date(year, month, day)
-
-    # ถ้า column `date` เป็น timestamptz ให้ค้นหาระหว่าง 00:00–23:59 ของวันนั้น
-    day_start = datetime(year, month, day, 0, 0, 0, tzinfo=timezone.utc)
-    day_end   = datetime(year, month, day, 23, 59, 59, tzinfo=timezone.utc)
-
-    # ⬇️ เทียบ “วันเดียวกัน (UTC)” แถวเดียวต่อวัน
     progress = (
-    db.query(models.DailyProgress)
-    .filter(models.DailyProgress.user_id == user_id)
-    .filter(func.date(text("timezone(:tz, daily_progress.date)")) == dt_date(year, month, day))
-    .params(tz=LOCAL_TZ)
-    .first()
+        db.query(models.DailyProgress)
+        .filter(models.DailyProgress.user_id == user_id)
+        .filter(text("date(timezone('Asia/Bangkok', daily_progress.date)) = :d"))
+        .params(d=target_date)
+        .first()
     )
-
     if not progress:
-        return {
-            "date": target_date,
-            "total_minutes": 0,
-            "total_seconds": 0,
-            "hours": 0,
-            "badge_level": 0,
-        }
-
+        return {"date": target_date, "total_minutes": 0, "total_seconds": 0, "hours": 0, "badge_level": 0}
     total_seconds = getattr(progress, "total_seconds", (progress.total_minutes or 0) * 60)
-
     return {
         "date": target_date,
         "total_minutes": progress.total_minutes or 0,
