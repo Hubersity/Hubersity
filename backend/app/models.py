@@ -1,4 +1,5 @@
-from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, func, UniqueConstraint, CheckConstraint, Index
+from sqlalchemy.sql import func
+from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, func, UniqueConstraint, CheckConstraint, Index, Date , DateTime
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -100,6 +101,8 @@ class Post(Base):
     post_content = Column(String, nullable=False)
     forum_id = Column(Integer, ForeignKey("forum.fid"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)  # new column
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     user = relationship("User", back_populates="posts")
     tags = relationship(
         "PostTag",
@@ -108,7 +111,7 @@ class Post(Base):
     )
     images = relationship("PostImage", back_populates="post")
     likes = relationship("Like", back_populates="post")
-    comments = relationship("Comment", back_populates="post")
+    comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
 
 class PostImage(Base):
     __tablename__ = "post_images"
@@ -117,6 +120,7 @@ class PostImage(Base):
     post_id = Column(Integer, ForeignKey("post.pid"), nullable=False)
     path = Column(String, nullable=False)
     caption = Column(String)
+    file_type = Column(String, nullable=True)
     post = relationship("Post", back_populates="images")
 
 
@@ -131,15 +135,20 @@ class StudySession(Base):
 
     user = relationship("User", back_populates="sessions")
 
+from sqlalchemy import Column, Integer, Date, TIMESTAMP, ForeignKey
+# ถ้ายังใช้ TIMESTAMP ต่อ ก็ไม่ต้องเปลี่ยน type ตรง date
 
 class DailyProgress(Base):
     __tablename__ = "daily_progress"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
-    date = Column(TIMESTAMP(timezone=True), nullable=False)
-    total_minutes = Column(Integer, default=0)
-    badge_level = Column(Integer, default=0)
+    date = Column(TIMESTAMP(timezone=True), nullable=False)  # คุณใช้แบบนี้อยู่
+    total_minutes = Column(Integer, default=0, nullable=False)
+    badge_level = Column(Integer, default=0, nullable=False)
+
+    # ใส่ให้ตรงกับ DB
+    total_seconds = Column(Integer, default=0, nullable=False)
 
     user = relationship("User", back_populates="progress")
 
@@ -164,10 +173,23 @@ class Comment(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
     
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
-    post_id = Column(Integer, ForeignKey("post.pid"), nullable=False)
+    post_id = Column(Integer, ForeignKey("post.pid", ondelete="CASCADE"), nullable=False)
     username = Column(String, nullable=False)
     user = relationship("User")
     post = relationship("Post", back_populates="comments")
+
+    files = relationship("CommentFile", back_populates="comment", cascade="all, delete-orphan")
+    
+class CommentFile(Base):
+    __tablename__ = "comment_files"
+
+    id = Column(Integer, primary_key=True, index=True)
+    comment_id = Column(Integer, ForeignKey("comments.cid", ondelete="CASCADE"), nullable=False)
+    path = Column(String, nullable=False)
+    file_type = Column(String, nullable=True)
+
+    comment = relationship("Comment", back_populates="files")
+
 
 class Chat(Base):
     __tablename__ = "chats"
@@ -186,19 +208,6 @@ class Chat(Base):
     messages = relationship(
         "ChatMessage", back_populates="chat", cascade="all, delete-orphan"
     )
-
-# class ChatMessage(Base):
-#     __tablename__ = "chat_messages"
-#     __table_args__ = (Index("ix_msg_chat_created", "chat_id", "created_at"),)
-
-#     id = Column(Integer, primary_key=True)
-#     chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
-#     sender_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
-#     text = Column(Text, nullable=False)
-#     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
-
-#     chat = relationship("Chat", back_populates="messages")
-#     sender = relationship("User")
 
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
