@@ -248,3 +248,24 @@ class ChatAttachment(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     message = relationship("ChatMessage", back_populates="attachments")
     
+class Notification(Base):
+    __tablename__ = "notifications"
+    id = Column(Integer, primary_key=True)
+    title = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    sender_id = Column(Integer, ForeignKey("users.uid"), nullable=True)
+    receiver_id = Column(Integer, nullable=True)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+    is_read = Column(Boolean, default=False)
+
+
+class NotificationRead(Base):
+    __tablename__ = "notification_reads"
+
+    id = Column(Integer, primary_key=True)
+    notification_id = Column(Integer, ForeignKey("notifications.id"))
+    user_id = Column(Integer, ForeignKey("users.uid"))
+    read_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    notification = relationship("Notification", backref="reads")
+    user = relationship("User")

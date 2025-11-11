@@ -166,3 +166,21 @@ class AdminUserDetailResponse(BaseModel):
     reportCategories: Dict[str, int]
     status: str
     posts: List[AdminPost]
+
+class NotificationCreate(BaseModel):
+    title: str
+    message: str
+    receiver_id: Optional[int] = None
+
+class NotificationResponse(BaseModel):
+    id: int
+    title: str
+    message: Optional[str]
+    sender_id: Optional[int]
+    receiver_id: Optional[int]
+    created_at: datetime
+    is_read: bool
+
+    class Config:
+        orm_mode = True
+

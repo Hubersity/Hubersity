@@ -5,7 +5,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from . import models, database
 from .database import engine
-from .routers import users, auth, study_calendar, posts, chat, admin
+from .routers import users, auth, study_calendar, posts, chat, admin, notification
 from fastapi.staticfiles import StaticFiles
 import os
 
@@ -49,6 +49,7 @@ app.include_router(study_calendar.router)
 app.include_router(posts.router)
 app.include_router(admin.router)
 app.include_router(chat.router)
+app.include_router(notification.router)
 
 # Seed forum data อัตโนมัติเมื่อ start server
 @app.on_event("startup")

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import os
 import shutil
+from .notification import create_notification_template
 from .. import models, schemas, database, oauth2, utils
 
 router = APIRouter(
@@ -443,8 +444,22 @@ def report_post(
         reason=report_data.reason
     )
     db.add(report)
-    db.commit()
 
+    noti_payload = {
+        "title": "ReportPost",
+        "receiver_id": post_id,
+        "message": "..."
+    }
+
+    try:
+        create_notification_template(
+            db=db,
+            current_user=current_user,
+            payload_data=noti_payload
+        )
+    except Exception as e:
+        print(f"Error creating internal notification: {e}")
+    db.commit()
     return {"message": "Report submitted"}
 
 
