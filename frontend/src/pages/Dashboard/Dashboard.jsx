@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { Home, Clock, Users, MessageSquare, Bell, User, Hash } from "lucide-react";
+import { Home, Clock, Users, MessageSquare, Bell, User, Hash, Settings } from "lucide-react";
 import { getCurrentUser } from "../../api/user"; 
 
 // =========================
@@ -115,29 +115,44 @@ function Sidebar() {
 
   return (
     <div className="fixed top-16 left-0 w-56 h-[calc(100vh-64px)] bg-white border-r shadow pt-6">
-      <nav className="flex flex-col">
-        {navItems.map(({ to, label, icon: Icon }) => {
-          const active = location.pathname === to;
-          return (
-            <Link
-              key={to}
-              to={to}
-              className={`flex items-center gap-3 px-5 py-3 transition-all w-full ${
-                active
-                  ? "bg-[#e0ebe2] text-emerald-700 font-semibold"
-                  : "hover:bg-gray-50 text-gray-700"
-              }`}
-            >
-              <Icon size={20} />
-              <span>{label}</span>
-            </Link>
-          );
-        })}
+      <nav className="flex flex-col h-full justify-between">
+        {/* 🔹 ส่วนเมนูหลัก */}
+        <div>
+          {navItems.map(({ to, label, icon: Icon }) => {
+            const active = location.pathname === to;
+            return (
+              <Link
+                key={to}
+                to={to}
+                className={`flex items-center gap-3 px-5 py-3 transition-all w-full ${
+                  active
+                    ? "bg-[#e0ebe2] text-emerald-700 font-semibold"
+                    : "hover:bg-gray-50 text-gray-700"
+                }`}
+              >
+                <Icon size={20} />
+                <span>{label}</span>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* 🔹 เมนู Setting ด้านล่างสุด */}
+        <Link
+          to="/app/setting"
+          className={`flex items-center gap-3 px-5 py-3 mb-4 transition-all w-full ${
+            location.pathname === "/app/setting"
+              ? "bg-[#e0ebe2] text-emerald-700 font-semibold"
+              : "hover:bg-gray-50 text-gray-700"
+          }`}
+        >
+          <Settings size={20} />
+          <span>Setting</span>
+        </Link>
       </nav>
     </div>
   );
 }
-
 // =========================
 // 🔹 Dashboard Layout
 // =========================

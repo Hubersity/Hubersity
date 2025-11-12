@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from datetime import datetime, date
-from typing import List, Optional
+from typing import List, Optional, Dict, Literal
 import re
 
 # สร้างบัญชีใหม่ (Sign Up)
@@ -112,15 +112,25 @@ class PostTagResponse(BaseModel):
 class CommentCreate(BaseModel):
     content: str
 
+class CommentFileResponse(BaseModel):
+    id: int
+    path: str
+    file_type: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
 class CommentResponse(BaseModel):
     cid: int
     content: str
     user_id: int
     username: str
-    profile_image: Optional[str]
+    profile_image: Optional[str] = None
     created_at: datetime
+    files: Optional[List[CommentFileResponse]] = []
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class PostResponse(BaseModel):
     pid: int
@@ -134,5 +144,60 @@ class PostResponse(BaseModel):
     tags: List[PostTagResponse] = []
     images: List[PostImageResponse] = []
     comments: List[CommentResponse] = []
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class BanRequest(BaseModel):
+    duration: str
+
+class ReportRequest(BaseModel):
+    reason: str
+
+class AdminPost(BaseModel):
+    id: str
+    content: str
+    createdAt: str
+    likes: int
+    comments: int
+    status: str
+
+class AdminUserDetailResponse(BaseModel):
+    uid: int
+    username: str
+    fullName: str
+    avatar: str
+    bio: str
+    numberOfReports: int
+    reportCategories: Dict[str, int]
+    status: str
+    posts: List[AdminPost]
+
+class NotificationCreate(BaseModel):
+    title: str
+    message: str
+    receiver_id: Optional[int] = None
+    target_role: Optional[str] = "admin"
+
+class NotificationResponse(BaseModel):
+    id: int
+    title: str
+    message: Optional[str]
+    sender_id: Optional[int]
+    receiver_id: Optional[int]
+    sender_username: Optional[str] = None
+    sender_avatar: Optional[str] = None
+    target_role: Optional[str]
+    created_at: datetime
+    is_read: Optional[bool] = False
 
     model_config = ConfigDict(from_attributes=True)
+
+    class Config:
+        from_attributes = True
+
+class PostUpdate(BaseModel):
+    post_content: Optional[str] = None
+    forum_id: Optional[int] = None
+    tags: Optional[List[int]] = None

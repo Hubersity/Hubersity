@@ -9,7 +9,7 @@
 // import Account from './pages/Dashboard/Account';
 // import Follow from './pages/Dashboard/Follow';
 // import Chat from './pages/Dashboard/Chat';
-// import Notifications from './pages/Dashboard/Notifications'; // ✅ เพิ่ม import หน้าแจ้งเตือน
+// import Notifications from './pages/Dashboard/Notifications'; 
 // import Dashboard_admin from './pages/Admin/Dashboard-admin.jsx';
 // import Overview from './pages/Admin/Overview.jsx';
 // import Account_admin from './pages/Admin/Account-admin.jsx';
@@ -53,7 +53,6 @@
 //     </Routes>
 //   );
 // }
-
 // export default App;
 
 import React, { Suspense, lazy } from "react";
@@ -73,8 +72,10 @@ import Chat from './pages/Dashboard/Chat';
 import Notifications from './pages/Dashboard/Notifications';
 import UserProfile from './pages/Dashboard/UserProfile';
 import Tags from './pages/Dashboard/Tags';
+import TagDetail from './pages/Dashboard/TagDetail'; 
+import Setting from "./pages/Dashboard/Setting/Setting";
 
-// ⬇️ admin: lazy imports (so they don't execute until visited)
+// ⬇admin: lazy imports (so they don't execute until visited)
 const Dashboard_admin     = lazy(() => import('./pages/Admin/Dashboard-admin.jsx'));
 const Overview            = lazy(() => import('./pages/Admin/Overview.jsx'));
 const Account_admin       = lazy(() => import('./pages/Admin/Account-admin.jsx'));
@@ -125,6 +126,8 @@ export default function App() {
         <Route path="account" element={<Account />} />
         <Route path="user/:userId" element={<UserProfile />} />
         <Route path="tags" element={<Tags />} />
+        <Route path="tags/:tagName" element={<TagDetail />} /> 
+        <Route path="setting" element={<Setting />} />
       </Route>
 
       {/* admin dashboard (lazy + boundary) */}
@@ -143,7 +146,8 @@ export default function App() {
         <Route path="acc-admin" element={<Suspense fallback={null}><Account_admin /></Suspense>} />
         <Route path="report" element={<Suspense fallback={null}><Report /></Suspense>} />
         <Route path="report/:id" element={<Suspense fallback={null}><PostDetail /></Suspense>} />
-        <Route path="report/user/:name" element={<Suspense fallback={null}><UserDetail /></Suspense>} />
+        <Route path="report/user/:username" element={<Suspense fallback={null}><UserDetail /></Suspense>} />
+        {/* <Route path="tags-admin" element={<Suspense fallback={null}><Tags /></Suspense>} /> */}
         <Route path="noti-admin" element={<Suspense fallback={null}><Notification_admin /></Suspense>} />
       </Route>
 

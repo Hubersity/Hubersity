@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from .. import models, database
 from fastapi import File, UploadFile, Form
-from fastapi.responses import JSONResponse
-import os, uuid, mimetypes
-from fastapi import status
+# from fastapi.responses import JSONResponse
+import os, uuid
+# from fastapi import status
 from typing import List
 import os, uuid
-from fastapi import HTTPException
+from fastapi import HTTPException, Body
 from starlette.status import HTTP_404_NOT_FOUND
-from sqlalchemy.orm import selectinload
+# from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/chats", tags=["Chat"])
 UPLOAD_ROOT = "uploads"  # มี mount /uploads แล้วใน main.py
@@ -41,6 +41,32 @@ def ensure_chat_if_friends(db: Session, uid1: int, uid2: int):
     db.commit()
     db.refresh(chat)
     return chat
+
+def forward(target_chat_id, source_message_id, attachment_id=None, prefix=None, by_user_id=None):
+    # 1) authz: ผู้ส่งต้องเห็นข้อความต้นทางได้
+    src = get_message_or_404(source_message_id)
+    assert can_view_message(by_user_id, src)
+
+    with db.transaction():
+        # 2) สร้างข้อความเปล่า (ถ้าอยากใส่ prefix ก็ใส่ที่ text)
+        text = (prefix + " " + (src.text or "")) if prefix and not attachment_id else (prefix or "")
+        new_msg = create_message(
+            chat_id=target_chat_id,
+            sender_id=by_user_id,
+            text=text,
+            forwarded_from_message_id=src.id,
+            forwarded_from_chat_id=src.chat_id,
+        )
+
+        if attachment_id:
+            att = get_attachment_or_404(attachment_id, message_id=src.id)
+            copy_or_link_attachment(att, to_message=new_msg)
+        else:
+            # ส่งต่อทั้งข้อความ (ทุกไฟล์)
+            for att in list_attachments(src.id):
+                copy_or_link_attachment(att, to_message=new_msg)
+
+    return new_msg
 
 # ---------- Endpoints ----------
 
@@ -75,7 +101,11 @@ def list_my_chats(
 
 
         preview = ""
-        if last and last.attachments:
+
+        # ✅ ถ้าข้อความล่าสุดถูกลบ ให้ขึ้น "This message was deleted."
+        if last and (last.kind or "").lower() == "deleted":
+            preview = ""
+        elif last and last.attachments:
             a = last.attachments[0]
             if a.kind == "image":
                 preview = "[image]"
@@ -136,42 +166,50 @@ def sync_my_friend_chats(
 
 # ดึงข้อความทั้งหมดในห้อง
 @router.get("/{chat_id}/messages")
-def get_messages(chat_id: int,
-                 me_id: int = Query(...),
-                 db: Session = Depends(database.get_db)):
-    # โหลด messages พร้อม attachments ทีเดียว
-    msgs = (
-        db.query(models.ChatMessage)
-        .options(selectinload(models.ChatMessage.attachments),
-                 selectinload(models.ChatMessage.sender))
-        .filter(models.ChatMessage.chat_id == chat_id)
-        .order_by(models.ChatMessage.created_at.asc())
-        .all()
-    )
+def get_messages(chat_id: int, me_id: int = Query(...), db: Session = Depends(database.get_db)):
+    msgs = (db.query(models.ChatMessage)
+            .options(selectinload(models.ChatMessage.attachments),
+                     selectinload(models.ChatMessage.sender))
+            .filter(models.ChatMessage.chat_id == chat_id)
+            .order_by(models.ChatMessage.created_at.asc())
+            .all())
+
     out = []
     for m in msgs:
         sender = "me" if m.sender_id == me_id else (m.sender.name or m.sender.username)
 
+        # ✅ ถ้าโดนลบแล้ว → ส่ง bubble เดียวว่า deleted และ "ไม่แตกไฟล์"
+        if (m.kind or "").lower() == "deleted":
+            out.append({
+                "id": m.id,
+                "sender": sender,
+                "text": "",
+                "kind": "deleted",
+                "url": None,
+                "name": "",
+                "created_at": m.created_at.isoformat(),
+            })
+            continue
+
         if m.attachments:
-            # แตกเป็นรายการละ 1 ไฟล์ เพื่อให้ frontend render ง่าย
             for a in m.attachments:
-                # basename = os.path.basename(a.path)
-                url = f"/uploads/{a.path}"     # a.path = "chat/1/xxx.png" หรือ "xxx.png"
                 out.append({
+                    "id": f"{m.id}:{a.id}",     # ให้ฝั่งหน้าใช้เป็น key เดิม
                     "sender": sender,
                     "text": m.text or "",
-                    "kind": a.kind,                          # "image" | "video" | "file"
-                    "url": f"/uploads/{a.path}",   # a.path = "chat/1/xxx.png"
-                    "name": a.original_name,             
+                    "kind": a.kind,
+                    "url":  f"/uploads/{a.path}",
+                    "name": a.original_name or "",
                     "created_at": m.created_at.isoformat(),
                 })
         else:
             out.append({
+                "id": m.id,
                 "sender": sender,
                 "text": m.text or "",
                 "kind": m.kind or "text",
-                "url": None,
-                "name": None,
+                "url":  None,
+                "name": "",
                 "created_at": m.created_at.isoformat(),
             })
     return out
@@ -201,6 +239,7 @@ def send_message(
     db.refresh(message)
 
     return {
+        "id": message.id,        # ★ ส่ง id กลับไป
         "sender": "me",
         "text": message.text,
         "kind": "text",
@@ -272,3 +311,187 @@ def upload_attachments(
             for a in saved
         ],
     }
+
+@router.delete("/{chat_id}/messages/{message_id}")
+def delete_message(
+    chat_id: int,
+    message_id: int,
+    me_id: int = Query(...),
+    db: Session = Depends(database.get_db),
+):
+    # หา message เฉพาะในห้องนี้
+    msg = (
+        db.query(models.ChatMessage)
+        .filter(models.ChatMessage.id == message_id,
+                models.ChatMessage.chat_id == chat_id)
+        .first()
+    )
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    # เช็กสิทธิ์อยู่ในห้อง
+    chat = db.query(models.Chat).filter(models.Chat.id == chat_id).first()
+    if not chat or me_id not in (chat.user1_id, chat.user2_id):
+        raise HTTPException(status_code=403, detail="Not allowed in this chat")
+
+    # (ถ้าอยากบังคับว่า 'ลบได้เฉพาะเจ้าของข้อความ')
+    # if msg.sender_id != me_id:
+    #     raise HTTPException(status_code=403, detail="Only sender can delete")
+
+    # ถ้าลบไปแล้ว ไม่ต้องทำซ้ำ
+    if msg.kind == "deleted":
+        return {"ok": True}
+
+    # SOFT DELETE: ไม่แตะไฟล์/attachment
+    msg.kind = "deleted"
+    msg.text = None
+    db.add(msg)
+    db.commit()
+
+    return {"ok": True}
+
+@router.post("/{chat_id}/forward")
+def forward_message(
+    chat_id: int,
+    me_id: int = Query(...),
+    payload: dict = Body(...),
+    db: Session = Depends(database.get_db),
+):
+    target = db.query(models.Chat).filter(models.Chat.id == chat_id).first()
+    if not target or me_id not in (target.user1_id, target.user2_id):
+        raise HTTPException(status_code=403, detail="Not in target chat")
+
+    src_msg_id_raw = (payload or {}).get("source_message_id")
+    if not src_msg_id_raw:
+        raise HTTPException(400, "source_message_id required")
+
+    try:
+        src_msg_id = int(str(src_msg_id_raw).split(":")[0])
+    except:
+        raise HTTPException(400, "invalid source_message_id")
+
+    src = (
+        db.query(models.ChatMessage)
+        .options(selectinload(models.ChatMessage.attachments))
+        .filter(models.ChatMessage.id == src_msg_id)
+        .first()
+    )
+    if not src:
+        raise HTTPException(404, "Source message not found")
+
+    # ต้องเป็นสมาชิกห้องต้นทางด้วย
+    src_chat = db.query(models.Chat).filter(models.Chat.id == src.chat_id).first()
+    if not src_chat or me_id not in (src_chat.user1_id, src_chat.user2_id):
+        raise HTTPException(403, "Not allowed to forward this message")
+
+    text_prefix = (payload or {}).get("prefix") or ""
+    new_text = (text_prefix + " " if text_prefix else "") + (src.text or "")
+
+    new_msg = models.ChatMessage(
+        chat_id=chat_id,
+        sender_id=me_id,
+        kind="text",
+        text=new_text if new_text else None,
+    )
+    db.add(new_msg)
+    db.flush()
+
+    # ---- คัดลอกไฟล์แนบแบบเลือกได้ ----
+    only_att_id = (payload or {}).get("attachment_id")  # optional
+    out_attachments = []
+
+    if only_att_id:
+        att = (
+            db.query(models.ChatAttachment)
+            .filter(models.ChatAttachment.id == int(only_att_id),
+                    models.ChatAttachment.message_id == src.id)
+            .first()
+        )
+        if not att:
+            raise HTTPException(404, "Attachment not found for this message")
+
+        new_att = models.ChatAttachment(
+            message_id=new_msg.id,
+            kind=att.kind,
+            path=att.path,  # reuse
+            original_name=att.original_name,
+            mime_type=att.mime_type,
+        )
+        db.add(new_att)
+        db.flush()
+        out_attachments.append({
+            "id": new_att.id, "kind": new_att.kind,
+            "url": f"/uploads/{new_att.path}",
+            "name": new_att.original_name, "mime_type": new_att.mime_type,
+        })
+    else:
+        for a in src.attachments or []:
+            new_att = models.ChatAttachment(
+                message_id=new_msg.id,
+                kind=a.kind, path=a.path,
+                original_name=a.original_name, mime_type=a.mime_type,
+            )
+            db.add(new_att); db.flush()
+            out_attachments.append({
+                "id": new_att.id, "kind": new_att.kind,
+                "url": f"/uploads/{new_att.path}",
+                "name": new_att.original_name, "mime_type": new_att.mime_type,
+            })
+
+    db.commit()
+    return {"message_id": new_msg.id, "sender": "me", "text": new_msg.text, "attachments": out_attachments}
+
+@router.get("/{chat_id}/messages")
+def list_messages(chat_id: int, me_id: int = Query(...), db: Session = Depends(database.get_db)):
+    chat = db.query(models.Chat).filter(models.Chat.id == chat_id).first()
+    if not chat or me_id not in (chat.user1_id, chat.user2_id):
+        raise HTTPException(403, "Not allowed")
+
+    rows = (
+        db.query(models.ChatMessage)
+        .options(selectinload(models.ChatMessage.attachments))
+        .filter(models.ChatMessage.chat_id == chat_id)
+        .order_by(models.ChatMessage.created_at.asc())
+        .all()
+    )
+
+    out = []
+    for m in rows:
+        sender = "me" if m.sender_id == me_id else "other"
+
+        if m.kind == "deleted":
+            out.append({
+                "id": m.id,
+                "sender": sender,
+                "kind": "deleted",
+                "text": None,
+                "url": None,
+                "name": None,
+                "attachments": [],  # ไม่ส่งไฟล์กลับ
+            })
+            continue
+
+        # ปกติ
+        atts = [{
+            "id": a.id,
+            "kind": a.kind,
+            "url": f"/uploads/{a.path}",
+            "name": a.original_name,
+            "mime_type": a.mime_type,
+        } for a in (m.attachments or [])]
+
+        # เผื่อ frontend ของคุณใช้ฟิลด์ url/name เดี่ยว ๆ
+        url = atts[0]["url"] if atts else None
+        name = atts[0]["name"] if atts else None
+
+        out.append({
+            "id": m.id,
+            "sender": sender,
+            "kind": m.kind or ("text" if not atts else atts[0]["kind"]),
+            "text": m.text or "",
+            "url": url,
+            "name": name,
+            "attachments": atts,
+        })
+
+    return out

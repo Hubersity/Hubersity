@@ -1,18 +1,8 @@
 import React, { useState, useEffect} from "react";
 import { Search, User} from "lucide-react";
 
-// funvtion call API
-const searchAPI= async (query) => {
-    // API_URL = link the connet to backend
-    const API_URL = `http://backend-api.com/search/users?name=${query}`;
+const API_URL = `http://localhost:8000`; 
 
-    const response = await fetch(API_URL);
-    if (!response.ok) {
-        // throw is stop run because it error, new Error('Search failed'); new Error is create the odj of error message.
-        throw new Error('Search failed');
-    }
-    return response.json();
-};
 
 // ********** ข้อมูลจำลองสำหรับทดสอบ (ลบออกเมื่อใช้ API จริง) **********
 const MOCK_USERS = [
@@ -24,9 +14,10 @@ const MOCK_USERS = [
     {profile: 'url_f', name: 'gigi78', email: 'gigi@gmail.com', university: 'Kasetsart', joinDate: '2025-8-26', status: 'Public' }
 ];
 
-export default function SerachAccount() {
+export default function SearchAccount() {
     // สถานะสำหรับเก็บคำค้นหาจากผู้ใช้
     const [searchTerm, setSearchTerm] = useState("");
+    const [allUsers, setAllUsers] = useState([]);
     // สถานะสำหรับเก็บผลลัพธ์ที่ได้ (Array ของ Object ผู้ใช้)
     // const [results, setResults] = useState([]);
     const [results, setResults] = useState(MOCK_USERS);
@@ -34,71 +25,84 @@ export default function SerachAccount() {
     const [isLoading, setIsLoading] = useState(false); // เริ่มต้นเป็น true เพื่อโหลดข้อมูลครั้งแรก
     const [error, setError] = useState(null);
 
-    // useEffect(() => {
-    //     const fetchAllUsers = async () => {
-    //         setIsLoading(true);
-    //         setError(null);
-    //         try {
-    //             const data = await searchAPI(""); // ดึงข้อมูลทั้งหมดเมื่อ searchTerm เป็นค่าว่าง
-    //             setResults(data); 
-    //         }
-    //         catch {
-    //             setError("Can not load information of the user");
-    //             setResults([]);
-    //         }
-    //         finally {
-    //             setIsLoading(false);
-    //         }
-    //     };
-    //     fetchAllUsers();
-    // }, []); // Array ว่าง [] ทำให้รันครั้งเดียวเมื่อโหลด
+    const formatUser = (user) => ({
+        profile: user.profile_image,
+        name: user.username,
+        email: user.email,
+        university: user.university || "-",
+        joinDate: user.created_at.split("T")[0],
+        status: user.privacy
+        ? user.privacy.charAt(0).toUpperCase() + user.privacy.slice(1).toLowerCase()
+        : "Public"
+    });
+
+
+    
+    const fetchAllUsers = async () => {
+        const API_URL = `http://localhost:8000/admin/users/all`; 
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+            throw new Error("Failed to fetch users");
+        }
+        return response.json();
+    };
+
+    useEffect(() => {
+        const loadUsers = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const data = await fetchAllUsers();
+                const formatted = data.map(formatUser);
+                setAllUsers(formatted);
+                setResults(formatted); // show all 
+            } catch {
+                setError("Cannot load user information");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadUsers();
+    }, []);
+
 
     // function sreach when the admin search
-    const handleSearch = async (e) => {
-        e.preventDefault(); // ป้องกันเบราว์เซอร์รีโหลดหน้า
+    const handleSearch = (e) => {
+        e.preventDefault(); // Prevent page reload
 
-        setIsLoading(true)
+        setIsLoading(true);
         setError(null);
-        setResults([]); // ล้างผลลัพธ์เดิม
 
-        // try {
-        //     // ส่ง searchTerm ปัจจุบัน (ถ้าว่างก็จะดึงทั้งหมด ถ้ามีก็จะค้นหาเฉพาะเจาะจง)
-        //     const data = await searchAPI(searchTerm);
-        //     // assume data is Array of the user that found
-        //     setResults(data);
-        // }
-        // catch {
-        //     setError("Not found, pls try agian")
-        // }
-        // finally {
-        //     setIsLoading(false);
-        // }
+        // Trim and lowercase the search term
+        const keyword = searchTerm.trim().toLowerCase();
 
-        // Filter users by name (case-insensitive), .filter(...) → คืน array ใหม่ที่ผ่านเงื่อนไขเท่านั้น
-        const filterred = MOCK_USERS.filter((user) => 
-            user.name.toLocaleLowerCase().includes(searchTerm.toLowerCase()));
-        if (filterred.length == 0) {
+        // Filter users by username (case-insensitive)
+        const filtered = allUsers.filter((user) =>
+            user.name.toLowerCase().includes(keyword)
+        );
+
+        if (filtered.length === 0) {
             setError("Not found, please try again");
             setResults([]);
-        }
-        else {
-            setResults(filterred);
+        } else {
+            setResults(filtered);
         }
 
         setIsLoading(false);
     };
 
+
     const UserRow = ({ user }) => (
         <div className="flex items-center gap-x-[12vh] py-3 border-b hover:bg-gray-50 text-gray-700">
         <img
-            src={user.profile || 'placeholder.jpg'}
+            src={`${API_URL}${user.profile}` || 'placeholder.jpg'}
             alt={user.name}
             className="w-8 h-8 rounded-full ml-10"
         />
         <span className="w-[10vh] font-medium">{user.name}</span>
         <span className="w-[15vh]">{user.email}</span>
         <span className="w-[10vh] ml-[2vw]">{user.university}</span>
-        <span className="w-[8vh] ml-[2vw]">{user.joinDate}</span>
+        <span className="w-[8vh] ml-[2vw] whitespace-nowrap">{user.joinDate}</span>
         <span
             className={`w-[8vh] ml-[4vw] flex items-center justify-center text-sm px-2 py-1 rounded-full ${
             user.status === "Public"
@@ -127,10 +131,10 @@ export default function SerachAccount() {
             </div>
             <div className="flex flex-row gap-x-[17vh]">
                 <span className="text-xl font-bold ml-[23vh]">Name</span>
-                <span className="text-xl font-bold">Gmail</span>
+                <span className="text-xl font-bold ml-[4vh]">Gmail</span>
                 <span className="text-xl font-bold">University</span>
                 <span className="text-xl font-bold">Join date</span>
-                <span className="text-xl font-bold">Status</span>
+                <span className="text-xl font-bold ml-[4vh]">Status</span>
             </div>
             {/* ส่วนแสดงรายการผู้ใช้ */}
             <div className="bg-white rounded-lg shadow">

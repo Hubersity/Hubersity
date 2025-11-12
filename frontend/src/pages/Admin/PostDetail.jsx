@@ -2,7 +2,7 @@ import React, { useState, useEffect} from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 // useNavigate go back to before page, useParamsอ่านค่าพารามิเตอร์จาก URL
-
+const API_URL = `http://localhost:8000`; 
 const MOCK_POSTS = [
     {
         id: "203",
@@ -87,56 +87,118 @@ export default function PostDetail() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
+    async function fetchPostDetail() {
         setLoading(true);
         setError(null);
-    
-        // ปกติจะ fetch(`/api/admin/report/${id}`)
-        const found = MOCK_POSTS.find((p) => p.id === String(id));
-        if (!found) {
-          setError("Post not found");
-          setPost(null);
-        } else {
-          setPost(found);
+
+        try {
+            const response = await fetch(`${API_URL}/admin/reports/${id}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
+
+        const found = await response.json();
+
+        const formatted = {
+            id: String(found.id),
+            user_id: found.user_id || found.uid || null,
+            author: found.username || "-",
+            avatar: found.avatar || "/images/default-avatar.png",
+            content: found.content || "-",
+            createdAt: found.createdAt || new Date().toISOString(),
+            lastReportDate: found.lastReportDate || "-",
+            numberOfReports: found.numberOfReports || 0,
+            reportCategories: found.reportCategories || {},
+            status: found.status
+            ? found.status.charAt(0).toUpperCase() + found.status.slice(1).toLowerCase()
+            : "Pending",
+            action: found.action || ""
+        };
+
+        setPost(formatted);
+        } catch (err) {
+        console.error("Error fetching post detail:", err);
+        setError("Failed to load post data.");
+        } finally {
         setLoading(false);
+        }
+    }
+
+    fetchPostDetail();
     }, [id]);
 
+
+
     async function handleUpdate() {
-        // when update it will send the action and the message to backend
         if (!post) return;
+
         if (!action) {
             alert("Please choose an action first");
             return;
-            // alert() ใช้แสดง “popup message
         }
-        setSaving(true);
-        try {
-            // จำลองการหน่วงเวลา
-            await new Promise((r) => setTimeout(r, 500));
-            // await fetch(`/api/admin/report/${post.id}/action`, {
-            //     method: 'POST',
-            //     body: JSON.stringify({ action, message }),
-            //   });
 
-            // Update the post data in UI
+        setSaving(true);
+
+        try {
+            await new Promise((r) => setTimeout(r, 500));
+
+            if (action === "Delete") {
+            const res = await fetch(`${API_URL}/admin/posts/${post.id}`, {
+                method: "DELETE"
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to delete post");
+            }
+
+            alert("Post deleted successfully");
+            setPost(null);
+            window.location.href = "/app_admin/report"; // 👈 redirect after deletion   
+            return;
+            }
+
+            if (action === "Ban") {
+                const res = await fetch(`${API_URL}/admin/users/${post.user_id}/ban`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ reason: message, duration: "1w" })
+                });
+
+                if (!res.ok) {
+                    throw new Error("Failed to ban user");
+                }
+
+                alert("User banned successfully");
+                setPost((prev) => {
+                    const updated = {
+                        ...prev,
+                        action: action,
+                        status: "Resolved"
+                    };
+                    console.log("✅ Updated post:", updated);
+                    return updated;
+                });
+
+            }
+
+
             setPost((prev) => ({
                 ...prev,
-                action: action,      // keep the chosen category
-                status: "Resolved",  // mark as Resolved after update
+                action: action,
+                status: "Resolved"
             }));
 
-            // setPost คือการเปลี่ยนค่า post ใน state->prev
-            // (prev) => ({  ...prev,  ช้ค่าปัจจุบันของ post (ที่ React ส่งให้ในชื่อ prev) แล้วคืนค่าใหม่กลับไปให้ React เก็บ.
-            alert("Action sent");  // tell admin that ส่งคำสั่งเรียบร้อยแล้ว
-        }
-        catch (e) {
+            alert("Action sent");
+        } catch (e) {
             console.error(e);
             alert("Failed to send action");
-        }
-        finally {
+        } finally {
             setSaving(false);
         }
-    }
+        }
+
     if (loading) {
         return <div className="p-6">Loading post...</div>;
     }
@@ -160,7 +222,7 @@ export default function PostDetail() {
                 <div className="flex flex-col items-center justify-start w-20">
                 <span className="text-xs font-medium mb-2">{post.author}</span>
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
-                    <img src={post.avatar} alt={post.author} className="w-full h-full object-cover" />
+                    <img src={post?.avatar ? `${API_URL}${post.avatar}` : "/images/default-avatar.png"} alt={post.author} className="w-full h-full object-cover" />
                 </div>
                 </div>
 
@@ -194,9 +256,9 @@ export default function PostDetail() {
                             className="w-full border rounded-full pl-5 px-3 py-2 mb-3 focus:ring-2 focus:ring-[#e0ebe2] appearance-none hover:bg-[#f6faf7]"
                         > 
                             <option value="">Choose action</option>
-                            <option value="Warn">Warn user</option>
+                            {/* <option value="Warn">Warn user</option> */}
                             <option value="Delete">Delete post</option>
-                            <option value="Hide">Hide post</option>
+                            <option value="Ban">Ban User</option>
                         </select>
 
                         <label className="block mb-2 text-sm">Message to user (optional)</label>

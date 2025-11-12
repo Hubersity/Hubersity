@@ -1,396 +1,520 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 import { Search, Send, Image, Paperclip, Video } from "lucide-react";
-import { useLayoutEffect } from "react";
 
-// URL backend
 const API_URL = "http://localhost:8000";
-const toAbs = (u) => (u?.startsWith("http") ? u : `${API_URL}${u || ""}`);
+const toAbs = (u) => (u?.startsWith?.("http") ? u : `${API_URL}${u || ""}`);
 
 export default function Chat() {
-  // อ่าน me_id / token แบบเดียวกับหน้าอื่น ๆ ในโปรเจกต์คุณ
+  // auth
   const { meId, token } = useMemo(() => {
     const currentKey = localStorage.getItem("currentUserKey");
     const auth = currentKey ? JSON.parse(localStorage.getItem(currentKey) || "{}") : {};
     return { meId: auth?.uid || 1, token: auth?.token || null };
   }, []);
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
 
+  // state
+  const [friends, setFriends] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [message, setMessage] = useState("");
+  const [search, setSearch] = useState("");
+  const [pendingFiles, setPendingFiles] = useState([]);
+  const [isSending, setIsSending] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // per-message menu + viewer
+  const [menuMsgId, setMenuMsgId] = useState(null);
+  const menuRef = useRef(null);
+  const [viewer, setViewer] = useState({ open: false, url: "" });
+
+  // forward modal
+  const [forward, setForward] = useState({ open: false, msg: null });
+  const [forwardSearch, setForwardSearch] = useState("");
+  const [forwardTargets, setForwardTargets] = useState(new Set());
+
+  const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const makeId = (f) => `${f.name}-${f.size}-${f.lastModified}`;
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   };
 
-  const [friends, setFriends] = useState([]);      // รายชื่อห้อง/เพื่อนจาก backend
-  const [selected, setSelected] = useState(null);  // ห้องที่เลือกอยู่ (มี chat_id)
-  const [message, setMessage] = useState("");
-  const [search, setSearch] = useState("");
-  const fileInputRef = useRef(null);
-  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
-  const [pendingFiles, setPendingFiles] = useState([]); // File[]
-  const [isSending, setIsSending] = useState(false);
+  useEffect(() => {
+    const onClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) setMenuMsgId(null);
+    };
+    const onEsc = (e) => { if (e.key === "Escape") setMenuMsgId(null); };
+    document.addEventListener("click", onClick);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("click", onClick);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, []);
 
-  // 1) โหลด "รายการห้องแชทของฉัน"
+  // load chat list
   useEffect(() => {
     const loadChats = async () => {
-      try {
-        const res = await fetch(`${API_URL}/chats?me_id=${meId}`, { headers: { ...authHeaders } });
-        if (!res.ok) throw new Error("load chats failed");
-        const list = await res.json();
-        // map ให้เข้ารูปแบบของ UI เดิม
-        const mapped = list.map((c) => ({
-          id: c.id, // chat_id
-          name: c.name,
-          username: c.username,
-          avatar: c.avatar || "/images/default.jpg",
-          lastMessage: c.lastMessage || "",
-          messages: [], // จะเติมทีหลังตอนคลิก
-        }));
-        setFriends(mapped);
-        const lastId = Number(localStorage.getItem("lastChatId") || 0);
-        const initial = mapped.find(x => x.id === lastId) || mapped[0];
-        // เลือกอันแรกอัตโนมัติ และโหลดข้อความ
-        if (initial) {
-          setSelected(initial);
-          await loadMessages(initial.id);
-        }
-      } catch (e) {
-        console.error("Error loading chats:", e);
+      const res = await fetch(`${API_URL}/chats?me_id=${meId}`, { headers: { ...authHeaders } });
+      if (!res.ok) throw new Error("load chats failed");
+      const list = await res.json();
+
+      const mapped = list.map((c) => ({
+        id: c.id, name: c.name, username: c.username,
+        avatar: c.avatar || "/images/default.jpg",
+        lastMessage: c.lastMessage || "", messages: []
+      }));
+
+      setFriends(mapped);
+      const lastId = Number(localStorage.getItem("lastChatId") || 0);
+      const initial = mapped.find(x => x.id === lastId) || mapped[0];
+      if (initial) {
+        setSelected(initial);
+        await loadMessages(initial.id);
       }
     };
-    loadChats();
+    loadChats().catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meId, token]);
 
-  // เลื่อนเมื่อมีการเปลี่ยนแปลงข้อความในห้องที่ถูกเลือก
-  useLayoutEffect(() => {
-    scrollToBottom();
-  }, [selected?.id, selected?.messages?.length]);
+  useLayoutEffect(() => { scrollToBottom(); }, [selected?.id, selected?.messages?.length]);
 
-  // 2) โหลดข้อความในห้อง (เรียกตอนคลิกซ้ายหรือเลือกห้อง)
+  // unique by username (กันรายชื่อเพื่อนซ้ำจากชื่อที่เหมือนกัน)
+  const uniqueFriendsAll = React.useMemo(() => {
+    const map = new Map(); // username -> item
+    for (const f of friends) if (!map.has(f.username)) map.set(f.username, f);
+    return [...map.values()];
+  }, [friends]);
+
+  // messages
   const loadMessages = async (chatId) => {
-    try {
-      const res = await fetch(`${API_URL}/chats/${chatId}/messages?me_id=${meId}`, {
-        headers: { ...authHeaders },
-      });
-      if (!res.ok) throw new Error("load messages failed");
-      const raw = await res.json();
-
-      // ✅ normalize ให้มี name
-      const normalized = raw.map(m => ({
-        sender: m.sender,
-        text: m.text ?? "",
-        kind: m.kind ?? "text",     // ✅ ใช้ค่า kind จาก backend
-        url:  m.url ?? null,        // ✅ ใช้ค่า url จาก backend
-        name: m.name ?? null,
-      }));
-  
-      setSelected(prev => (
-        prev && prev.id === chatId ? { ...prev, messages: normalized } : prev
-      ));
-    } catch (e) {
-      console.error("Error loading messages:", e);
-    }
+    const res = await fetch(`${API_URL}/chats/${chatId}/messages?me_id=${meId}`, { headers: { ...authHeaders } });
+    if (!res.ok) throw new Error("load messages failed");
+    const raw = await res.json();
+    const normalized = raw.map((m) => ({
+      id: m.id, sender: m.sender, text: m.text ?? "",
+      kind: m.kind ?? "text", url: m.url ?? null, name: m.name ?? null,
+    }));
+    setSelected((prev) => (prev && prev.id === chatId ? { ...prev, messages: normalized } : prev));
   };
 
-  // 3) เมื่อคลิกชื่อเพื่อนทางซ้าย → เลือกห้อง + โหลดข้อความ
   const handleSelectFriend = async (f) => {
     setSelected(f);
-    localStorage.setItem("lastChatId", String(f.id)); // ✅ บันทึกห้องล่าสุด
+    localStorage.setItem("lastChatId", String(f.id));
     await loadMessages(f.id);
   };
 
-  // 4) ส่งข้อความในห้องปัจจุบัน
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if (!selected || isSending) return;
-  
-    setIsSending(true);
-    const text = message.trim();
-  
-    try {
-      // 1) อัปโหลดไฟล์ก่อน (ถ้ามี)
-      if (pendingFiles.length > 0) {
-        const form = new FormData();
-        pendingFiles.forEach(f => form.append("files", f));
-  
-        const res = await fetch(`${API_URL}/chats/${selected.id}/upload?me_id=${meId}`, {
-          method: "POST",
-          body: form,
-        });
-        if (!res.ok) throw new Error("upload failed");
-  
-        const data = await res.json(); // { attachments: [...] }
-  
-        const newMsgs = (data.attachments || []).map(a => ({
-          sender: "me",
-          kind: a.kind,
-          url:  toAbs(a.url || a.path),
-          name: a.name || null,
-          text: a.name || "",        // ใช้ชื่อไฟล์เป็น label ภายใน bubble กรณีชนิด file
-        }));
-  
-        // เติมข้อความไฟล์ลงห้องแชต
-        setSelected(prev => prev ? { ...prev, messages: [...prev.messages, ...newMsgs] } : prev);
-  
-        // อัปเดต lastMessage ฝั่งซ้ายให้เป็นชนิดล่าสุด
-        const first = (data.attachments || [])[0];
-        const label =
-          !first ? "" : first.kind === "image" ? "[image]"
-               : first.kind === "video" ? "[video]"
-               : (first.name || "[file]");
-  
-        setFriends(prev => prev.map(it =>
-          it.id === selected.id ? { ...it, lastMessage: label } : it
-        ));
-      }
-  
-      // 2) ส่งข้อความตัวอักษรต่อ (ถ้ามี)
-      if (text) {
-        const res2 = await fetch(`${API_URL}/chats/${selected.id}/messages?me_id=${meId}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...authHeaders },
-          body: JSON.stringify({ text }),
-        });
-        if (!res2.ok) throw new Error("send message failed");
-        const saved = await res2.json();
-  
-        setSelected(prev => prev ? {
-          ...prev,
-          messages: [
-            ...prev.messages,
-            {
-              sender: saved.sender ?? "me",
-              text:   saved.text   ?? "",
-              kind:   saved.kind   ?? "text",
-              url:    saved.url ? toAbs(saved.url) : null,
-            }
-          ]
-        } : prev);
-  
-        // อัปเดต lastMessage เป็นข้อความจริง ถ้ามี text
-        setFriends(prev => prev.map(it =>
-          it.id === selected.id ? { ...it, lastMessage: text } : it
-        ));
-      }
-  
-      // เลื่อนลงล่างสุดเสมอ (หลัง DOM อัปเดต)
-      requestAnimationFrame(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-      });
-  
-    } catch (err) {
-      console.error(err);
-    } finally {
-      // เคลียร์ทุกอย่างให้ชัวร์ ไม่ว่าจะแตกกิ่งไหน
-      setMessage("");
-      setPendingFiles([]);   // ✅ พรีวิวใต้ช่องพิมพ์จะหายแน่นอน
-      setIsSending(false);
-    }
-  };
-
-  // ถ้าต้องการสร้างห้องใหม่กับเพื่อน ( needเป็นเพื่อนสองทางแล้ว)
-  // await fetch(`${API_URL}/chats/with/${otherUserId}?me_id=${meId}`, { method: "POST", headers: authHeaders });
-
-  const filteredFriends = friends.filter((f) =>
-    f.name.toLowerCase().includes(search.toLowerCase())
-  );
-
-  // อัปโหลดไฟล์ / รูป / วิดีโอ
+  // upload helpers
   const handleUploadClick = (accept) => {
     if (!fileInputRef.current) return;
-    fileInputRef.current.accept = accept; // "*/*" | "image/*" | "video/*"
+    fileInputRef.current.accept = accept;
     fileInputRef.current.click();
   };
-    
+
   const onFilesSelected = (e) => {
     if (!selected) return;
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-  
-    // แค่เก็บไว้เพื่อพรีวิว ยังไม่อัปโหลด
-    setPendingFiles(prev => [...prev, ...files]);
-  
-    // reset input ให้เลือกไฟล์เดิมซ้ำได้
+    const previews = files.map((f) => ({
+      id: makeId(f), file: f, url: URL.createObjectURL(f),
+      isImage: f.type.startsWith("image/"), isVideo: f.type.startsWith("video/"),
+    }));
+    setPendingFiles((prev) => [...prev, ...previews]);
     e.target.value = "";
+  };
+
+  // delete
+  const handleDelete = async (msgId) => {
+    if (!selected) return;
+    const prevMsgs = selected.messages;
+    setSelected((s) => s ? {
+      ...s,
+      messages: s.messages.map((m) =>
+        m.id === msgId ? { ...m, kind: "deleted", text: "", url: null, name: "" } : m
+      )
+    } : s);
+
+    const baseId = String(msgId).split(":")[0];
+    try {
+      const res = await fetch(`${API_URL}/chats/${selected.id}/messages/${baseId}?me_id=${meId}`, {
+        method: "DELETE", headers: { ...authHeaders },
+      });
+      if (!res.ok) throw new Error("delete failed");
+
+      // ✅ ถ้าข้อความที่ลบคือ “ตัวล่าสุดในห้อง” → อัปเดต preview ฝั่งซ้ายเป็น "" ไม่ต้องรีก็ขึ้นเลย
+      const lastMsg = prevMsgs[prevMsgs.length - 1];
+      const isDeletingLast =
+        lastMsg && String(lastMsg.id).split(":")[0] === String(baseId);
+
+      if (isDeletingLast) {
+        setFriends(prev =>
+          prev.map(it =>
+            it.id === selected.id ? { ...it, lastMessage: "" } : it
+          )
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      setSelected((s) => (s ? { ...s, messages: prevMsgs } : s));
+      alert("Error delete message");
+    }
+  };
+
+  // forward
+  const toggleTarget = (chatId) => {
+    setForwardTargets((prev) => {
+      const next = new Set(prev);
+      next.has(chatId) ? next.delete(chatId) : next.add(chatId);
+      return next;
+    });
+  };
+
+  const forwardToTargets = async () => {
+    if (!forward.msg || forwardTargets.size === 0) return;
+    const [midStr, aidStr] = String(forward.msg.id).split(":");
+    const mid = Number(midStr);
+    const aid = aidStr ? Number(aidStr) : undefined;
+    const targets = Array.from(forwardTargets);
+
+    try {
+      for (const targetId of targets) {
+        const payload = { source_message_id: mid};
+        if (aid) payload.attachment_id = aid;
+
+        const res = await fetch(`${API_URL}/chats/${targetId}/forward?me_id=${meId}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error(`forward failed (${targetId})`);
+        const data = await res.json();
+
+        const mapped = (data.attachments?.length
+          ? data.attachments.map(a => ({
+              id: `${data.message_id}:${a.id}`, sender: "me",
+              kind: a.kind, url: toAbs(a.url), name: a.name || "",
+              text: a.kind === "file" ? (a.name || "") : "",
+            }))
+          : [{ id: data.message_id, sender: "me", kind: "text", text: data.text || "Forwarded", url: null }]
+        );
+
+        if (selected?.id === targetId) {
+          setSelected((prev) => prev ? { ...prev, messages: [...prev.messages, ...mapped] } : prev);
+          requestAnimationFrame(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }));
+        }
+
+        const label = mapped[0].kind === "image" ? "[image]"
+                    : mapped[0].kind === "video" ? "[video]"
+                    : mapped[0].kind === "file"  ? (mapped[0].name || "[file]")
+                    : (mapped[0].text || "");
+        setFriends((prev) => prev.map(it => it.id === targetId ? { ...it, lastMessage: label } : it));
+      }
+
+      setForward({ open: false, msg: null });
+      setForwardTargets(new Set());
+    } catch (e) {
+      console.error(e);
+      alert("Forward message fail.");
+    }
+  };
+
+  // send (upload first, then text)
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!selected || isSending) return;
+    setIsSending(true);
+    const text = message.trim();
+
+    try {
+      if (pendingFiles.length > 0) {
+        const form = new FormData();
+        pendingFiles.forEach((p) => form.append("files", p.file));
+        setIsUploading(true); setUploadProgress(0);
+
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", `${API_URL}/chats/${selected.id}/upload?me_id=${meId}`);
+          xhr.upload.onprogress = (e) => { if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100)); };
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              const data = JSON.parse(xhr.responseText);
+              const newMsgs = (data.attachments || []).map((a) => ({
+                id: `${data.message_id}:${a.id}`, sender: "me",
+                kind: a.kind, url: toAbs(a.url || a.path),
+                name: a.name || "", text: a.kind === "file" ? (a.name || "") : "",
+              }));
+              setSelected((prev) => prev ? { ...prev, messages: [...prev.messages, ...newMsgs] } : prev);
+              const first = (data.attachments || [])[0];
+              const label = !first ? "" : first.kind === "image" ? "[image]" : first.kind === "video" ? "[video]" : (first.name || "[file]");
+              setFriends((prev) => prev.map(it => it.id === selected.id ? { ...it, lastMessage: label } : it));
+              setPendingFiles((prev) => { prev.forEach(p => URL.revokeObjectURL(p.url)); return []; });
+              resolve();
+            } else reject(new Error("Upload failed"));
+          };
+          xhr.onerror = () => reject(new Error("Network error"));
+          xhr.send(form);
+        }).catch(console.error).finally(() => { setIsUploading(false); setUploadProgress(0); });
+      }
+
+      if (text) {
+        const res2 = await fetch(`${API_URL}/chats/${selected.id}/messages?me_id=${meId}`, {
+          method: "POST", headers: { "Content-Type": "application/json", ...authHeaders },
+          body: JSON.stringify({ text }),
+        });
+        if (!res2.ok) throw new Error("send message failed");
+        const saved = await res2.json();
+        setSelected((prev) => prev ? { ...prev, messages: [...prev.messages, {
+          id: saved.id, sender: saved.sender ?? "me", text: saved.text ?? "",
+          kind: saved.kind ?? "text", url: saved.url ? toAbs(saved.url) : null,
+        }] } : prev);
+        setFriends((prev) => prev.map(it => it.id === selected.id ? { ...it, lastMessage: text } : it));
+      }
+
+      requestAnimationFrame(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }));
+    } finally {
+      setMessage(""); setPendingFiles([]); setIsSending(false);
+    }
   };
 
   return (
     <div className="flex h-full w-full bg-white overflow-hidden">
       {/* Sidebar */}
       <div className="w-[28%] border-r flex flex-col">
-        <div className="p-5 border-b flex-shrink-0 bg-white">
+        <div className="p-5 border-b bg-white">
           <h2 className="text-xl font-semibold mb-3">Chat</h2>
           <div className="relative">
             <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
             <input
-              type="text"
-              placeholder="Find friend..."
-              value={search}
+              type="text" placeholder="Find friend..." value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full border rounded-full py-2 pl-10 pr-4 focus:ring-2 focus:ring-[#e0ebe2] bg-white text-gray-700"
             />
           </div>
         </div>
 
-        {/* รายชื่อเพื่อน */}
         <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-white">
-          {filteredFriends.map((f) => (
-            <div
-              key={f.id}
-              onClick={() => handleSelectFriend(f)}
-              className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
-                selected?.id === f.id ? "bg-[#e0ebe2]" : "hover:bg-gray-100"
-              }`}
-            >
-              <img src={f.avatar} alt={f.name} className="w-12 h-12 rounded-full object-cover border" />
-              {/* min-w-0 เพื่อให้ truncate ทำงานใน flex */}
-              <div className="flex-1 min-w-0">
-              {/* <p className="w-full font-semibold text-gray-800 leading-tight truncate">
-                {f.name || ""}
-              </p> */}
-              <p className="font-semibold text-gray-800 truncate">{f.name}</p>
-              {/* <p className="w-full text-sm text-gray-500 leading-tight truncate">
-                {f.lastMessage || ""}
-              </p> */}
-              <p className="text-sm text-gray-500 truncate">{f.lastMessage}</p>
+          {uniqueFriendsAll
+            .filter((f) => f.name.toLowerCase().includes(search.toLowerCase()))
+            .map((f) => (
+              <div
+                key={f.id}
+                onClick={() => handleSelectFriend(f)}
+                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all ${
+                  selected?.id === f.id ? "bg-[#e0ebe2]" : "hover:bg-gray-100"
+                }`}
+              >
+                <img src={f.avatar} alt={f.name} className="w-12 h-12 rounded-full object-cover border" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-800 truncate">
+                    {f.name} 
+                    <span className="ml-1 text-xs text-gray-500">@{f.username}</span>
+                  </p>
+                  <p className="text-sm text-gray-500 truncate">{f.lastMessage}</p>
+                </div>
               </div>
-            </div>
-          ))}
-
-          {filteredFriends.length === 0 && (
+            ))}
+          {uniqueFriendsAll.filter((f) => f.name.toLowerCase().includes(search.toLowerCase())).length === 0 && (
             <div className="text-sm text-gray-500 px-2">No chats yet.</div>
           )}
         </div>
       </div>
 
-      {/* Chat Box */}
+      {/* Chat box */}
       <div className="flex-1 flex flex-col bg-white">
         {selected ? (
           <>
-            {/* Header */}
             <div className="p-4 border-b flex items-center gap-3">
-              <img
-                src={selected.avatar}
-                alt={selected.name}
-                className="w-10 h-10 rounded-full border"
-              />
+              <img src={selected.avatar} alt={selected.name} className="w-10 h-10 rounded-full border" />
               <p className="text-lg font-semibold">{selected.name}</p>
             </div>
 
-            {/* กล่องข้อความ */}
             <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3">
-            {selected?.messages?.map((msg, i) => {
-              const isMe = msg.sender === "me";
-              const url  = toAbs(msg.url);
+              {selected?.messages?.map((msg) => {
+                const isMe = msg.sender === "me";
+                const url = toAbs(msg.url);
 
-              return (
-                <div key={i} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
-                  <div className={`px-3 py-2 rounded-2xl max-w-[70%] ${isMe ? "bg-[#e0ebe2] text-gray-800" : "bg-gray-100 text-gray-800"} break-words whitespace-pre-wrap`}>
-                    {msg.kind === "image" && url ? (
-                      <img src={url} alt="" className="rounded-lg max-w-full" />
-                    ) : msg.kind === "video" && url ? (
-                      <video src={url} controls className="rounded-lg max-w-full" />
-                    ) : msg.kind === "file" && url ? (
-                      <a href={url} target="_blank" rel="noreferrer" className="underline break-all">
-                        📎 {msg.name || msg.url.split("/").pop() /* ✅ ใช้ name ก่อน */}
-                      </a>
-                    ) : (
-                      // (renderMessageContent(msg) ?? "")
-                      (msg.text ?? "")
+                return (
+                  <div key={msg.id} className={`relative group flex ${isMe ? "justify-end" : "justify-start"}`}>
+                    {/* ⋯ menu button */}
+                    {msg.kind !== "deleted" && (
+                      <button
+                        type="button"
+                        className={`absolute -top-2 ${isMe ? "-right-2" : "-left-2"} opacity-0 group-hover:opacity-100 transition bg-white/90 hover:bg-white shadow rounded-full px-2 py-0.5 text-xs`}
+                        onClick={(e) => { e.stopPropagation(); setMenuMsgId(msg.id); }}
+                        aria-haspopup="menu" aria-expanded={menuMsgId === msg.id}
+                        title="Options"
+                      >
+                        ⋯
+                      </button>
+                    )}
+
+                    {/* bubble */}
+                    <div className={`px-3 py-2 rounded-2xl max-w-[70%] ${isMe ? "bg-[#e0ebe2] text-gray-800" : "bg-gray-100 text-gray-800"} break-words whitespace-pre-wrap`}>
+                      {msg.kind === "deleted" ? (
+                        <i className="text-gray-500 italic">This message was deleted.</i>
+                      ) : msg.kind === "image" && url ? (
+                        <img src={url} alt="" className="rounded-lg max-w-full cursor-zoom-in" onClick={() => setViewer({ open: true, url })} />
+                      ) : msg.kind === "video" && url ? (
+                        <video src={url} controls className="rounded-lg max-w-full" />
+                      ) : msg.kind === "file" && url ? (
+                        <a href={url} target="_blank" rel="noreferrer" className="underline break-all">📎 {msg.name || url.split("/").pop()}</a>
+                      ) : (
+                        msg.text ?? ""
+                      )}
+                    </div>
+
+                    {/* floating menu */}
+                    {menuMsgId === msg.id && (
+                      <div
+                        ref={menuRef} role="menu"
+                        className={`absolute z-20 mt-6 ${isMe ? "right-0" : "left-0"} w-40 rounded-xl border bg-white shadow-lg overflow-hidden`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {/* delete (only mine) */}
+                        {isMe && (
+                          <button className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                                  onClick={() => { setMenuMsgId(null); handleDelete(msg.id); }}
+                                  role="menuitem">
+                            Delete message
+                          </button>
+                        )}
+
+                        {/* forward */}
+                        <button className="w-full px-3 py-2 text-left hover:bg-gray-50"
+                                onClick={() => { setMenuMsgId(null); setForward({ open: true, msg }); }}
+                                role="menuitem">
+                          Forward message
+                        </button>
+
+                        {/* copy (text only) */}
+                        {msg.kind === "text" && msg.text && (
+                          <button className="w-full px-3 py-2 text-left hover:bg-gray-50"
+                                  onClick={() => { navigator.clipboard.writeText(msg.text); setMenuMsgId(null); }}>
+                            Copy message
+                          </button>
+                        )}
+
+                        {/* download (attachments only) */}
+                        {["image","video","file"].includes(msg.kind) && msg.url && (
+                          <a className="block px-3 py-2 hover:bg-gray-50" href={toAbs(msg.url)} download onClick={() => setMenuMsgId(null)}>
+                            Download file
+                          </a>
+                        )}
+                      </div>
                     )}
                   </div>
-                </div>
-              );
-            })}
-
-              {!selected && (
-                <div className="text-sm text-gray-500">Select a chat to start messaging.</div>
-              )}
-
+                );
+              })}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* พิมพ์ + แนบไฟล์ */}
+            {/* composer */}
             <form onSubmit={handleSend} className="border-t bg-white flex items-center gap-3 px-5 py-3 flex-shrink-0">
-              {/* ปุ่มแนบไฟล์ 3 อัน Input file ซ่อน*/}
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                className="hidden"
-                onChange={onFilesSelected}
-              />
-
+              <input ref={fileInputRef} type="file" multiple className="hidden" onChange={onFilesSelected} />
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleUploadClick("*/*")}
-                  className="p-2 rounded-full hover:bg-gray-100"
-                >
-                  <Paperclip size={20} className="text-gray-500" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleUploadClick("image/*")}
-                  className="p-2 rounded-full hover:bg-gray-100"
-                >
-                  <Image size={20} className="text-gray-500" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleUploadClick("video/*")}
-                  className="p-2 rounded-full hover:bg-gray-100"
-                >
-                  <Video size={20} className="text-gray-500" />
-                </button>
+                <button type="button" onClick={() => handleUploadClick("*/*")} className="p-2 rounded-full hover:bg-gray-100"><Paperclip size={20} className="text-gray-500" /></button>
+                <button type="button" onClick={() => handleUploadClick("image/*")} className="p-2 rounded-full hover:bg-gray-100"><Image size={20} className="text-gray-500" /></button>
+                <button type="button" onClick={() => handleUploadClick("video/*")} className="p-2 rounded-full hover:bg-gray-100"><Video size={20} className="text-gray-500" /></button>
               </div>
 
+              {/* previews + progress */}
               {pendingFiles.length > 0 && (
-              <div className="px-5 py-2 border-t bg-white flex flex-wrap gap-2">
-                {pendingFiles.map((f, idx) => {
-                  const url = URL.createObjectURL(f);
-                  const isImg = f.type.startsWith("image/");
-                  const isVideo = f.type.startsWith("video/");
-                  return (
-                    <div key={idx} className="flex items-center gap-2 border rounded-xl px-2 py-1">
-                      {isImg ? (
-                        <img src={url} alt={f.name} className="w-12 h-12 object-cover rounded" />
-                      ) : isVideo ? (
-                        <video src={url} className="w-16 h-12 rounded" muted />
-                      ) : (
-                        <span className="text-sm px-2 break-all max-w-[200px] truncate">{f.name}</span>
-                      )}
-                      <button
-                        type="button"
-                        className="text-xs text-red-600"
-                        onClick={() => setPendingFiles(prev => prev.filter((_, i) => i !== idx))}
-                      >
+                <div className="px-3 py-1 flex gap-2 items-center">
+                  {pendingFiles.map((p) => (
+                    <div key={p.id} className="flex items-center gap-2 border rounded-xl px-2 py-1">
+                      {p.isImage ? <img src={p.url} alt={p.file.name} className="w-10 h-10 object-cover rounded" /> :
+                       p.isVideo ? <video src={p.url} className="w-12 h-10 rounded bg-gray-100" preload="metadata" muted playsInline /> :
+                       <span className="text-sm px-2 break-all max-w-[160px] truncate">{p.file.name}</span>}
+                      <button type="button" className="text-xs text-red-600"
+                              onClick={() => { URL.revokeObjectURL(p.url); setPendingFiles(prev => prev.filter(x => x.id !== p.id)); }}>
                         remove
                       </button>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  ))}
+                  {isUploading && (
+                    <div className="flex items-center gap-3 text-sm text-gray-600">
+                      <div className="h-2 w-40 bg-gray-200 rounded overflow-hidden">
+                        <div className="h-2 bg-green-500 transition-all" style={{ width: `${uploadProgress}%` }} />
+                      </div>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
-            {/* ช่องพิม text */}
-            <input
-              type="text"
-              placeholder="Type a message..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="flex-1 border rounded-full px-4 py-2.5 focus:ring-2 focus:ring-[#e0ebe2] outline-none"
-              disabled={!selected}
-            />
+              <input type="text" placeholder="Type a message..." value={message}
+                     onChange={(e) => setMessage(e.target.value)}
+                     className="flex-1 border rounded-full px-4 py-2.5 focus:ring-2 focus:ring-[#e0ebe2] outline-none" disabled={!selected} />
 
-            {/* send buttom */}
-            <button type="submit" className="p-2 bg-[#6dbf74] text-white rounded-full hover:bg-[#5aa862] transition" disabled={!selected}>
-              <Send size={18} />
-            </button>
-          </form>
-        </>
+              <button type="submit" className="p-2 bg-[#6dbf74] text-white rounded-full hover:bg-[#5aa862] transition"
+                      disabled={!selected || isUploading || isSending}>
+                <Send size={18} />
+              </button>
+            </form>
+          </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-500">
-            Select a chat to start messaging.
+          <div className="flex-1 flex items-center justify-center text-gray-500">Select a chat to start messaging.</div>
+        )}
+
+        {/* image viewer */}
+        {viewer.open && (
+          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"
+               onClick={() => setViewer({ open: false, url: "" })} role="button" aria-label="Close image viewer">
+            <img src={viewer.url} alt="" className="max-h-[90vh] max-w-[95vw] rounded-lg object-contain" />
+          </div>
+        )}
+
+        {/* forward modal */}
+        {forward.open && (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+               onClick={() => { setForward({ open:false, msg:null }); setForwardTargets(new Set()); }}>
+            <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <div className="px-5 py-4 border-b flex items-center justify-between">
+                <div className="font-semibold">Forward</div>
+                <button onClick={() => { setForward({ open:false, msg:null }); setForwardTargets(new Set()); }}
+                        className="text-gray-500 hover:text-black">✕</button>
+              </div>
+
+              <div className="px-5 py-3">
+                <input value={forwardSearch} onChange={(e) => setForwardSearch(e.target.value)}
+                       placeholder="Find friend…" className="w-full border rounded-lg px-3 py-2" />
+              </div>
+
+              <div className="px-5 pb-4 max-h-[50vh] overflow-y-auto space-y-2">
+                {uniqueFriendsAll
+                  .filter(f => f.name.toLowerCase().includes(forwardSearch.toLowerCase()))
+                  .map(f => (
+                    <label key={f.id} className="flex items-center gap-3 p-2 rounded-lg border hover:bg-gray-50 cursor-pointer">
+                      <input type="checkbox" checked={forwardTargets.has(f.id)}
+                             onChange={() => toggleTarget(f.id)} onClick={(e) => e.stopPropagation()} />
+                      <img src={f.avatar} alt={f.name} className="w-8 h-8 rounded-full border object-cover" />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">
+                          {f.name} 
+                          <span className="ml-1 text-xs text-gray-500">@{f.username}</span>
+                        </div>
+                        <div className="text-xs text-gray-500 truncate">{f.lastMessage}</div>
+                      </div>
+                    </label>
+                  ))}
+                {uniqueFriendsAll.filter(f => f.name.toLowerCase().includes(forwardSearch.toLowerCase())).length === 0 && (
+                  <div className="text-sm text-gray-500 px-1 py-2">Not found this user name</div>
+                )}
+              </div>
+
+              <div className="px-5 py-4 border-t flex justify-end gap-2">
+                <button className="px-4 py-2 rounded-lg border"
+                        onClick={() => { setForward({ open:false, msg:null }); setForwardTargets(new Set()); }}>
+                  Cancel
+                </button>
+                <button className="px-4 py-2 rounded-lg bg-[#6dbf74] text-white disabled:opacity-50"
+                        disabled={forwardTargets.size === 0} onClick={forwardToTargets}>
+                  Send
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

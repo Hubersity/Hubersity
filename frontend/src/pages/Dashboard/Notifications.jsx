@@ -1,54 +1,57 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+const API_URL = "http://localhost:8000";
 
 export default function Notifications() {
   // mock data สำหรับการแจ้งเตือน
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: "comment",
-      name: "Skibidi",
-      avatar: "/images/Patthiaon.jpg",
-      time: "today",
-      text: `commented your post “Yes, I’ve taken the ISP course before. If you have any questions, you can DM me.”`,
-      isFollowing: false,
-    },
-    {
-      id: 2,
-      type: "like",
-      name: "Skibidi",
-      avatar: "/images/Patthiaon.jpg",
-      time: "today",
-      text: "and 47 others liked your post.",
-      isFollowing: false,
-    },
-    {
-      id: 3,
-      type: "follow",
-      name: "Rose",
-      avatar: "/images/Karnpon.jpg",
-      time: "yesterday",
-      text: "started following you.",
-      isFollowing: false,
-    },
-    {
-      id: 4,
-      type: "like",
-      name: "Pysart",
-      avatar: "/images/Watcharapat.jpg",
-      time: "this week",
-      text: "and 102 others liked your post.",
-      isFollowing: true,
-    },
-    {
-      id: 5,
-      type: "follow",
-      name: "Pysart",
-      avatar: "/images/Watcharapat.jpg",
-      time: "this week",
-      text: "started following you.",
-      isFollowing: false,
-    },
-  ]);
+  // const [notifications, setNotifications] = useState([
+  //   {
+  //     id: 1,
+  //     type: "comment",
+  //     name: "Skibidi",
+  //     avatar: "/images/Patthiaon.jpg",
+  //     time: "today",
+  //     text: `commented your post “Yes, I’ve taken the ISP course before. If you have any questions, you can DM me.”`,
+  //     isFollowing: false,
+  //   },
+  //   {
+  //     id: 2,
+  //     type: "like",
+  //     name: "Skibidi",
+  //     avatar: "/images/Patthiaon.jpg",
+  //     time: "today",
+  //     text: "and 47 others liked your post.",
+  //     isFollowing: false,
+  //   },
+  //   {
+  //     id: 3,
+  //     type: "follow",
+  //     name: "Rose",
+  //     avatar: "/images/Karnpon.jpg",
+  //     time: "yesterday",
+  //     text: "started following you.",
+  //     isFollowing: false,
+  //   },
+  //   {
+  //     id: 4,
+  //     type: "like",
+  //     name: "Pysart",
+  //     avatar: "/images/Watcharapat.jpg",
+  //     time: "this week",
+  //     text: "and 102 others liked your post.",
+  //     isFollowing: true,
+  //   },
+  //   {
+  //     id: 5,
+  //     type: "follow",
+  //     name: "Pysart",
+  //     avatar: "/images/Watcharapat.jpg",
+  //     time: "this week",
+  //     text: "started following you.",
+  //     isFollowing: false,
+  //   },
+  // ]);
+  const [notifications, setNotifications] = useState([]);
 
   // กด follow / unfollow
   const handleFollowBack = (id) => {
@@ -59,11 +62,80 @@ export default function Notifications() {
     );
   };
 
-  // แยกกลุ่มตามเวลา
+  useEffect(() => {
+    const currentKey = localStorage.getItem("currentUserKey");
+    const authData = currentKey
+      ? JSON.parse(localStorage.getItem(currentKey) || "{}")
+      : null;
+
+    if (!authData?.token) return;
+
+    async function fetchNotifications() {
+      try {
+        const res = await fetch(`${API_URL}/notification/me`, {
+          headers: {
+            Authorization: `Bearer ${authData.token}`,
+          },
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch notifications");
+
+        const raw = await res.json();
+
+        const formatted = raw.map((n) => ({
+          id: n.id,
+          type: "system", // or infer from n.title/message if needed
+          name: n.sender_username,
+          avatar: n.sender_avatar ? `${API_URL}${n.sender_avatar}` : "/images/default-avatar.png",
+          time: groupTime(n.created_at),
+          text: n.message,
+          isFollowing: false,
+        }));
+
+        setNotifications(formatted);
+      } catch (err) {
+        console.error("Error loading notifications:", err);
+      }
+    }
+
+    fetchNotifications();
+  }, []);
+
+
+  function groupTime(dateStr) {
+    const created = new Date(dateStr);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    if (created >= today && created < new Date(today.getTime() + 86400000)) return "today";
+    if (created >= yesterday && created < today) return "yesterday";
+    if (created >= startOfWeek && created <= endOfWeek) return "this week";
+    return created.toISOString().split("T")[0];
+  }
+
+  // ✅ Group notifications by time
   const grouped = notifications.reduce((acc, cur) => {
     acc[cur.time] = acc[cur.time] ? [...acc[cur.time], cur] : [cur];
     return acc;
   }, {});
+
+  // ✅ Order sections
+  const order = ["today", "yesterday", "this week"];
+  const sections = order
+    .filter((key) => grouped[key])
+    .concat(
+      Object.keys(grouped)
+        .filter((key) => !order.includes(key))
+        .sort()
+        .reverse()
+    );
+
 
   return (
     <div className="flex flex-col w-full h-[calc(100vh-64px)] bg-white overflow-hidden">
