@@ -113,8 +113,8 @@ def list_my_chats(
                 preview = "[video]"
             else:
                 preview = a.original_name or "[file]"
-        # else:
-        #     preview = last.text or "" if last else ""
+        else:
+            preview = last.text or "" if last else ""
 
         result.append({
             "id": c.id,
