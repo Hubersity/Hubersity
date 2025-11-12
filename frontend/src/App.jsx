@@ -73,6 +73,7 @@ import Notifications from './pages/Dashboard/Notifications';
 import UserProfile from './pages/Dashboard/UserProfile';
 import Tags from './pages/Dashboard/Tags';
 import TagDetail from './pages/Dashboard/TagDetail'; 
+import Setting from "./pages/Dashboard/Setting/Setting";
 
 // ⬇admin: lazy imports (so they don't execute until visited)
 const Dashboard_admin     = lazy(() => import('./pages/Admin/Dashboard-admin.jsx'));
@@ -126,6 +127,7 @@ export default function App() {
         <Route path="user/:userId" element={<UserProfile />} />
         <Route path="tags" element={<Tags />} />
         <Route path="tags/:tagName" element={<TagDetail />} /> 
+        <Route path="setting" element={<Setting />} />
       </Route>
 
       {/* admin dashboard (lazy + boundary) */}
