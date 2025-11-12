@@ -84,7 +84,7 @@ export default function ForHelp() {
           Your account details and browser information may be included automatically to help us identify the issue.
         </p>
         <p className="mt-1">
-          Need urgent help? Contact <span className="text-[#8cab93] font-medium">Hubersity@gmail.com</span>
+          Need urgent help? Contact <span className="text-[#8cab93] font-medium">hubersityske@gmail.com</span>
         </p>
       </div>
 
