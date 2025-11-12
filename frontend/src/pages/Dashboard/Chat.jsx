@@ -142,6 +142,19 @@ export default function Chat() {
         method: "DELETE", headers: { ...authHeaders },
       });
       if (!res.ok) throw new Error("delete failed");
+
+      // ✅ ถ้าข้อความที่ลบคือ “ตัวล่าสุดในห้อง” → อัปเดต preview ฝั่งซ้ายเป็น "" ไม่ต้องรีก็ขึ้นเลย
+      const lastMsg = prevMsgs[prevMsgs.length - 1];
+      const isDeletingLast =
+        lastMsg && String(lastMsg.id).split(":")[0] === String(baseId);
+
+      if (isDeletingLast) {
+        setFriends(prev =>
+          prev.map(it =>
+            it.id === selected.id ? { ...it, lastMessage: "" } : it
+          )
+        );
+      }
     } catch (err) {
       console.error(err);
       setSelected((s) => (s ? { ...s, messages: prevMsgs } : s));
