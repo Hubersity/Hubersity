@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link , useNavigate} from "react-router-dom";
 import {
   Paperclip,
   Image,
@@ -455,6 +455,7 @@ export default function Board() {
   const [menuOpen, setMenuOpen] = useState(null);
   const [selectedUni, setSelectedUni] = useState(null);
   const currentKey = localStorage.getItem("currentUserKey");
+  const navigate = useNavigate();
   const [previewImage, setPreviewImage] = useState(null);
   const authData = currentKey
     ? JSON.parse(localStorage.getItem(currentKey) || "{}")
@@ -1147,8 +1148,8 @@ const handlePost = async () => {
                       key={i}
                       onClick={(e) => {
                         e.stopPropagation();
-                        // 👉 ไปหน้า tag หรือ filter โพสต์
-                        console.log("Clicked tag:", word);
+                        // ไปหน้า tag หรือ filter โพสต์
+                        navigate(`/app/tags/${word.slice(1)}`);
                         // ถ้ามีหน้า tag แล้วใช้ navigate(`/tags/${word.slice(1)}`)
                       }}
                       className="text-green-700 hover:text-green-800 font-medium cursor-pointer"
