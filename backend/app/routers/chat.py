@@ -101,7 +101,11 @@ def list_my_chats(
 
 
         preview = ""
-        if last and last.attachments:
+
+        # ✅ ถ้าข้อความล่าสุดถูกลบ ให้ขึ้น "This message was deleted."
+        if last and (last.kind or "").lower() == "deleted":
+            preview = ""
+        elif last and last.attachments:
             a = last.attachments[0]
             if a.kind == "image":
                 preview = "[image]"
@@ -109,8 +113,8 @@ def list_my_chats(
                 preview = "[video]"
             else:
                 preview = a.original_name or "[file]"
-        else:
-            preview = last.text or "" if last else ""
+        # else:
+        #     preview = last.text or "" if last else ""
 
         result.append({
             "id": c.id,
@@ -309,34 +313,41 @@ def upload_attachments(
     }
 
 @router.delete("/{chat_id}/messages/{message_id}")
-def delete_message(chat_id: int, message_id: int,
-                   me_id: int = Query(...),
-                   db: Session = Depends(database.get_db)):
-    m = (db.query(models.ChatMessage)
-            .options(selectinload(models.ChatMessage.attachments))
-            .filter(models.ChatMessage.id == message_id,
-                    models.ChatMessage.chat_id == chat_id)
-            .first())
-    if not m:
-        raise HTTPException(404, "Message not found")
-    if m.sender_id != me_id:
-        raise HTTPException(403, "You can delete only your messages")
+def delete_message(
+    chat_id: int,
+    message_id: int,
+    me_id: int = Query(...),
+    db: Session = Depends(database.get_db),
+):
+    # หา message เฉพาะในห้องนี้
+    msg = (
+        db.query(models.ChatMessage)
+        .filter(models.ChatMessage.id == message_id,
+                models.ChatMessage.chat_id == chat_id)
+        .first()
+    )
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found")
 
-    # ✅ ลบแถว attachments ออก (และจะเลือก unlink ไฟล์ด้วยก็ได้)
-    for a in m.attachments:
-        try:
-            # ถ้าคุณเก็บ path เป็นชื่อไฟล์ เช่น "xxx.png"
-            abs_path = os.path.join(UPLOAD_DIR, a.path)
-            if os.path.exists(abs_path):
-                os.remove(abs_path)  # ถ้าไม่อยากลบไฟล์จริง ให้คอมเมนต์บรรทัดนี้
-        except Exception:
-            pass
-        db.delete(a)
+    # เช็กสิทธิ์อยู่ในห้อง
+    chat = db.query(models.Chat).filter(models.Chat.id == chat_id).first()
+    if not chat or me_id not in (chat.user1_id, chat.user2_id):
+        raise HTTPException(status_code=403, detail="Not allowed in this chat")
 
-    # ✅ soft delete ข้อความ
-    m.kind = "deleted"
-    m.text = None
+    # (ถ้าอยากบังคับว่า 'ลบได้เฉพาะเจ้าของข้อความ')
+    # if msg.sender_id != me_id:
+    #     raise HTTPException(status_code=403, detail="Only sender can delete")
+
+    # ถ้าลบไปแล้ว ไม่ต้องทำซ้ำ
+    if msg.kind == "deleted":
+        return {"ok": True}
+
+    # SOFT DELETE: ไม่แตะไฟล์/attachment
+    msg.kind = "deleted"
+    msg.text = None
+    db.add(msg)
     db.commit()
+
     return {"ok": True}
 
 @router.post("/{chat_id}/forward")
@@ -429,3 +440,58 @@ def forward_message(
 
     db.commit()
     return {"message_id": new_msg.id, "sender": "me", "text": new_msg.text, "attachments": out_attachments}
+
+@router.get("/{chat_id}/messages")
+def list_messages(chat_id: int, me_id: int = Query(...), db: Session = Depends(database.get_db)):
+    chat = db.query(models.Chat).filter(models.Chat.id == chat_id).first()
+    if not chat or me_id not in (chat.user1_id, chat.user2_id):
+        raise HTTPException(403, "Not allowed")
+
+    rows = (
+        db.query(models.ChatMessage)
+        .options(selectinload(models.ChatMessage.attachments))
+        .filter(models.ChatMessage.chat_id == chat_id)
+        .order_by(models.ChatMessage.created_at.asc())
+        .all()
+    )
+
+    out = []
+    for m in rows:
+        sender = "me" if m.sender_id == me_id else "other"
+
+        if m.kind == "deleted":
+            out.append({
+                "id": m.id,
+                "sender": sender,
+                "kind": "deleted",
+                "text": None,
+                "url": None,
+                "name": None,
+                "attachments": [],  # ไม่ส่งไฟล์กลับ
+            })
+            continue
+
+        # ปกติ
+        atts = [{
+            "id": a.id,
+            "kind": a.kind,
+            "url": f"/uploads/{a.path}",
+            "name": a.original_name,
+            "mime_type": a.mime_type,
+        } for a in (m.attachments or [])]
+
+        # เผื่อ frontend ของคุณใช้ฟิลด์ url/name เดี่ยว ๆ
+        url = atts[0]["url"] if atts else None
+        name = atts[0]["name"] if atts else None
+
+        out.append({
+            "id": m.id,
+            "sender": sender,
+            "kind": m.kind or ("text" if not atts else atts[0]["kind"]),
+            "text": m.text or "",
+            "url": url,
+            "name": name,
+            "attachments": atts,
+        })
+
+    return out
