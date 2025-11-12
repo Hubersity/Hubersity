@@ -7,7 +7,7 @@ export default function ChangePassword() {
       </h2>
 
       {/* ฟอร์มกรอกรหัสผ่าน */}
-      <div className="flex flex-col space-y-5 w-full max-w-md">
+      <div className="flex flex-col space-y-5 w-full">
         {/* Current Password */}
         <div className="flex flex-col">
           <label className="text-gray-700 text-sm font-medium mb-2">
@@ -45,7 +45,7 @@ export default function ChangePassword() {
         </div>
 
         {/* ปุ่ม Confirm */}
-        <div className="pt-4">
+        <div className="pt-4 flex justify-center w-full">
           <button
             className="bg-[#8cab93] text-white font-medium px-8 py-2 rounded-full hover:bg-[#7da186] transition"
           >
