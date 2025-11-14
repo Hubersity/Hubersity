@@ -421,29 +421,64 @@ export default function Chat() {
 
               {/* previews + progress */}
               {pendingFiles.length > 0 && (
-                <div className="px-3 py-1 flex gap-2 items-center">
-                  {pendingFiles.map((p) => (
-                    <div key={p.id} className="flex items-center gap-2 border rounded-xl px-2 py-1">
-                      {p.isImage ? <img src={p.url} alt={p.file.name} className="w-10 h-10 object-cover rounded" /> :
-                       p.isVideo ? <video src={p.url} className="w-12 h-10 rounded bg-gray-100" preload="metadata" muted playsInline /> :
-                       <span className="text-sm px-2 break-all max-w-[160px] truncate">{p.file.name}</span>}
-                      <button type="button" className="text-xs text-red-600"
-                              onClick={() => { URL.revokeObjectURL(p.url); setPendingFiles(prev => prev.filter(x => x.id !== p.id)); }}>
-                        remove
-                      </button>
-                    </div>
-                  ))}
-                  {isUploading && (
-                    <div className="flex items-center gap-3 text-sm text-gray-600">
-                      <div className="h-2 w-40 bg-gray-200 rounded overflow-hidden">
-                        <div className="h-2 bg-green-500 transition-all" style={{ width: `${uploadProgress}%` }} />
+                <div className="max-w-xs">
+                  <div className="px-3 py-1 flex flex-wrap gap-2 items-start">
+                    {pendingFiles.map((p) => (
+                      <div
+                        key={p.id}
+                        className="border rounded-xl px-2 py-2 flex flex-col gap-1 max-w-[190px] bg-white"
+                      >
+                        {/* แถวบน: รูป/วิดีโอ/ชื่อไฟล์ */}
+                        <div className="flex items-center gap-2">
+                          {p.isImage ? (
+                            <img
+                              src={p.url}
+                              alt={p.file.name}
+                              className="w-10 h-10 object-cover rounded"
+                            />
+                          ) : p.isVideo ? (
+                            <video
+                              src={p.url}
+                              className="w-12 h-10 rounded bg-gray-100"
+                              preload="metadata"
+                              muted
+                              playsInline
+                            />
+                          ) : (
+                            <span className="text-xs px-2 break-words max-w-[130px]">
+                              {p.file.name}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* แถวล่าง: ปุ่ม remove อยู่ในกรอบเสมอ */}
+                        <button
+                          type="button"
+                          className="self-end text-[11px] text-red-600"
+                          onClick={() => {
+                            URL.revokeObjectURL(p.url);
+                            setPendingFiles((prev) => prev.filter((x) => x.id !== p.id));
+                          }}
+                        >
+                          remove
+                        </button>
                       </div>
-                      <span>{uploadProgress}%</span>
-                    </div>
-                  )}
+                    ))}
+                    {isUploading && (
+                      <div className="flex items-center gap-3 text-sm text-gray-600">
+                        <div className="h-2 w-40 bg-gray-200 rounded overflow-hidden">
+                          <div
+                            className="h-2 bg-green-500 transition-all"
+                            style={{ width: `${uploadProgress}%` }}
+                          />
+                        </div>
+                        <span>{uploadProgress}%</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
-
+              
               <input type="text" placeholder="Type a message..." value={message}
                      onChange={(e) => setMessage(e.target.value)}
                      className="flex-1 border rounded-full px-4 py-2.5 focus:ring-2 focus:ring-[#e0ebe2] outline-none" disabled={!selected} />
