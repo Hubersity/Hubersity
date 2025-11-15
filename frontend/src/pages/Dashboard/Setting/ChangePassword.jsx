@@ -180,13 +180,18 @@ export default function ChangePassword() {
 
         {/* SUBMIT BUTTON */}
         <div className="pt-2 flex justify-center">
-          <button
-            onClick={handleSubmit}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium 
-            shadow-md px-8 py-2 rounded-full transition"
-          >
-            Confirm
-          </button>
+        <button
+          onClick={handleSubmit}
+          className="
+            bg-[#8cab93]
+            hover:bg-[#7fa586]
+            text-white font-medium
+            shadow-md px-8 py-2 
+            rounded-full transition
+          "
+        >
+          Confirm
+        </button>
         </div>
 
       </div>

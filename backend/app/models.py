@@ -4,6 +4,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
+from datetime import datetime
 
 from .database import Base
 
@@ -309,3 +310,20 @@ class Block(Base):
 
     blocker = relationship("User", foreign_keys=[blocker_id])
     blocked = relationship("User", foreign_keys=[blocked_id])
+
+class HelpReport(Base):
+    __tablename__ = "help_reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
+    message = Column(String, nullable=False)
+    file_path = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    resolved = Column(Boolean, default=False)
+
+    user = relationship("User")
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,      # จะใส่เวลาอัตโนมัติ
+        nullable=False
+    )
