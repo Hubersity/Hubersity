@@ -12,9 +12,9 @@ const navItems = [
   { to: "/app/follow", label: "Follow", icon: Users },
   { to: "/app/chat", label: "Chat", icon: MessageSquare },
   { to: "/app/notification", label: "Notification", icon: Bell },
-  { to: "/app/account", label: "Account", icon: User },
   { to: "/app/tags", label: "Tags", icon: Hash },
   { to: "/app/news", label: "News", icon: Megaphone },
+  { to: "/app/account", label: "Account", icon: User },
 ];
 
 // =========================
