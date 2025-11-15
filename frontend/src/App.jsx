@@ -74,6 +74,7 @@ import UserProfile from './pages/Dashboard/UserProfile';
 import Tags from './pages/Dashboard/Tags';
 import TagDetail from './pages/Dashboard/TagDetail'; 
 import Setting from "./pages/Dashboard/Setting/Setting";
+import News from './pages/Dashboard/News';
 
 // ⬇admin: lazy imports (so they don't execute until visited)
 const Dashboard_admin     = lazy(() => import('./pages/Admin/Dashboard-admin.jsx'));
@@ -128,6 +129,7 @@ export default function App() {
         <Route path="account" element={<Account />} />
         <Route path="user/:userId" element={<UserProfile />} />
         <Route path="tags" element={<Tags />} />
+        <Route path="news" element={<News />} />
         <Route path="tags/:tagName" element={<TagDetail />} /> 
         <Route path="setting" element={<Setting />} />
       </Route>
