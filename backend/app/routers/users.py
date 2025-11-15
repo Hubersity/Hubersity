@@ -5,6 +5,8 @@ from ..database import get_db
 from typing import List
 import datetime, shutil, os
 from .notification import create_notification_template
+from pydantic import BaseModel, validator
+import re
 
 
 router = APIRouter(
@@ -297,3 +299,51 @@ def get_user(
         )
     return user
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_new_password: str
+
+    @validator("new_password")
+    def validate_new_password(cls, v):
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"\d", v):
+            raise ValueError("Password must contain at least one number")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
+            raise ValueError("Password must contain at least one special character (!@#$...)")
+        return v
+
+    @validator("confirm_new_password")
+    def passwords_match(cls, v, values):
+        if "new_password" in values and v != values["new_password"]:
+            raise ValueError("Passwords do not match")
+        return v
+    
+@router.post("/change-password")
+def change_password(
+    data: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+
+    user = db.query(models.User).filter(models.User.uid == current_user.uid).first()
+
+    # 1) ตรวจสอบรหัสเดิม
+    if not utils.verify(data.current_password, user.password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+    # 2) ห้ามใช้รหัสเดิมซ้ำ
+    if utils.verify(data.new_password, user.password):
+        raise HTTPException(status_code=400, detail="New password cannot be the same as old password")
+
+    # 3) แฮชและบันทึก
+    hashed_new = utils.hash(data.new_password)
+    user.password = hashed_new
+
+    db.commit()
+    db.refresh(user)
+
+    return {"message": "Password changed successfully"}
