@@ -49,6 +49,8 @@ export default function UserProfile() {
   const [extraDetails, setExtraDetails] = useState("");
   const [isFollowing, setIsFollowing] = useState(false);
   const [reportAccountOpen, setReportAccountOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   const openReport = (pid) => {
     setReportPostId(pid);
@@ -156,6 +158,28 @@ export default function UserProfile() {
   useEffect(() => {
     if (!authData?.token || !user) return;
 
+    const checkBlockStatus = async () => {
+      try {
+        const res = await fetch(`${API_URL}/block/list`, {
+          headers: { Authorization: `Bearer ${authData.token}` },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const blocked = data.some((b) => String(b.blocked_id) === String(userId));
+          setIsBlocked(blocked);
+        }
+      } catch (err) {
+        console.error("Error checking block status:", err);
+      }
+    };
+
+    checkBlockStatus();
+  }, [authData, user]);
+
+  useEffect(() => {
+    if (!authData?.token || !user) return;
+
     const checkFollowing = async () => {
       try {
         const res = await fetch(`${API_URL}/follow/following`, {
@@ -175,7 +199,6 @@ export default function UserProfile() {
   }, [authData, user]);
 
   
-
   if (error)
     return <div className="p-10 text-center text-red-500">Failed to load user: {error}</div>;
   if (!authData)
@@ -215,6 +238,48 @@ export default function UserProfile() {
     }
   };
 
+  const handleBlockToggle = async () => {
+    if (!authData?.token) return;
+
+    try {
+      // ถ้าบล็อกอยู่ → ปลดบล็อก
+      if (isBlocked) {
+        const res = await fetch(`${API_URL}/block/${userId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${authData.token}` },
+        });
+
+        if (res.ok) {
+          setIsBlocked(false);
+          alert("User unblocked.");
+        }
+      } 
+      // ถ้ายังไม่บล็อก → เปิด modal confirm
+      else {
+        setBlockOpen(true);
+      }
+    } catch (err) {
+      console.error("Block action failed:", err);
+    }
+  };
+
+  const confirmBlock = async () => {
+    try {
+      const res = await fetch(`${API_URL}/block/${userId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${authData.token}` },
+      });
+
+      if (res.ok) {
+        setIsBlocked(true);
+        setBlockOpen(false);
+        alert("User blocked successfully.");
+      }
+    } catch (err) {
+      console.error("Block failed:", err);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center bg-white min-h-[calc(100vh-64px)] py-10 relative">
       {/* กล่องโปรไฟล์ */}
@@ -234,9 +299,12 @@ export default function UserProfile() {
         <motion.button
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
-          className="px-6 py-2 rounded-[10px] font-medium shadow-sm text-sm hover:shadow-md bg-[#ea4124] text-white"
+          onClick={handleBlockToggle}
+          className={`px-6 py-2 rounded-[10px] font-medium shadow-sm text-sm hover:shadow-md transition-all text-white ${
+            isBlocked ? "bg-red-800" : "bg-[#ea4124]"
+          }`}
         >
-          Block
+          {isBlocked ? "Blocked" : "Block"}
         </motion.button>
 
         <motion.button
@@ -781,6 +849,69 @@ export default function UserProfile() {
                   className="px-5 py-2 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow"
                 >
                   Submit Report
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal Confirm Block */}
+      <AnimatePresence>
+        {blockOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {/* overlay */}
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-[3px]"
+              onClick={() => setBlockOpen(false)}
+            />
+
+            {/* modal */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.8, opacity: 0, y: 20 }}
+              transition={{ type: "spring", stiffness: 150, damping: 20 }}
+              className="relative w-full max-w-md mx-4 rounded-2xl bg-white shadow-2xl border border-gray-100 overflow-hidden"
+            >
+              {/* Header */}
+              <div className="px-6 py-4 bg-gradient-to-r from-red-50 to-orange-50 border-b">
+                <h3 className="text-lg font-semibold text-red-700 flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-red-600" />
+                  Block User
+                </h3>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 text-gray-700 space-y-3">
+                <p className="text-sm">
+                  Are you sure you want to block{" "}
+                  <span className="font-semibold text-gray-900">{user.name}</span>?
+                </p>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  They will not be able to see your posts or interact with your account anymore.
+                  You can unblock them anytime.
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t">
+                <button
+                  onClick={() => setBlockOpen(false)}
+                  className="px-4 py-2 text-sm rounded-lg border border-gray-300 hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBlock}
+                  className="px-5 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700 shadow"
+                >
+                  Confirm Block
                 </button>
               </div>
             </motion.div>

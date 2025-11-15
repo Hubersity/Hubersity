@@ -295,3 +295,17 @@ class NotificationRead(Base):
     notification = relationship("Notification", backref="reads")
     user = relationship("User")
 
+
+class Block(Base):
+    __tablename__ = "blocks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    blocker_id = Column(Integer, ForeignKey("users.uid"))
+    blocked_id = Column(Integer, ForeignKey("users.uid"))
+
+    __table_args__ = (
+        UniqueConstraint("blocker_id", "blocked_id", name="unique_block"),
+    )
+
+    blocker = relationship("User", foreign_keys=[blocker_id])
+    blocked = relationship("User", foreign_keys=[blocked_id])
