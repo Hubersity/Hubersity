@@ -347,3 +347,19 @@ def change_password(
     db.refresh(user)
 
     return {"message": "Password changed successfully"}
+
+@router.delete("/delete", status_code=200)
+def delete_current_user(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    user = db.query(models.User).filter(models.User.uid == current_user.uid).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # ลบ user
+    db.delete(user)
+    db.commit()
+
+    return {"message": "Account deleted successfully"}
