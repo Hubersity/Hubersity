@@ -74,6 +74,7 @@ import UserProfile from './pages/Dashboard/UserProfile';
 import Tags from './pages/Dashboard/Tags';
 import TagDetail from './pages/Dashboard/TagDetail'; 
 import Setting from "./pages/Dashboard/Setting/Setting";
+import News from './pages/Dashboard/News';
 
 // ⬇admin: lazy imports (so they don't execute until visited)
 const Dashboard_admin     = lazy(() => import('./pages/Admin/Dashboard-admin.jsx'));
@@ -83,6 +84,8 @@ const Report              = lazy(() => import('./pages/Admin/Report.jsx'));
 const Notification_admin  = lazy(() => import('./pages/Admin/Notification-admin.jsx'));
 const PostDetail          = lazy(() => import('./pages/Admin/PostDetail.jsx'));
 const UserDetail          = lazy(() => import('./pages/Admin/UserDetail.jsx'));
+const News_admin          = lazy(() => import('./pages/Admin/News-admin.jsx'));
+const NewsCreate_admin    = lazy(() => import('./pages/Admin/NewsCreate-admin.jsx'));
 
 // Simple Error Boundary to isolate admin crashes
 class AdminErrorBoundary extends React.Component {
@@ -126,6 +129,7 @@ export default function App() {
         <Route path="account" element={<Account />} />
         <Route path="user/:userId" element={<UserProfile />} />
         <Route path="tags" element={<Tags />} />
+        <Route path="news" element={<News />} />
         <Route path="tags/:tagName" element={<TagDetail />} /> 
         <Route path="setting" element={<Setting />} />
       </Route>
@@ -149,6 +153,8 @@ export default function App() {
         <Route path="report/user/:username" element={<Suspense fallback={null}><UserDetail /></Suspense>} />
         {/* <Route path="tags-admin" element={<Suspense fallback={null}><Tags /></Suspense>} /> */}
         <Route path="noti-admin" element={<Suspense fallback={null}><Notification_admin /></Suspense>} />
+        <Route path="news" element={<Suspense fallback={null}><News_admin /></Suspense>} />
+        <Route path="news/create" element={<Suspense fallback={null}><NewsCreate_admin /></Suspense>} />
       </Route>
 
       {/* fallback */}

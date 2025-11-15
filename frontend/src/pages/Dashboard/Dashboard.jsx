@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { Home, Clock, Users, MessageSquare, Bell, User, Hash, Settings } from "lucide-react";
+import { Home, Clock, Users, MessageSquare, Bell, User, Hash, Settings, Megaphone} from "lucide-react";
 import { getCurrentUser } from "../../api/user"; 
 
 // =========================
@@ -14,6 +14,7 @@ const navItems = [
   { to: "/app/notification", label: "Notification", icon: Bell },
   { to: "/app/account", label: "Account", icon: User },
   { to: "/app/tags", label: "Tags", icon: Hash },
+  { to: "/app/news", label: "News", icon: Megaphone },
 ];
 
 // =========================

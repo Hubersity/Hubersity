@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { ChartNoAxesColumn, Flag, Hash, Bell, User } from "lucide-react";
+import { ChartNoAxesColumn, Flag, Megaphone, Bell, User } from "lucide-react";
 import { getCurrentUser } from "../../api/user"; 
 
 const API_URL = `http://localhost:8000`; 
@@ -10,6 +10,7 @@ const navItems = [
   { to: "/app_admin/acc-admin", label: "Account", icon: User },
   { to: "/app_admin/report", label: "Report", icon: Flag },
   { to: "/app_admin/noti-admin", label: "Notification", icon: Bell },
+  { to: "/app_admin/news", label: "News", icon: Megaphone },
 ];
 
 function Topbar() {
