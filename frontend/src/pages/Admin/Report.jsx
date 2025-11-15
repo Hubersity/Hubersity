@@ -16,6 +16,13 @@ const MOCK_USERSRE = [
     {UserName: 'dogneverdie', NumberOfReports: 6, PopularReasons: 'Privacy Violation', LastDate: '2025-10-10', Action: 'Report 1 year', status: 'Resolved' }
 ];
 
+const MOCK_COMMENT = [
+    {Comment_ID: '#001', NumberOfReports: 10, PopularReasons: 'Harassment', LastDate: '2025-10-13', Action: "", status: 'Pending' },
+    {Comment_ID: '#002', NumberOfReports: 8, PopularReasons: 'Illegal Activity', LastDate: '2025-10-13', Action: 'Remove', status: 'Resolved' },
+    {Comment_ID: '#003', NumberOfReports: 11, PopularReasons: 'Spam', LastDate: '2025-10-11', Action: "", status: 'Pending' },
+    {Comment_ID: '#004', NumberOfReports: 6, PopularReasons: 'Privacy Violation', LastDate: '2025-10-10', Action: 'Warn', status: 'Resolved' }
+];
+
 const InfoPost = ({ post }) => {
     if (!post) return null;
     const rawId = String(post.Post_ID || "");
@@ -29,7 +36,7 @@ const InfoPost = ({ post }) => {
         <span className="w-[10vh] ml-[6vw]">{post.PopularReasons ?? "-"}</span>
         <span className="w-[8vh] ml-[11vw] whitespace-nowrap">{post.LastDate ?? "-"}</span>
         <span className="w-[8vh] ml-[11.5vw]">{post.Action ? post.Action : "-"}</span>
-        <span className={`w-[8vh] ml-[6vw] flex items-center justify-center text-sm px-2 py-1 rounded-full ${post.status === "Pending" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+        <span className={`w-[8vh] ml-[5vw] flex items-center justify-center text-sm px-2 py-1 rounded-full ${post.status === "Pending" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
           {post.status ?? "Pending"}
         </span>
       </div>
@@ -49,12 +56,41 @@ const InfoUser = ({ user }) => {
         <span className="w-[10vh] ml-[6vw]">{user.PopularReasons ?? "-"}</span>
         <span className="w-[8vh] ml-[11vw] whitespace-nowrap">{user.LastDate ?? "-"}</span>
         <span className="w-[8vh] ml-[11vw]">{user.Action ? user.Action : "-"}</span>
-        <span className={`w-[8vh] ml-[6vw] flex items-center justify-center text-sm px-2 py-1 rounded-full ${user.status === "Banned" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+        <span className={`w-[8vh] ml-[5vw] flex items-center justify-center text-sm px-2 py-1 rounded-full ${user.status === "Banned" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
           {user.status ?? "Pending"}
         </span>
       </div>
     );
   };
+
+// component of comment
+const InfoComment = ({ comment }) => {
+  if (!comment) return null;
+  const rawId = String(comment.Comment_ID || "");
+  const idForUrl = rawId.replace("#", "");
+
+  return (
+    <div className="flex items-center py-3 border-b hover:bg-gray-50 text-gray-700">
+      <Link
+        to={`/app_admin/report/comment/${idForUrl}`}
+        className="text-green-700 hover:underline w-[10vw] ml-[2vw]">
+        {rawId || "-"}
+      </Link>
+      <span className="w-[15vh] ml-[6vw]">{comment.NumberOfReports ?? "-"}</span>
+      <span className="w-[10vh] ml-[6vw]">{comment.PopularReasons ?? "-"}</span>
+      <span className="w-[8vh] ml-[11vw] whitespace-nowrap">{comment.LastDate ?? "-"}</span>
+      <span className="w-[8vh] ml-[11.5vw]">{comment.Action ? comment.Action : "-"}</span>
+      <span
+        className={`w-[8vh] ml-[5vw] flex items-center justify-center text-sm px-2 py-1 rounded-full ${
+          comment.status === "Pending"
+            ? "bg-red-100 text-red-700"
+            : "bg-green-100 text-green-700"
+        }`}>
+        {comment.status ?? "Pending"}
+      </span>
+    </div>
+  );
+};
 
 export default function Report() {
     const [numReports, setNumReports] = useState(0);
@@ -62,9 +98,19 @@ export default function Report() {
     const [isLoading, setIsLoading] = useState(true);
     const [lookNow, setLookNow] = useState("post");
     const [results, setResults] = useState([]);
-    const [error, setError] = useState(null)
+    const [error, setError] = useState(null);
+    const [numReportsComment, setNumReportComment] = useState(0);
 
     useEffect(() => {
+        // ถ้าเป็น comment ใช้ mock เลย ไม่ต้องเรียก backend
+        if (lookNow === "comment") {
+            setIsLoading(false);
+            setError(null);
+            setNumReportComment(MOCK_COMMENT.length);
+            setResults(MOCK_COMMENT);
+            return; // ออกจาก effect ตรงนี้เลย
+        }
+
         const fetchReports = async () => {
             setIsLoading(true);
             setError(null);
@@ -103,7 +149,8 @@ export default function Report() {
 
             setNumReports(formattedPosts.length);
             setNumReportUser(formattedUsers.length);
-            setResults(lookNow === "post" ? formattedPosts : formattedUsers);
+            setNumReportComment(MOCK_COMMENT.length);
+            setResults(lookNow === "post" ? formattedPosts : lookNow === "user" ? formattedUsers : MOCK_COMMENT);
             } catch (err) {
             console.error("Error fetching reports:", err);
             setError("Failed to load report data.");
@@ -132,7 +179,7 @@ export default function Report() {
     //     setError(null);
 
     //     // get data (mock here; replace by fetch when ready)
-    //     const data = lookNow === "post" ? MOCK_POSTRE : MOCK_USERSRE;
+    //     const data = lookNow === "comment" ? MOCK_COMMENT;
 
     //     // small timeout ensures state updates occur in safe order
     //     setTimeout(() => {
@@ -148,7 +195,7 @@ export default function Report() {
 
     return (
         <div className="flex flex-col">
-            {/* num of report post and user */}
+            {/* num of report post and user and comment */}
             <div className="flex flex-row gap-4">
                 <div className="w-[50vw] h-[20vh] bg-[#fdfaf6] rounded-xl shadow-2xl">
                     <div className="flex flex-col h-full ml-4">
@@ -171,9 +218,20 @@ export default function Report() {
                         </div>
                     </div>
                 </div>
+
+                <div className="w-[50vw] h-[20vh] bg-[#fdfaf6] rounded-xl shadow-2xl">
+                    <div className="flex flex-col h-full ml-4">
+                        <h1 className="mt-4 text-xl">Number of reported comment</h1>
+                        <div className="flex justify-center items-center h-full -mt-6">
+                            <div className="text-6xl font-bold">
+                                {isLoading ? "..." : numReportsComment}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {/* post or user */}
+            {/* post or user or comment*/}
             <div className="flex flex-row gap-x-12 mt-12">
                 {/* Repost post */}
                 <motion.button
@@ -183,9 +241,9 @@ export default function Report() {
                     }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`ml-[15vw] text-xl rounded-3xl px-8 transition ${lookNow === "post" ? "bg-[#e0ebe2]" : "bg-[#ffffff]"} hover:opacity-90`}>
+                    className={`ml-[10vw] text-xl rounded-3xl px-8 transition ${lookNow === "post" ? "bg-[#e0ebe2]" : "bg-[#ffffff]"} hover:opacity-90`}>
                         Reported posts
-                    </motion.button>
+                </motion.button>
                 {/* Report user */}
                 <motion.button
                     type="button"
@@ -194,21 +252,32 @@ export default function Report() {
                     }}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    className={`ml-[27vw] text-xl rounded-3xl px-8 transition ${lookNow === "user" ? "bg-[#e0ebe2]" : "bg-[#ffffff]"} hover:opacity-90`}>
+                    className={`ml-[10vw] text-xl rounded-3xl px-8 transition ${lookNow === "user" ? "bg-[#e0ebe2]" : "bg-[#ffffff]"} hover:opacity-90`}>
                         Reported users
+                </motion.button>
+                {/* comment */}
+                <motion.button
+                    type="button"
+                    onClick={() => {
+                        setLookNow("comment");
+                    }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className={`ml-[10vw] text-xl rounded-3xl px-8 transition ${lookNow === "comment" ? "bg-[#e0ebe2]" : "bg-[#ffffff]"} hover:opacity-90`}>
+                        Reported comment
                 </motion.button>
             </div>
 
             {/* topic */}
-            <div className="flex flex-row gap-x-[20vh] mt-12 mb-6">
+            <div className="flex flex-row gap-x-[15vh] mt-12 mb-6">
                 <span className="font-bold ml-[2vw]">
-                    {lookNow === 'post' ? "Post ID":"Name"}
+                    {lookNow === 'post' ? "Post ID": lookNow === 'user' ? "Name" : "Comment ID"}
                 </span>
                 <span className="font-bold">Number of reports</span>
                 <span className="font-bold">Popular reasons</span>
                 <span className="font-bold whitespace-nowrap">last date of report</span>
                 <span className="font-bold">Action</span>
-                <span className="font-bold">Status</span>
+                <span className="font-bold mr-4">Status</span>
             </div>
 
             {/* ส่วนแสดงรายการผู้ใช้ */}
@@ -223,10 +292,23 @@ export default function Report() {
                 
                 {!isLoading && results.length > 0 && (
                     <div>
-                        {lookNow === "post"
-                        ? results.map((p) => <InfoPost key={p.Post_ID ?? p.id ?? JSON.stringify(p)} post={p} />)
-                        : results.map((u) => <InfoUser key={u.UserName ?? u.id ?? JSON.stringify(u)} user={u} />)
-                        }
+                    {lookNow === "post" &&
+                        results.map((p) => (
+                            <InfoPost key={p.Post_ID ?? p.id ?? JSON.stringify(p)} post={p} />
+                        ))}
+
+                    {lookNow === "user" &&
+                        results.map((u) => (
+                            <InfoUser key={u.UserName ?? u.id ?? JSON.stringify(u)} user={u} />
+                        ))}
+
+                    {lookNow === "comment" &&
+                        results.map((c) => (
+                            <InfoComment
+                            key={c.Comment_ID ?? c.id ?? JSON.stringify(c)}
+                            comment={c}
+                          />
+                        ))}
                     </div>
                 )}
             </div>
