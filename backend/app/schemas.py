@@ -201,3 +201,10 @@ class PostUpdate(BaseModel):
     post_content: Optional[str] = None
     forum_id: Optional[int] = None
     tags: Optional[List[int]] = None
+
+class BlockOut(BaseModel):
+    blocker_id: int
+    blocked_id: int
+
+    class Config:
+        orm_mode = True

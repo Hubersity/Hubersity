@@ -4,11 +4,77 @@ import { useNavigate } from "react-router-dom";
 
 const API_URL = "http://localhost:8000";
 
+function UnfollowConfirmModal({ open, onClose, onConfirm, user }) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* overlay */}
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+
+      {/* modal */}
+      <div className="relative bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-md mx-4 animate-fadeIn overflow-hidden">
+
+        {/* header */}
+        <div className="px-5 py-4 bg-gradient-to-r from-emerald-50 to-green-50 border-b">
+          <h3 className="text-lg font-semibold text-gray-800">Unfollow</h3>
+        </div>
+
+        {/* body */}
+        <div className="px-6 py-6 text-center space-y-4">
+          <img
+            src={
+              user?.profile_image
+                ? user.profile_image.startsWith("http")
+                  ? user.profile_image
+                  : `http://localhost:8000${user.profile_image}`
+                : "/images/default.jpg"
+            }
+            alt={user?.name}
+            className="w-20 h-20 rounded-full object-cover border shadow-sm mx-auto"
+          />
+
+          <p className="text-gray-700 text-base">
+            Are you sure you want to unfollow{" "}
+            <span className="font-semibold text-gray-900">@{user?.username}</span>?
+          </p>
+
+          <p className="text-sm text-gray-500">
+            You will stop seeing their posts in your follow list.
+          </p>
+        </div>
+
+        {/* footer */}
+        <div className="px-6 py-4 flex justify-end gap-3 bg-gray-50 border-t">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white transition"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700 transition"
+          >
+            Unfollow
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Follow() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState([]);
   const token = JSON.parse(localStorage.getItem(localStorage.getItem("currentUserKey") || ""))?.token;
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [targetUser, setTargetUser] = useState(null);
 
   // โหลดรายชื่อคนที่เราติดตาม
   useEffect(() => {
@@ -120,7 +186,10 @@ export default function Follow() {
 
               {/* ปุ่ม Follow / Following */}
               <button
-                onClick={() => handleUnfollow(u.uid)}
+                  onClick={() => {
+                    setTargetUser(u);
+                    setConfirmOpen(true);
+                  }}
                 className="px-5 py-1.5 rounded-full font-medium text-sm bg-[#6dbf74] text-white hover:bg-[#5aa862] transition-all"
               >
                 Following
@@ -129,6 +198,16 @@ export default function Follow() {
           ))
         )}
       </div>
+      <UnfollowConfirmModal
+      open={confirmOpen}
+      onClose={() => setConfirmOpen(false)}
+      user={targetUser}
+      onConfirm={() => {
+        handleUnfollow(targetUser.uid);
+        setConfirmOpen(false);
+      }}
+      />
     </div>
+    
   );
 }

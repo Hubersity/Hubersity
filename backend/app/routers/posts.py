@@ -7,6 +7,13 @@ import shutil
 from .notification import create_notification_template
 from .. import models, schemas, database, oauth2, utils
 
+def is_blocked(db, viewer_uid, target_uid):
+    block = db.query(models.Block).filter_by(
+        blocker_id=viewer_uid,
+        blocked_id=target_uid
+    ).first()
+    return block is not None
+
 router = APIRouter(
     prefix="/posts",
     tags=["Posts"]
@@ -213,7 +220,6 @@ def get_my_posts(
         )
 
     return response
-
 @router.get("/all", response_model=List[schemas.PostResponse])
 def get_all_posts(
     db: Session = Depends(get_db),
@@ -223,15 +229,18 @@ def get_all_posts(
     
     response = []
 
-
     for post in posts:
+
+        if is_blocked(db, current_user.uid, post.user_id):
+            continue
+
         like_count = db.query(models.Like).filter(models.Like.post_id == post.pid).count()
         is_liked_by_me = db.query(models.Like).filter_by(post_id=post.pid, user_id=current_user.uid).first() is not None
+
         enriched_comments = []
         for c in post.comments:
             user = db.query(models.User).filter(models.User.uid == c.user_id).first()
 
-            # ดึงไฟล์แนบของคอมเมนต์
             files = db.query(models.CommentFile).filter(models.CommentFile.comment_id == c.cid).all()
             files_response = [
                 schemas.CommentFileResponse(
@@ -302,6 +311,10 @@ def get_posts(
     response = []
 
     for post in posts:
+
+        if is_blocked(db, current_user.uid, post.user_id):
+            continue
+
         # นับจำนวนไลก์
         like_count = db.query(models.Like).filter(models.Like.post_id == post.pid).count()
 
@@ -363,6 +376,10 @@ def get_posts_by_forum(
     response = []
 
     for post in posts:
+
+        if is_blocked(db, current_user.uid, post.user_id):
+            continue
+        
         like_count = db.query(models.Like).filter(models.Like.post_id == post.pid).count()
         response.append(
             schemas.PostResponse(
