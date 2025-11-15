@@ -1,11 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AccountSettings from "./AccountSettings";
 import Language from "./Language";
 import ForHelp from "./ForHelp";
+import FromApp from "./SettingAdminReply"; 
 
 export default function Setting() {
-  const [selected, setSelected] = useState("Account Settings");
+  // โหลดแท็บล่าสุด (default = Account Settings)
+  const [selected, setSelected] = useState(
+    localStorage.getItem("settingTab") || "Account Settings"
+  );
 
+  // เมื่อมีการเปลี่ยนแท็บ → เก็บลง localStorage
+  useEffect(() => {
+    localStorage.setItem("settingTab", selected);
+  }, [selected]);
+
+  // แสดงคอนเทนต์ตามแท็บที่เลือก
   const renderContent = () => {
     switch (selected) {
       case "Account Settings":
@@ -14,16 +24,20 @@ export default function Setting() {
         return <Language />;
       case "For Help":
         return <ForHelp />;
+      case "From Hubersity":
+        return <FromApp />;
       default:
         return <AccountSettings />;
     }
   };
 
+  const menuItems = ["Account Settings", "Language", "For Help", "From Hubersity"]; 
+
   return (
     <div className="flex h-full bg-white rounded-lg border">
-      {/* คอลัมน์ซ้าย */}
+      {/* Left Menu */}
       <div className="w-1/4 border-r border-gray-200 p-4">
-        {["Account Settings", "Language", "For Help"].map((item) => (
+        {menuItems.map((item) => (
           <div
             key={item}
             onClick={() => setSelected(item)}
@@ -38,7 +52,7 @@ export default function Setting() {
         ))}
       </div>
 
-      {/* คอนเทนต์ด้านขวา */}
+      {/* Right Content */}
       <div className="flex-1">{renderContent()}</div>
     </div>
   );

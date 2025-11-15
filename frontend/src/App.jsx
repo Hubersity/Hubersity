@@ -29,7 +29,8 @@ const PostDetail          = lazy(() => import('./pages/Admin/PostDetail.jsx'));
 const UserDetail          = lazy(() => import('./pages/Admin/UserDetail.jsx'));
 const News_admin          = lazy(() => import('./pages/Admin/News-admin.jsx'));
 const NewsCreate_admin    = lazy(() => import('./pages/Admin/NewsCreate-admin.jsx'));
-const CommentDetail       = lazy(() => import('./pages/Admin/CommentDetail.jsx'));
+const ForHelp_admin = lazy(() => import('./pages/Admin/ForHelp-admin.jsx'));
+const CommentDetail = lazy(() => import('./pages/Admin/CommentDetail.jsx'));
 
 // Simple Error Boundary to isolate admin crashes
 class AdminErrorBoundary extends React.Component {
@@ -99,6 +100,7 @@ export default function App() {
         <Route path="noti-admin" element={<Suspense fallback={null}><Notification_admin /></Suspense>} />
         <Route path="news" element={<Suspense fallback={null}><News_admin /></Suspense>} />
         <Route path="news/create" element={<Suspense fallback={null}><NewsCreate_admin /></Suspense>} />
+        <Route path="forhelp-admin" element={<Suspense fallback={null}><ForHelp_admin /></Suspense>} />
       </Route>
 
       {/* fallback */}
