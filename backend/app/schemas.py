@@ -117,8 +117,7 @@ class CommentFileResponse(BaseModel):
     path: str
     file_type: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CommentResponse(BaseModel):
     cid: int
@@ -146,8 +145,7 @@ class PostResponse(BaseModel):
     comments: List[CommentResponse] = []
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class BanRequest(BaseModel):
     duration: str
@@ -194,10 +192,16 @@ class NotificationResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        from_attributes = True
+    # class Config:
+    #     from_attributes = True
 
 class PostUpdate(BaseModel):
     post_content: Optional[str] = None
     forum_id: Optional[int] = None
     tags: Optional[List[int]] = None
+
+class BlockOut(BaseModel):
+    blocker_id: int
+    blocked_id: int
+
+    model_config = ConfigDict(orm_mode=True)

@@ -1,4 +1,5 @@
 import datetime
+from zoneinfo import ZoneInfo
 from app import models
 
 
@@ -37,21 +38,26 @@ def test_start_and_stop_session_with_monkeypatched_upsert(client, db_session, mo
     # monkeypatch upsert_daily_progress to a sqlite-friendly implementation
     import app.routers.study_calendar as sc
 
-    def fake_upsert(db, user_id: int, add_seconds: int, badge: int):
-        # find or create daily progress for today (compare by date string YYYY-MM-DD)
+    def fake_upsert(db, user_id: int, add_seconds: int, badge: int, target_day_utc: datetime.datetime):
+        # find or create daily progress for target day (compare by Bangkok date YYYY-MM-DD)
         from sqlalchemy import func
 
-        today = datetime.date.today().isoformat()
+        # target_day_utc is the start of the Bangkok day in UTC time
+        # Convert it back to Bangkok to get the actual date that was intended
+        tz = ZoneInfo("Asia/Bangkok")
+        target_date_bangkok = target_day_utc.astimezone(tz).date().isoformat()
+        
+        # Query using Bangkok date conversion (same as the calendar endpoint)
         dp = (
             db.query(models.DailyProgress)
             .filter(models.DailyProgress.user_id == user_id)
-            .filter(func.date(models.DailyProgress.date) == today)
+            .filter(func.date(models.DailyProgress.date) == target_date_bangkok)
             .first()
         )
         if not dp:
             dp = models.DailyProgress(
                 user_id=user_id,
-                date=datetime.datetime.now(datetime.timezone.utc),
+                date=target_day_utc,
                 total_seconds=add_seconds,
                 total_minutes=add_seconds // 60,
                 badge_level=badge,
@@ -87,14 +93,15 @@ def test_calendar_returns_entries(client, db_session):
     user = r.json()
 
     # create a DailyProgress row for today
-    today = datetime.date.today()
-    dp = models.DailyProgress(user_id=user["uid"], date=datetime.datetime.now(datetime.timezone.utc), total_minutes=30, total_seconds=1800, badge_level=1)
+    tz = ZoneInfo("Asia/Bangkok")
+    today_bangkok = datetime.datetime.now(tz).date()
+    dp = models.DailyProgress(user_id=user["uid"], date=datetime.datetime.now(tz), total_minutes=30, total_seconds=1800, badge_level=1)
     db_session.add(dp)
     db_session.commit()
 
-    res = client.get(f"/study/calendar/{user['uid']}/{today.year}/{today.month}")
+    res = client.get(f"/study/calendar/{user['uid']}/{today_bangkok.year}/{today_bangkok.month}")
     assert res.status_code == 200
     data = res.json()
-    key = today.strftime("%Y-%m-%d")
+    key = today_bangkok.strftime("%Y-%m-%d")
     assert key in data
     assert data[key]["total_minutes"] == 30

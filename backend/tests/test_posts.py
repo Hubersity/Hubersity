@@ -26,7 +26,7 @@ def test_create_post_and_comment_and_like(client, db_session):
 
     # add a comment
     comment = {"content": "Nice post"}
-    cre = client.post(f"/posts/{pid}/comments", json=comment, headers=headers)
+    cre = client.post(f"/posts/{pid}/comments", data=comment, headers=headers)
     assert cre.status_code == 200
     assert cre.json()["content"] == "Nice post"
 
