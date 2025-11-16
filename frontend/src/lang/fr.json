@@ -1,0 +1,243 @@
+{
+  "sidebar": {
+    "board": "Fil",
+    "time": "Temps d’étude",
+    "follow": "Abonnements",
+    "chat": "Chat",
+    "notification": "Notifications",
+    "tags": "Tags",
+    "news": "Actualités",
+    "account": "Compte",
+    "setting": "Paramètres"
+  },
+  "board": {
+    "search": "Rechercher un texte",
+    "universityTalk": "Discussions Universitaires",
+    "followTalk": "Discussions Suivies",
+    "newPostPlaceholder": "Écris ce que tu penses...",
+    "postButton": "Publier",
+    "comment": "Commentaire",
+    "writeComment": "Écrire un commentaire...",
+    "send": "Envoyer",
+    "noPosts": "Aucune publication trouvée."
+  },
+  "editPost": {
+    "title": "Modifier la publication",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
+  },
+  "common": {
+    "cancel": "Annuler",
+    "saveChanges": "Enregistrer",
+    "delete": "Supprimer",
+    "submit": "Envoyer"
+  },
+  "post": {
+    "edit": "Modifier la publication",
+    "delete": "Supprimer",
+    "report": "Signaler"
+  },
+  "report": {
+    "titlePost": "Signaler une publication",
+    "titleComment": "Signaler un commentaire",
+    "description": "Veuillez sélectionner une raison pour signaler cette publication",
+    "harassment": "Harcèlement (intimidation, discrimination ou ciblage d’un groupe, religion ou genre).",
+    "sexual": "Contenu sexuel (contenu inapproprié ou pornographique).",
+    "illegal": "Activité illégale (promotion d’actions ou services illégaux).",
+    "spam": "Spam (répétition du même contenu).",
+    "privacy": "Atteinte à la vie privée (partage de données ou photos sans consentement).",
+    "other": "Autre (veuillez préciser)",
+    "otherPlaceholder": "Précisez la raison",
+    "additional": "Détails supplémentaires",
+    "optional": "optionnel",
+    "postId": "ID de la publication",
+    "detailsPlaceholder": "Décrivez ce qui s’est passé ou tout contexte utile pour examiner votre signalement.",
+    "submit": "Envoyer le signalement"
+  },
+  "delete": {
+    "title": "Supprimer la publication",
+    "confirm": "Êtes-vous sûr de vouloir supprimer cette publication ?",
+    "warning": "Cette action est irréversible.",
+    "cancel": "Annuler",
+    "delete": "Supprimer"
+  },
+  "deleteComment": {
+    "title": "Supprimer le commentaire",
+    "confirm": "Êtes-vous sûr de vouloir supprimer ce commentaire ?",
+    "warning": "Cette action est irréversible.",
+    "cancel": "Annuler",
+    "delete": "Supprimer"
+  },
+  "account": {
+    "title": "Informations du compte",
+    "username": "Nom d’utilisateur",
+    "following": "Abonnements",
+    "followers": "Abonnés",
+
+    "name": "Nom",
+    "birthdate": "Date de naissance",
+    "age": "Âge",
+    "bio": "Bio",
+    "university": "Université",
+    "selectUniversity": "Sélectionner une université",
+    "visibility": "Visibilité",
+    "private": "Privé",
+    "public": "Public",
+    "saveChanges": "Enregistrer",
+
+    "myPosts": "Mes publications",
+    "noPosts": "Vous n’avez encore rien publié.",
+
+    "edit": "Modifier",
+    "delete": "Supprimer",
+
+    "editPostTitle": "Modifier la publication",
+    "deletePostTitle": "Supprimer la publication",
+    "deletePostConfirm": "Voulez-vous vraiment supprimer cette publication ?",
+    "deleteWarning": "Cette action est irréversible.",
+    "cancel": "Annuler",
+    "confirmDelete": "Supprimer"
+  },
+  "follow": {
+    "title": "Abonnements",
+    "searchPlaceholder": "Rechercher un compte...",
+    "noFollow": "Vous ne suivez encore personne.",
+    "following": "Suivi",
+
+    "modalTitle": "Se désabonner",
+    "modalMessage": "Voulez-vous vous désabonner de",
+    "modalSubMessage": "Vous ne verrez plus les publications de cet utilisateur.",
+
+    "cancel": "Annuler",
+    "unfollow": "Se désabonner"
+  },
+  "notification": {
+    "title": "Notifications",
+
+    "today": "Aujourd’hui",
+    "yesterday": "Hier",
+    "thisWeek": "Cette semaine",
+
+    "followBack": "Suivre en retour",
+    "following": "Suivi",
+
+    "noNotification": "Vous n’avez aucune notification."
+  },
+  "userProfile": {
+    "follow": "Suivre",
+    "following": "Suivi",
+    "block": "Bloquer",
+    "blocked": "Bloqué",
+    "report": "Signaler",
+
+    "age": "Âge",
+    "bioEmpty": "Aucune bio.",
+    "private": "Ce compte est privé",
+
+    "history": "Historique",
+    "comments": "Commentaires",
+    "noPosts": "Aucune publication.",
+    "studyToday": "Étude du jour",
+
+    "postDetail": "Détails de la publication",
+    "close": "Fermer",
+
+    "reportPostTitle": "Signaler la publication",
+    "reportAccountTitle": "Signaler le compte",
+    "selectReasonPost": "Sélectionnez une raison pour signaler cette publication :",
+    "selectReasonAccount": "Sélectionnez une raison pour signaler ce compte :",
+    "additionalDetails": "Détails supplémentaires (optionnel)",
+
+    "submitReport": "Envoyer",
+    "cancel": "Annuler",
+
+    "blockUser": "Bloquer l’utilisateur",
+    "blockConfirm": "Voulez-vous vraiment bloquer",
+    "blockDetail": "Cet utilisateur ne pourra plus voir vos publications ni interagir avec vous. Vous pouvez le débloquer à tout moment.",
+    "confirmBlock": "Confirmer le blocage"
+  },
+  "settings": {
+    "changePassword": "Changer le mot de passe",
+    "blockedUsers": "Utilisateurs bloqués",
+    "deleteAccount": "Supprimer le compte"
+  },
+  "setting": {
+    "accountSettings": "Paramètres du compte",
+    "language": "Langue",
+    "forHelp": "Aide",
+    "fromHubersity": "De Hubersity"
+  },
+  "changePassword": {
+    "title": "Changer le mot de passe",
+    "current": "Mot de passe actuel",
+    "new": "Nouveau mot de passe",
+    "confirmNew": "Confirmer le nouveau mot de passe",
+    "confirmBtn": "Confirmer",
+
+    "errorCurrent": "Veuillez entrer votre mot de passe actuel",
+    "errorMatch": "Les mots de passe ne correspondent pas",
+
+    "rule1": "Au moins 8 caractères",
+    "rule2": "Contient au moins une majuscule",
+    "rule3": "Contient au moins un chiffre",
+    "rule4": "Contient au moins un caractère spécial (!@#$...)"
+  },
+  "blockedUsers": {
+    "title": "Utilisateurs bloqués",
+    "loading": "Chargement des utilisateurs bloqués...",
+    "unblock": "Débloquer",
+    "noBlocked": "Vous n’avez bloqué personne.",
+
+    "popupTitle": "Débloquer l’utilisateur ?",
+    "popupMessage": "Voulez-vous débloquer",
+    "cancel": "Annuler",
+    "confirm": "Débloquer"
+  },
+  "deleteAccount": {
+    "title": "Gestion du compte",
+    "logout": "Déconnexion",
+    "dangerTitle": "Zone de danger",
+    "dangerText": "La suppression du compte est permanente et irréversible.",
+    "deleteButton": "Supprimer le compte",
+
+    "modalTitle": "Confirmer la suppression",
+    "modalText1": "Êtes-vous sûr de vouloir supprimer votre compte ?",
+    "modalText2": "Cette action est définitive et irréversible.",
+    "cancel": "Annuler",
+    "confirmDelete": "Supprimer",
+
+    "deletedSuccess": "Votre compte a été supprimé.",
+    "deleteFailed": "Échec de la suppression.",
+    "networkError": "Erreur réseau."
+  },
+  "language": {
+    "title": "Langue",
+    "appLanguage": "Langue de l’application",
+    "description": "Choisissez la langue des menus et de la navigation Hubersity.",
+    "save": "Enregistrer"
+  },
+  "settingHelp": {
+    "title": "Aide",
+    "reportProblem": "Signaler un problème",
+    "description": "Veuillez fournir des détails afin que nous puissions résoudre votre problème rapidement.",
+    "placeholder": "Décrivez votre problème ici...",
+    "addFile": "Ajouter un fichier",
+    "confirm": "Confirmer",
+    "attached": "Fichier joint :",
+    "success": "Signalement envoyé avec succès. Merci !"
+  },
+  "tagsPage": {
+    "popular6": "6 tags populaires",
+    "otherTags": "Autres tags",
+    "noTags": "Aucun tag trouvé",
+    "loadMore": "Voir plus",
+    "loading": "Chargement…",
+    "noMore": "Plus de tags",
+    "noOtherTags": "Aucun autre tag",
+    "searchPlaceholder": "Rechercher des tags...",
+    "postWithTag": "Publier avec #{{tag}}...",
+    "noPostsForTag": "Aucune publication pour ce tag",
+    "trending": "Tendance",
+    "postsCount": "publications"
+  }
+}

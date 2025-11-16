@@ -132,5 +132,38 @@
     "following": "フォロー中",
 
     "noNotification": "通知はまだありません。"
+  },
+  "userProfile": {
+    "follow": "フォロー",
+    "following": "フォロー中",
+    "block": "ブロック",
+    "blocked": "ブロック済み",
+    "report": "報告",
+
+    "age": "年齢",
+    "bioEmpty": "自己紹介はありません。",
+    "private": "このアカウントは非公開です",
+
+    "history": "履歴",
+    "comments": "コメント",
+    "noPosts": "投稿はまだありません。",
+    "studyToday": "今日の勉強時間",
+
+    "postDetail": "投稿の詳細",
+    "close": "閉じる",
+
+    "reportPostTitle": "投稿を報告",
+    "reportAccountTitle": "アカウントを報告",
+    "selectReasonPost": "この投稿を報告する理由を選択してください：",
+    "selectReasonAccount": "このアカウントを報告する理由を選択してください：",
+    "additionalDetails": "追加情報（任意）",
+
+    "submitReport": "報告を送信",
+    "cancel": "キャンセル",
+
+    "blockUser": "ユーザーをブロック",
+    "blockConfirm": "本当にブロックしますか？",
+    "blockDetail": "ブロックされたユーザーはあなたの投稿を見たり、あなたと交流することができません。いつでも解除できます。",
+    "confirmBlock": "ブロックを確認"
   }
 }

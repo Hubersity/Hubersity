@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
 export default function BlockedUsers() {
+  const { t } = useTranslation();
+
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +30,6 @@ export default function BlockedUsers() {
 
         const blockList = await res.json();
 
-        // โหลดข้อมูล user
         const detailedUsers = await Promise.all(
           blockList.map(async (b) => {
             const uRes = await fetch(`${API_URL}/users/${b.blocked_id}`, {
@@ -71,13 +73,17 @@ export default function BlockedUsers() {
   };
 
   if (loading)
-    return <p className="px-10 py-10 text-gray-500">Loading blocked users...</p>;
+    return (
+      <p className="px-10 py-10 text-gray-500">
+        {t("blockedUsers.loading")}
+      </p>
+    );
 
   return (
     <div className="relative flex flex-col items-start justify-center px-10 py-8 w-full">
       {/* หัวข้อ */}
       <h2 className="text-xl font-semibold text-gray-800 mb-6">
-        Blocked Users
+        {t("blockedUsers.title")}
       </h2>
 
       {/* รายชื่อผู้ถูกบล็อก */}
@@ -103,7 +109,7 @@ export default function BlockedUsers() {
               </div>
             </div>
 
-            {/* ปุ่ม Unblock → เปิด popup */}
+            {/* ปุ่ม Unblock */}
             <button
               onClick={() => {
                 setSelectedUser(user);
@@ -111,20 +117,21 @@ export default function BlockedUsers() {
               }}
               className="px-5 py-1.5 rounded-full font-medium text-sm bg-[#ea4124] text-white hover:bg-[#d93a20] transition-all"
             >
-              Unblock
+              {t("blockedUsers.unblock")}
             </button>
           </div>
         ))}
 
         {blockedUsers.length === 0 && (
-          <p className="text-gray-500 italic">You have not blocked anyone.</p>
+          <p className="text-gray-500 italic">
+            {t("blockedUsers.noBlocked")}
+          </p>
         )}
       </div>
 
-      {/* =====================  POPUP Confirm Unblock  ===================== */}
+      {/* POPUP Confirm Unblock */}
       {confirmUnblockOpen && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* เบลอพื้นหลัง */}
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setConfirmUnblockOpen(false)}
@@ -134,16 +141,16 @@ export default function BlockedUsers() {
             className="relative bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-md mx-4 overflow-hidden animate-fadeIn"
             style={{ animation: "fadeIn 0.25s ease" }}
           >
-            {/* HEADER: Gradient แดงสวยๆ */}
+            {/* HEADER */}
             <div className="px-6 py-4 bg-gradient-to-r from-red-50 to-orange-50 border-b">
               <h3 className="text-xl font-semibold text-gray-800">
-                Unblock User?
+                {t("blockedUsers.popupTitle")}
               </h3>
             </div>
 
             {/* BODY */}
             <div className="px-6 py-6 text-gray-700 text-center">
-              <p className="text-sm mb-1">Do you want to unblock</p>
+              <p className="text-sm mb-1">{t("blockedUsers.popupMessage")}</p>
               <p className="font-semibold text-gray-900 text-lg">
                 @{selectedUser.username}?
               </p>
@@ -155,31 +162,25 @@ export default function BlockedUsers() {
                 onClick={() => setConfirmUnblockOpen(false)}
                 className="px-5 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 text-gray-700 text-sm font-medium transition"
               >
-                Cancel
+                {t("blockedUsers.cancel")}
               </button>
 
               <button
                 onClick={confirmUnblock}
                 className="px-6 py-2 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium shadow-md transition-all"
               >
-                Unblock
+                {t("blockedUsers.confirm")}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Animation CSS */}
+      {/* Animation */}
       <style>{`
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

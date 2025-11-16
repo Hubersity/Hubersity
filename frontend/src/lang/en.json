@@ -122,5 +122,123 @@
     "following": "Following",
 
     "noNotification": "You don't have any notifications yet."
+    },
+    "userProfile": {
+    "follow": "Follow",
+    "following": "Following",
+    "block": "Block",
+    "blocked": "Blocked",
+    "report": "Report",
+
+    "age": "Age",
+    "bioEmpty": "No bio provided.",
+    "private": "This account is private",
+
+    "history": "History",
+    "comments": "Comments",
+    "noPosts": "No posts yet.",
+    "studyToday": "Study Today",
+
+    "postDetail": "Post Detail",
+    "close": "Close",
+
+    "reportPostTitle": "Report Post",
+    "reportAccountTitle": "Report Account",
+    "selectReasonPost": "Please select a reason for reporting this post:",
+    "selectReasonAccount": "Please select a reason for reporting this account:",
+    "additionalDetails": "Additional details (optional)",
+
+    "submitReport": "Submit Report",
+    "cancel": "Cancel",
+
+    "blockUser": "Block User",
+    "blockConfirm": "Are you sure you want to block",
+    "blockDetail": "They will not be able to see your posts or interact with your account anymore. You can unblock them anytime.",
+    "confirmBlock": "Confirm Block"
+
+  },
+    "settings": {
+    "changePassword": "Change Password",
+    "blockedUsers": "Blocked Users",
+    "deleteAccount": "Delete Account"
+    },
+    "setting": {
+    "accountSettings": "Account Settings",
+    "language": "Language",
+    "forHelp": "For Help",
+    "fromHubersity": "From Hubersity"
+    },
+    "changePassword": {
+    "title": "Change Password",
+    "current": "Current Password",
+    "new": "New Password",
+    "confirmNew": "New Password again",
+    "confirmBtn": "Confirm",
+
+    "errorCurrent": "Please enter your current password",
+    "errorMatch": "Passwords do not match",
+
+    "rule1": "At least 8 characters long",
+    "rule2": "Contains at least one uppercase letter",
+    "rule3": "Contains at least one number",
+    "rule4": "Contains at least one special character (!@#$...)"
+    },
+    "blockedUsers": {
+    "title": "Blocked Users",
+    "loading": "Loading blocked users...",
+    "unblock": "Unblock",
+    "noBlocked": "You have not blocked anyone.",
+
+    "popupTitle": "Unblock User?",
+    "popupMessage": "Do you want to unblock",
+    "cancel": "Cancel",
+    "confirm": "Unblock"
+    },
+    "deleteAccount": {
+    "title": "Account Management",
+    "logout": "Log Out",
+    "dangerTitle": "Danger Zone",
+    "dangerText": "Deleting your account is permanent and cannot be undone.",
+    "deleteButton": "Delete Account",
+
+    "modalTitle": "Confirm Account Deletion",
+    "modalText1": "Are you absolutely sure you want to delete your account?",
+    "modalText2": "This action is permanent and cannot be undone.",
+    "cancel": "Cancel",
+    "confirmDelete": "Delete Account",
+
+    "deletedSuccess": "Your account has been deleted.",
+    "deleteFailed": "Failed to delete account.",
+    "networkError": "Network error."
+    },
+    "language": {
+    "title": "Language",
+    "appLanguage": "App Language",
+    "description": "Select your preferred language for Hubersity menus and navigation.",
+    "save": "Save Language"
+    },
+    "settingHelp": {
+    "title": "For Help",
+    "reportProblem": "Report a Problem",
+    "description": "Please provide details so we can resolve your issue quickly.",
+    "placeholder": "Describe your issue here...",
+    "addFile": "Add File",
+    "confirm": "Confirm",
+    "attached": "Attached:",
+    "success": "Report submitted successfully. Thank you!"
+    },
+    "tagsPage": {
+    "popular6": "6 Popular Tags",
+    "otherTags": "Other Tags",
+    "noTags": "No tags found yet",
+    "loadMore": "Load more",
+    "loading": "Loading…",
+    "noMore": "No more tags to load",
+    "noOtherTags": "No other tags",
+    "searchPlaceholder": "Search tags...",
+    "postWithTag": "Post with #{{tag}}...",
+    "noPostsForTag": "No posts for this tag yet",
+    "trending": "Trending",
+    "postsCount": "posts"
     }
 }
