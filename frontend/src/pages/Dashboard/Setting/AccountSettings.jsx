@@ -1,18 +1,27 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import ChangePassword from "./ChangePassword";
 import BlockedUsers from "./BlockedUsers";
 import DeleteAccount from "./DeleteAccount";
 
 export default function AccountSettings() {
-  const [selectedSub, setSelectedSub] = useState("Change Password");
+  const { t } = useTranslation();
+
+  const menuList = [
+    { key: "changePassword", label: t("settings.changePassword") },
+    { key: "blockedUsers", label: t("settings.blockedUsers") },
+    { key: "deleteAccount", label: t("settings.deleteAccount") },
+  ];
+
+  const [selectedSub, setSelectedSub] = useState("changePassword");
 
   const renderSub = () => {
     switch (selectedSub) {
-      case "Change Password":
+      case "changePassword":
         return <ChangePassword />;
-      case "Blocked Users":
+      case "blockedUsers":
         return <BlockedUsers />;
-      case "Delete Account":
+      case "deleteAccount":
         return <DeleteAccount />;
       default:
         return <ChangePassword />;
@@ -21,24 +30,24 @@ export default function AccountSettings() {
 
   return (
     <div className="flex h-full">
-      {/* คอลัมน์เมนูย่อย */}
+      {/* Sidebar Submenu */}
       <div className="w-1/4 border-r border-gray-200 p-4">
-        {["Change Password", "Blocked Users", "Delete Account"].map((sub) => (
+        {menuList.map((item) => (
           <div
-            key={sub}
-            onClick={() => setSelectedSub(sub)}
+            key={item.key}
+            onClick={() => setSelectedSub(item.key)}
             className={`cursor-pointer p-2 rounded-lg mb-2 text-sm ${
-              selectedSub === sub
+              selectedSub === item.key
                 ? "bg-[#e0ebe2] text-emerald-700 font-semibold"
                 : "hover:bg-gray-100 text-gray-700"
             }`}
           >
-            {sub}
+            {item.label}
           </div>
         ))}
       </div>
 
-      {/* พื้นที่เนื้อหา */}
+      {/* Content Area */}
       <div className="flex-1 p-6">{renderSub()}</div>
     </div>
   );

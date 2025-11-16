@@ -1,19 +1,43 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+
 import AccountSettings from "./AccountSettings";
 import Language from "./Language";
 import ForHelp from "./ForHelp";
+import FromApp from "./SettingAdminReply";
 
 export default function Setting() {
-  const [selected, setSelected] = useState("Account Settings");
+  const { t } = useTranslation();
 
+  // เมนูทั้งหมด + key ใช้กับ i18n
+  const menuItems = [
+    { key: "accountSettings", label: t("setting.accountSettings") },
+    { key: "language", label: t("setting.language") },
+    { key: "forHelp", label: t("setting.forHelp") },
+    { key: "fromHubersity", label: t("setting.fromHubersity") }
+  ];
+
+  // อ่านแท็บล่าสุดจาก localStorage (default = accountSettings)
+  const [selected, setSelected] = useState(
+    localStorage.getItem("settingTab") || "accountSettings"
+  );
+
+  // เมื่อเปลี่ยนแท็บ → เซฟลง localStorage
+  useEffect(() => {
+    localStorage.setItem("settingTab", selected);
+  }, [selected]);
+
+  // เลือกคอนเทนต์ตามแท็บ
   const renderContent = () => {
     switch (selected) {
-      case "Account Settings":
+      case "accountSettings":
         return <AccountSettings />;
-      case "Language":
+      case "language":
         return <Language />;
-      case "For Help":
+      case "forHelp":
         return <ForHelp />;
+      case "fromHubersity":
+        return <FromApp />;
       default:
         return <AccountSettings />;
     }
@@ -21,24 +45,24 @@ export default function Setting() {
 
   return (
     <div className="flex h-full bg-white rounded-lg border">
-      {/* คอลัมน์ซ้าย */}
+      {/* Left Menu */}
       <div className="w-1/4 border-r border-gray-200 p-4">
-        {["Account Settings", "Language", "For Help"].map((item) => (
+        {menuItems.map((item) => (
           <div
-            key={item}
-            onClick={() => setSelected(item)}
+            key={item.key}
+            onClick={() => setSelected(item.key)}
             className={`cursor-pointer p-2 rounded-lg mb-2 text-sm ${
-              selected === item
+              selected === item.key
                 ? "bg-[#e0ebe2] text-emerald-700 font-semibold"
                 : "hover:bg-gray-100 text-gray-700"
             }`}
           >
-            {item}
+            {item.label}
           </div>
         ))}
       </div>
 
-      {/* คอนเทนต์ด้านขวา */}
+      {/* Right Content */}
       <div className="flex-1">{renderContent()}</div>
     </div>
   );

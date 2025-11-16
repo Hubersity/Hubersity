@@ -322,3 +322,26 @@ def get_report_detail(
     }
 
 
+@router.get("/user")
+def get_user_notifications_query(
+    receiver_id: int,
+    db: Session = Depends(get_db)
+):
+    notifications = (
+        db.query(models.Notification)
+        .filter(models.Notification.receiver_id == receiver_id)
+        .order_by(models.Notification.created_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": n.id,
+            "title": n.title,
+            "message": n.message,
+            "created_at": n.created_at,
+            "sender_id": n.sender_id,
+            "target_role": n.target_role
+        }
+        for n in notifications
+    ]

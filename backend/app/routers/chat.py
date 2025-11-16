@@ -15,7 +15,7 @@ from sqlalchemy import or_, and_, func
 
 router = APIRouter(prefix="/chats", tags=["Chat"])
 UPLOAD_ROOT = "uploads"  # มี mount /uploads แล้วใน main.py
-UPLOAD_DIR = "/app/uploads"  # โฟลเดอร์เก็บไฟล์ในคอนเทนเนอร์
+UPLOAD_DIR = "uploads/chat"  # Use relative path for compatibility with GitHub Actions
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 active_connections = {}
 
@@ -313,7 +313,7 @@ def upload_attachments(
     db.flush()
 
     # >>> โฟลเดอร์ย่อยตามห้อง
-    chat_dir = os.path.join(UPLOAD_DIR, "chat", str(chat_id))
+    chat_dir = os.path.join(UPLOAD_DIR, str(chat_id))
     os.makedirs(chat_dir, exist_ok=True)
 
     saved = []

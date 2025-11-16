@@ -72,6 +72,6 @@ def test_upload_attachment_saves_file_and_returns_meta(client, db_session):
     # assert file exists in the uploads folder
     saved = data['attachments'][0]['url']  # like /uploads/chat/<id>/filename
     rel = saved.replace('/uploads/', '')
-    # the app stores files under /app/uploads/<rel>
-    abs_path = os.path.join(os.sep, "app", "uploads", rel)
+    # the app stores files under uploads/<rel>
+    abs_path = os.path.join("uploads", rel)
     assert os.path.exists(abs_path)

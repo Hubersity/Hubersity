@@ -1,0 +1,169 @@
+{
+  "sidebar": {
+    "board": "掲示板",
+    "time": "学習時間",
+    "follow": "フォロー",
+    "chat": "チャット",
+    "notification": "通知",
+    "tags": "タグ",
+    "news": "ニュース",
+    "account": "アカウント",
+    "setting": "設定"
+  },
+
+  "board": {
+    "search": "検索テキスト",
+    "universityTalk": "大学トーク",
+    "followTalk": "フォロートーク",
+    "newPostPlaceholder": "ここに入力してください...",
+    "postButton": "投稿",
+    "comment": "コメント",
+    "writeComment": "コメントを書く...",
+    "send": "送信",
+    "noPosts": "投稿が見つかりません。"
+  },
+
+  "editPost": {
+    "title": "投稿を編集",
+    "cancel": "キャンセル",
+    "save": "変更を保存"
+  },
+
+  "common": {
+    "cancel": "キャンセル",
+    "saveChanges": "変更を保存",
+    "delete": "削除",
+    "submit": "送信"
+  },
+
+  "post": {
+    "edit": "投稿を編集",
+    "delete": "削除",
+    "report": "報告"
+  },
+
+  "report": {
+    "titlePost": "投稿を報告",
+    "titleComment": "コメントを報告",
+    "description": "この投稿を報告する理由を選択してください",
+    "harassment": "嫌がらせ（いじめ、差別、宗教・性別・集団への攻撃など）",
+    "sexual": "性的な内容（アダルト、わいせつ、不適切な内容）",
+    "illegal": "違法行為（違法な行為やサービスの助長）",
+    "spam": "スパム（同じ内容の繰り返し投稿）",
+    "privacy": "プライバシー侵害（本人の許可なく個人情報や写真を共有）",
+    "other": "その他（詳細を記入）",
+    "otherPlaceholder": "理由を記入してください",
+    "additional": "追加情報",
+    "optional": "任意",
+    "postId": "投稿ID",
+    "detailsPlaceholder": "状況や報告理由の詳細を記入してください。",
+    "submit": "報告を送信"
+  },
+
+  "delete": {
+    "title": "投稿を削除",
+    "confirm": "本当にこの投稿を削除しますか？",
+    "warning": "この操作は元に戻せません。",
+    "cancel": "キャンセル",
+    "delete": "削除"
+  },
+
+  "deleteComment": {
+    "title": "コメントを削除",
+    "confirm": "本当にこのコメントを削除しますか？",
+    "warning": "この操作は元に戻せません。",
+    "cancel": "キャンセル",
+    "delete": "削除"
+  },
+
+  "account": {
+    "title": "アカウント情報",
+    "username": "ユーザー名",
+    "following": "フォロー中",
+    "followers": "フォロワー",
+
+    "name": "名前",
+    "birthdate": "生年月日",
+    "age": "年齢",
+    "bio": "自己紹介",
+    "university": "大学",
+    "selectUniversity": "大学を選択",
+    "visibility": "公開設定",
+    "private": "非公開",
+    "public": "公開",
+    "saveChanges": "変更を保存",
+
+    "myPosts": "自分の投稿",
+    "noPosts": "まだ投稿がありません。",
+
+    "edit": "編集",
+    "delete": "削除",
+
+    "editPostTitle": "投稿を編集",
+    "deletePostTitle": "投稿を削除",
+    "deletePostConfirm": "本当にこの投稿を削除しますか？",
+    "deleteWarning": "この操作は元に戻せません。",
+    "cancel": "キャンセル",
+    "confirmDelete": "削除"
+  },
+
+  "follow": {
+    "title": "フォロー",
+    "searchPlaceholder": "アカウントを検索...",
+    "noFollow": "まだ誰もフォローしていません。",
+    "following": "フォロー中",
+
+    "modalTitle": "フォロー解除",
+    "modalMessage": "本当にフォローを解除しますか？",
+    "modalSubMessage": "フォローリストにこのユーザーの投稿が表示されなくなります。",
+
+    "cancel": "キャンセル",
+    "unfollow": "フォロー解除"
+  },
+
+  "notification": {
+    "title": "通知",
+
+    "today": "今日",
+    "yesterday": "昨日",
+    "thisWeek": "今週",
+
+    "followBack": "フォローバック",
+    "following": "フォロー中",
+
+    "noNotification": "通知はまだありません。"
+  },
+  "userProfile": {
+    "follow": "フォロー",
+    "following": "フォロー中",
+    "block": "ブロック",
+    "blocked": "ブロック済み",
+    "report": "報告",
+
+    "age": "年齢",
+    "bioEmpty": "自己紹介はありません。",
+    "private": "このアカウントは非公開です",
+
+    "history": "履歴",
+    "comments": "コメント",
+    "noPosts": "投稿はまだありません。",
+    "studyToday": "今日の勉強時間",
+
+    "postDetail": "投稿の詳細",
+    "close": "閉じる",
+
+    "reportPostTitle": "投稿を報告",
+    "reportAccountTitle": "アカウントを報告",
+    "selectReasonPost": "この投稿を報告する理由を選択してください：",
+    "selectReasonAccount": "このアカウントを報告する理由を選択してください：",
+    "additionalDetails": "追加情報（任意）",
+
+    "submitReport": "報告を送信",
+    "cancel": "キャンセル",
+
+    "blockUser": "ユーザーをブロック",
+    "blockConfirm": "本当にブロックしますか？",
+    "blockDetail": "ブロックされたユーザーはあなたの投稿を見たり、あなたと交流することができません。いつでも解除できます。",
+    "confirmBlock": "ブロックを確認"
+  }
+}

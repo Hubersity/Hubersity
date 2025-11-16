@@ -1,6 +1,8 @@
 from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from datetime import datetime, date
 from typing import List, Optional, Dict, Literal
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
+from app.database import Base
 import re
 
 # สร้างบัญชีใหม่ (Sign Up)
@@ -138,8 +140,7 @@ class CommentFileResponse(BaseModel):
     path: str
     file_type: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CommentResponse(BaseModel):
     cid: int
@@ -167,8 +168,7 @@ class PostResponse(BaseModel):
     comments: List[CommentResponse] = []
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class BanRequest(BaseModel):
     duration: str
@@ -260,3 +260,29 @@ class NewsOut(NewsBase):
 
     class Config:
         orm_mode = True
+        
+class BlockOut(BaseModel):
+    blocker_id: int
+    blocked_id: int
+
+
+    class SomeModel(BaseModel):
+        model_config = ConfigDict(from_attributes=True)
+
+class HelpReportCreate(BaseModel):  # Pydantic
+    user_id: int
+    message: str
+
+
+class HelpReportResponse(BaseModel):
+    id: int
+    message: str
+    file_path: Optional[str]
+    resolved: bool
+    created_at: Optional[datetime]
+    username: Optional[str] = None
+    avatar: Optional[str] = None
+
+
+    class SomeModel(BaseModel):
+        model_config = ConfigDict(from_attributes=True)
