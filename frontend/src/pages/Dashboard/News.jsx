@@ -1,38 +1,67 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+
+const API_URL = "http://localhost:8000";
+const toAbs = (u) => (u?.startsWith?.("http") ? u : `${API_URL}${u || ""}`);
 
 export default function News() {
-  const [newsList] = useState([
-    {
-      id: 1,
-      image: "/images/New1.jpg",
-      title: "Google Releases Gemini for KU Students",
-      summary: "Google announces free Gemini access for KU students.",
-    },
-    {
-      id: 2,
-      image: "/images/New2.jpg",
-      title: "New Engineering Upskill Project",
-      summary: "Apply to join the new engineering upskill project.",
-    },
-    {
-      id: 3,
-      image: "/images/New3.jpg",
-      title: "AI Tools for Academic Assistants",
-      summary: "Explore new tools for students and researchers.",
-    },
-    {
-      id: 4,
-      image: "/images/New4.jpg",
-      title: "Adobe Creative Cloud Update",
-      summary: "Adobe services updated exclusively for KU students.",
-    },
-    {
-      id: 5,
-      image: "/images/New5.jpg",
-      title: "Research Square & KULC Studio Program",
-      summary: "Join training for research & academic writing.",
-    },
-  ]);
+  // const [newsList] = useState([
+  //   {
+  //     id: 1,
+  //     image: "/images/New1.jpg",
+  //     title: "Google Releases Gemini for KU Students",
+  //     summary: "Google announces free Gemini access for KU students.",
+  //   },
+  //   {
+  //     id: 2,
+  //     image: "/images/New2.jpg",
+  //     title: "New Engineering Upskill Project",
+  //     summary: "Apply to join the new engineering upskill project.",
+  //   },
+  //   {
+  //     id: 3,
+  //     image: "/images/New3.jpg",
+  //     title: "AI Tools for Academic Assistants",
+  //     summary: "Explore new tools for students and researchers.",
+  //   },
+  //   {
+  //     id: 4,
+  //     image: "/images/New4.jpg",
+  //     title: "Adobe Creative Cloud Update",
+  //     summary: "Adobe services updated exclusively for KU students.",
+  //   },
+  //   {
+  //     id: 5,
+  //     image: "/images/New5.jpg",
+  //     title: "Research Square & KULC Studio Program",
+  //     summary: "Join training for research & academic writing.",
+  //   },
+  // ]);
+
+  const [newsList, setNewsList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [errMsg, setErrMsg] = useState("");
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const res = await fetch(`${API_URL}/news`);
+        if (!res.ok) throw new Error(`Load failed: ${res.status}`);
+        const data = await res.json();
+        setNewsList(data || []);
+      } catch (err) {
+        console.error(err);
+        setErrMsg("Cannot load news.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, []);
+
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (errMsg) return <div className="p-6 text-red-500">{errMsg}</div>;
 
   return (
     <div className="w-full">
@@ -54,7 +83,7 @@ export default function News() {
             {/* IMAGE */}
             <div className="relative h-48 w-full overflow-hidden">
               <img
-                src={n.image}
+                src={n.image_url ? toAbs(n.image_url) : "/images/news_fallback.jpg"}
                 alt=""
                 className="
                   h-full w-full object-cover 
@@ -74,7 +103,8 @@ export default function News() {
               />
 
               {/* READ MORE BUTTON */}
-              <button
+              <Link
+                to={`/app/news/${n.id}`}
                 className="
                   absolute left-1/2 top-1/2 
                   -translate-x-1/2 -translate-y-1/2
@@ -88,7 +118,7 @@ export default function News() {
                 "
               >
                 Read more
-              </button>
+              </Link>
 
               {/* Summary (text fade in) */}
               <p
@@ -99,7 +129,7 @@ export default function News() {
                   transition-all duration-500
                 "
               >
-                {n.summary}
+                {n.hover_text || n.summary}
               </p>
             </div>
 
