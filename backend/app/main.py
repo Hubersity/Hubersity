@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
@@ -11,9 +12,35 @@ import os
 from fastapi.middleware.cors import CORSMiddleware
 
 # สร้างตารางทั้งหมดในฐานข้อมูล
-models.Base.metadata.create_all(bind=engine)
+# Allow tests to skip DB init by setting SKIP_DB_INIT=1 in the environment.
+SKIP_DB_INIT = os.getenv("SKIP_DB_INIT", "") == "1"
+if not SKIP_DB_INIT:
+    models.Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app):
+    # Seed forum data on startup when DB initialization is enabled
+    if not SKIP_DB_INIT:
+        db: Session = next(database.get_db())
+        try:
+            existing = db.query(models.Forum).all()
+            if len(existing) == 0:
+                forums = [
+                    models.Forum(fid=1, forum_name="University Talk"),
+                    models.Forum(fid=2, forum_name="Follow Talk"),
+                ]
+                db.add_all(forums)
+                db.commit()
+                print("Forum table seeded with default data.")
+            else:
+                print("ℹForum table already has data.")
+        finally:
+            db.close()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 origins = [
     "http://localhost:5173",
@@ -39,13 +66,36 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 os.makedirs("/app/uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
 
-# ตรวจสอบการเชื่อมต่อฐานข้อมูล
-try:
-    with engine.connect() as conn:
-        conn.execute(text("SELECT 1"))
-    print("Database connection OK ")
-except Exception as e:
-    print("Database connection failed :", e)
+# ตรวจสอบการเชื่อมต่อฐานข้อมูล (skippable in tests)
+if not SKIP_DB_INIT:
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        print("Database connection OK ")
+    except Exception as e:
+        print("Database connection failed :", e)
+
+
+@asynccontextmanager
+async def lifespan(app):
+    # Seed forum data on startup when DB initialization is enabled
+    if not SKIP_DB_INIT:
+        db: Session = next(database.get_db())
+        try:
+            existing = db.query(models.Forum).all()
+            if len(existing) == 0:
+                forums = [
+                    models.Forum(fid=1, forum_name="University Talk"),
+                    models.Forum(fid=2, forum_name="Follow Talk"),
+                ]
+                db.add_all(forums)
+                db.commit()
+                print("Forum table seeded with default data.")
+            else:
+                print("ℹForum table already has data.")
+        finally:
+            db.close()
+    yield
 
 # รวมทุก router
 app.include_router(users.router)
@@ -59,22 +109,6 @@ app.include_router(follow.router)
 app.include_router(block.router)
 app.include_router(help.router)
 
-
-# Seed forum data อัตโนมัติเมื่อ start server
-@app.on_event("startup")
-def seed_forum_data():
-    db: Session = next(database.get_db())
-    existing = db.query(models.Forum).all()
-    if len(existing) == 0:
-        forums = [
-            models.Forum(fid=1, forum_name="University Talk"),
-            models.Forum(fid=2, forum_name="Follow Talk"),
-        ]
-        db.add_all(forums)
-        db.commit()
-        print("Forum table seeded with default data.")
-    else:
-        print("ℹForum table already has data.")
 
 @app.get("/")
 def root():
