@@ -1,14 +1,33 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
+const API_URL = "http://localhost:8000";
+// ถ้า image_url ไม่ใช่ http ให้เติม base url ให้
+const toAbs = (u) => (u?.startsWith("http") ? u : `${API_URL}${u || ""}`);
+
 export default function NewsAdminPage() {
-  const [newsList] = useState([
-    { id: 1, image: "/images/New1.jpg", title: "Google Releases Gemini for KU Students", summary: "Google announces free Gemini access for KU students." },
-    { id: 2, image: "/images/New2.jpg", title: "New Engineering Upskill Project", summary: "Apply to join the new engineering upskill project." },
-    { id: 3, image: "/images/New3.jpg", title: "AI Tools for Academic Assistants", summary: "Explore new tools for students and researchers." },
-    { id: 4, image: "/images/New4.jpg", title: "Adobe Creative Cloud Update", summary: "Adobe services updated exclusively for KU students." },
-    { id: 5, image: "/images/New5.jpg", title: "Research Square & KULC Studio Program", summary: "Training for research & academic writing." },
-  ]);
+  // const [newsList] = useState([
+  //   { id: 1, image: "/images/New1.jpg", title: "Google Releases Gemini for KU Students", summary: "Google announces free Gemini access for KU students." },
+  //   { id: 2, image: "/images/New2.jpg", title: "New Engineering Upskill Project", summary: "Apply to join the new engineering upskill project." },
+  //   { id: 3, image: "/images/New3.jpg", title: "AI Tools for Academic Assistants", summary: "Explore new tools for students and researchers." },
+  //   { id: 4, image: "/images/New4.jpg", title: "Adobe Creative Cloud Update", summary: "Adobe services updated exclusively for KU students." },
+  //   { id: 5, image: "/images/New5.jpg", title: "Research Square & KULC Studio Program", summary: "Training for research & academic writing." },
+  // ]);
+  const [newsList, setNewsList] = useState([]);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const res = await fetch(`${API_URL}/news`);
+        const data = await res.json();
+        setNewsList(data);
+      } catch (err) {
+        console.error("Error loading news:", err);
+      }
+    };
+  
+    fetchNews();
+  }, []);
 
   return (
     <div className="w-full">
@@ -46,7 +65,7 @@ export default function NewsAdminPage() {
             {/* IMAGE */}
             <div className="relative h-48 w-full overflow-hidden">
               <img
-                src={n.image}
+                src={toAbs(n.image_url)}
                 alt=""
                 className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
               />
@@ -70,7 +89,7 @@ export default function NewsAdminPage() {
                   z-20
                 "
               >
-                {n.summary}
+                {n.hover_text || n.summary}
               </p>
 
               {/* EDIT BUTTON */}

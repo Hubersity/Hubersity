@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from . import models, database
 from .database import engine
-from .routers import users, auth, study_calendar, posts, chat, admin, notification, follow
+from .routers import users, auth, study_calendar, posts, chat, admin, notification, follow, news, news_upload
 from fastapi.staticfiles import StaticFiles
 import os
 from fastapi.middleware.cors import CORSMiddleware
@@ -105,7 +105,9 @@ app.include_router(posts.router)
 app.include_router(admin.router)
 app.include_router(chat.router)
 app.include_router(notification.router)
-app.include_router(follow.router)  
+app.include_router(follow.router) 
+app.include_router(news.router)
+app.include_router(news_upload.router) 
 
 
 @app.get("/")

@@ -62,8 +62,10 @@ export default function Chat() {
       const list = await res.json();
 
       const mapped = list.map((c) => ({
-        id: c.id, name: c.name, username: c.username,
-        avatar: c.avatar || "/images/default.jpg",
+        id: c.id,
+        name: c.name, 
+        username: c.username,
+        avatar: toAbs(c.avatar || "/images/default.jpg"),
         lastMessage: c.lastMessage || "", messages: []
       }));
 
@@ -87,6 +89,17 @@ export default function Chat() {
     for (const f of friends) if (!map.has(f.username)) map.set(f.username, f);
     return [...map.values()];
   }, [friends]);
+
+  // auto-refresh messages ทุก ๆ 3 วิ ตอนที่มีห้องถูกเลือกอยู่
+  useEffect(() => {
+    if (!selected?.id) return;
+
+    const interval = setInterval(() => {
+      loadMessages(selected.id);  // ใช้ตัวเดิมเลย
+    }, 3000); // 3000 ms = 3 วินาที
+
+    return () => clearInterval(interval); // เคลียร์ตอนเปลี่ยนห้อง / ออกจากหน้า
+  }, [selected?.id, meId, token]);
 
   // messages
   const loadMessages = async (chatId) => {

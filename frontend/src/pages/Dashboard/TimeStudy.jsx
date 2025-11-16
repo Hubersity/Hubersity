@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { PlayIcon, PauseIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 
@@ -15,68 +15,154 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
   const baseSecsRef = useRef(0);        // วินาทีที่ commit แล้ว + extra ณ ตอน sync ล่าสุด
   const baseClientNowRef = useRef(0);   // เวลาเครื่อง ณ ตอน sync ล่าสุด
 
-  // every time "time" เปลี่ยน ส่งขึ้น parent เพื่อทำสีปฏิทิน
+  const syncFromServer = useCallback(async () => {
+    if (!userObj?.uid || !token) return;
+  
+    try {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      const d = String(now.getDate()).padStart(2, "0");
+  
+      // 1) ดึงเวลาที่ commit แล้วของวันนี้
+      const res1 = await fetch(
+        `http://localhost:8000/study/progress/${userObj.uid}/${y}/${m}/${d}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const prog = await res1.json();
+      const savedSecs = prog.total_seconds ?? (prog.total_minutes || 0) * 60;
+  
+      // 2) ดึง session ที่กำลังวิ่งอยู่ (ถ้ามี)
+      const res2 = await fetch(
+        `http://localhost:8000/study/active/${userObj.uid}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const active = await res2.json();
+  
+      if (active.active) {
+        setSessionId(active.sid);
+        const serverNow = new Date(active.server_now);
+        const start = new Date(active.start_time);
+  
+        // กันข้ามเที่ยงคืน: นับเฉพาะส่วนที่อยู่ในวันนี้
+        const todayStart = new Date(serverNow);
+        todayStart.setHours(0, 0, 0, 0);
+        const overlapStart = start > todayStart ? start : todayStart;
+  
+        const extra = Math.max(
+          0,
+          Math.floor((serverNow.getTime() - overlapStart.getTime()) / 1000)
+        );
+  
+        const show = savedSecs + extra;
+        setTime(show);
+        setrunning(true);
+  
+        // เคลียร์ interval เก่า แล้วเริ่มใหม่
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = setInterval(() => {
+          setTime((prev) => prev + 1);
+        }, 1000);
+      } else {
+        // ไม่มี session กำลังวิ่ง → ใช้แค่ savedSecs
+        setTime(savedSecs);
+        setrunning(false);
+        if (timerRef.current) clearInterval(timerRef.current);
+      }
+    } catch (err) {
+      console.error("syncFromServer error:", err);
+    }
+  }, [userObj?.uid, token]);
+
   useEffect(() => {
     if (typeof onSyncSeconds === "function") onSyncSeconds(time);
   }, [time, onSyncSeconds]);
 
   useEffect(() => {
     if (!userObj?.uid || !token) return;
-  
-    (async () => {
-      // 1) โหลดเวลาวันนี้ที่ commit แล้วใน DB
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth()+1).padStart(2,'0');
-      const d = String(now.getDate()).padStart(2,'0');
+    syncFromServer();
 
-      // 1) โหลดยอดที่ commit แล้ว
-      const res1 = await fetch(`http://localhost:8000/study/progress/${userObj.uid}/${y}/${m}/${d}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const prog = await res1.json();
-      const savedSecs = prog.total_seconds ?? (prog.total_minutes || 0) * 60;
-  
-      // 2) เช็คว่ามี session ค้างอยู่มั้ย
-      const res2 = await fetch(`http://localhost:8000/study/active/${userObj.uid}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const active = await res2.json();
-  
-      if (active.active) {
-        setSessionId(active.sid);
-  
-        // ใช้เวลา server เพื่อลดปัญหา clock เพี้ยน
-        const serverNow = new Date(active.server_now);
-        const start = new Date(active.start_time);
-  
-        // กันข้ามเที่ยงคืน: นับเพิ่มเฉพาะส่วนที่ทับวันนี้
-        const todayStart = new Date(serverNow);
-        todayStart.setHours(0,0,0,0);
-        const overlapStart = start > todayStart ? start : todayStart;
-  
-        // const extra = Math.max(0, Math.floor((serverNow - overlapStart) / 1000));
-        const extra = Math.max(0, Math.floor((serverNow.getTime() - overlapStart.getTime()) / 1000));
-        const show = savedSecs + extra;
-        setTime(show);
-        // เหมือนกด "กำลังวิ่ง"
-        setrunning(true);
-        // clear interval เก่า ก่อนตั้งใหม่
-        if (timerRef.current) clearInterval(timerRef.current);
-        timerRef.current = setInterval(() => {
-          // แค่เพิ่ม time; effect ด้านบนจะ sync ให้ parent เอง
-          setTime((prev) => prev + 1);
-        }, 1000);
-      } else {
-        setTime(savedSecs);
-        setrunning(false);
-        if (timerRef.current) clearInterval(timerRef.current);
-      }
-    })();
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [userObj?.uid, token]);
+  }, [userObj?.uid, token, syncFromServer]);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        syncFromServer();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [syncFromServer]);
+
+
+  // every time "time" เปลี่ยน ส่งขึ้น parent เพื่อทำสีปฏิทิน
+  // useEffect(() => {
+  //   if (typeof onSyncSeconds === "function") onSyncSeconds(time);
+  // }, [time, onSyncSeconds]);
+
+  // useEffect(() => {
+  //   if (!userObj?.uid || !token) return;
+  
+  //   (async () => {
+  //     // 1) โหลดเวลาวันนี้ที่ commit แล้วใน DB
+  //     const now = new Date();
+  //     const y = now.getFullYear();
+  //     const m = String(now.getMonth()+1).padStart(2,'0');
+  //     const d = String(now.getDate()).padStart(2,'0');
+
+  //     // 1) โหลดยอดที่ commit แล้ว
+  //     const res1 = await fetch(`http://localhost:8000/study/progress/${userObj.uid}/${y}/${m}/${d}`, {
+  //       headers: { Authorization: `Bearer ${token}` }
+  //     });
+  //     const prog = await res1.json();
+  //     const savedSecs = prog.total_seconds ?? (prog.total_minutes || 0) * 60;
+  
+  //     // 2) เช็คว่ามี session ค้างอยู่มั้ย
+  //     const res2 = await fetch(`http://localhost:8000/study/active/${userObj.uid}`, {
+  //       headers: { Authorization: `Bearer ${token}` }
+  //     });
+  //     const active = await res2.json();
+  
+  //     if (active.active) {
+  //       setSessionId(active.sid);
+  
+  //       // ใช้เวลา server เพื่อลดปัญหา clock เพี้ยน
+  //       const serverNow = new Date(active.server_now);
+  //       const start = new Date(active.start_time);
+  
+  //       // กันข้ามเที่ยงคืน: นับเพิ่มเฉพาะส่วนที่ทับวันนี้
+  //       const todayStart = new Date(serverNow);
+  //       todayStart.setHours(0,0,0,0);
+  //       const overlapStart = start > todayStart ? start : todayStart;
+  
+  //       // const extra = Math.max(0, Math.floor((serverNow - overlapStart) / 1000));
+  //       const extra = Math.max(0, Math.floor((serverNow.getTime() - overlapStart.getTime()) / 1000));
+  //       const show = savedSecs + extra;
+  //       setTime(show);
+  //       // เหมือนกด "กำลังวิ่ง"
+  //       setrunning(true);
+  //       // clear interval เก่า ก่อนตั้งใหม่
+  //       if (timerRef.current) clearInterval(timerRef.current);
+  //       timerRef.current = setInterval(() => {
+  //         // แค่เพิ่ม time; effect ด้านบนจะ sync ให้ parent เอง
+  //         setTime((prev) => prev + 1);
+  //       }, 1000);
+  //     } else {
+  //       setTime(savedSecs);
+  //       setrunning(false);
+  //       if (timerRef.current) clearInterval(timerRef.current);
+  //     }
+  //   })();
+  //   return () => {
+  //     if (timerRef.current) clearInterval(timerRef.current);
+  //   };
+  // }, [userObj?.uid, token]);
 
   const startSession = async () => {
     if (!userObj?.uid || !token) return;
@@ -160,7 +246,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
       <h2 className="text-5xl font-bold self-end mb-8 mt-4">Today</h2>
       <div className="flex flex-col items-center gap-2">
         <div className="flex gap-1">
-          <img src={ShowPicture} alt="study-status" className="max-w-[450pw] max-h-[450px] w-auto h-auto object-contain" />
+          <img src={ShowPicture} alt="study-status" className="max-w-[450px] max-h-[450px] w-auto h-auto object-contain" />
         </div>
 
         <span className="text-4xl font-bold">{`${hours}:${minutes}:${seconds}`}</span>
@@ -229,8 +315,14 @@ const getTodayStr = () => {
 
 function Calendar() {
   const currentDate = new Date();
-  const [month, setMonth] = useState(currentDate.getMonth() + 1);
-  const [year, setYear] = useState(currentDate.getFullYear());
+  // const [month, setMonth] = useState(currentDate.getMonth() + 1);
+  // const [year, setYear] = useState(currentDate.getFullYear());
+  const now = new Date();
+  const [dateState, setDateState] = useState({
+    month: now.getMonth() + 1,
+    year: now.getFullYear(),
+  });
+  const { month, year } = dateState;
   const [studyData, setStudyData] = useState({});
 
   // โหลด user/token จาก localStorage ใน parent (ครั้งเดียว)
@@ -244,10 +336,17 @@ function Calendar() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const u = JSON.parse(localStorage.getItem("user") || "null");
-    const t = localStorage.getItem("token");
-    setUserObj(u);
-    setToken(t);
+  
+    const currentKey = localStorage.getItem("currentUserKey");
+    if (!currentKey) return;
+  
+    const auth = JSON.parse(localStorage.getItem(currentKey) || "{}");
+  
+    // แค่ต้องการ uid กับ token ให้ timer ใช้
+    if (auth?.uid && auth?.token) {
+      setUserObj({ uid: auth.uid, username: auth.username });
+      setToken(auth.token);
+    }
   }, []);
 
   const monthNames = [
@@ -348,16 +447,22 @@ function Calendar() {
   };
 
   const nextMonth = () => {
-    setMonth(m => {
-      if (m === 12) { setYear(y => y + 1); return 1; }
-      return m + 1;
+    setDateState(prev => {
+      let { month, year } = prev;
+      if (month === 12) {
+        return { month: 1, year: year + 1 };
+      }
+      return { month: month + 1, year };
     });
   };
 
   const prevMonth = () => {
-    setMonth(m => {
-      if (m === 1) { setYear(y => y - 1); return 12; }
-      return m - 1;
+    setDateState(prev => {
+      let { month, year } = prev;
+      if (month === 1) {
+        return { month: 12, year: year - 1 };
+      }
+      return { month: month - 1, year };
     });
   };
 

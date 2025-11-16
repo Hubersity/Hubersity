@@ -480,7 +480,7 @@ def list_messages(chat_id: int, me_id: int = Query(...), db: Session = Depends(d
             "mime_type": a.mime_type,
         } for a in (m.attachments or [])]
 
-        # เผื่อ frontend ของคุณใช้ฟิลด์ url/name เดี่ยว ๆ
+        # เผื่อ frontend ใช้ฟิลด์ url/name เดี่ยว ๆ
         url = atts[0]["url"] if atts else None
         name = atts[0]["name"] if atts else None
 
