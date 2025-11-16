@@ -1,60 +1,3 @@
-// import { Routes, Route, Navigate } from 'react-router-dom';
-// import Home from './pages/Home/Home';
-// import Login from './pages/Login/Login';
-// import Sign_in from './pages/Sign in/Sign_in';
-// import Dashboard from './pages/Dashboard/Dashboard';
-// import Board from './pages/Dashboard/Board';
-// import TimeStudy from './pages/Dashboard/TimeStudy';
-// import CreateAcc from "./pages/Create-account/create-acc.jsx";
-// import Account from './pages/Dashboard/Account';
-// import Follow from './pages/Dashboard/Follow';
-// import Chat from './pages/Dashboard/Chat';
-// import Notifications from './pages/Dashboard/Notifications'; 
-// import Dashboard_admin from './pages/Admin/Dashboard-admin.jsx';
-// import Overview from './pages/Admin/Overview.jsx';
-// import Account_admin from './pages/Admin/Account-admin.jsx';
-// import Report from './pages/Admin/Report.jsx';
-// import Tags from './pages/Admin/Tags.jsx';
-// import Notifications_admin from './pages/Admin/Notification-admin.jsx';
-
-// function App() {
-//   return (
-//     <Routes>
-//       {/* 🏠 หน้าแรก */}
-//       <Route path="/" element={<Home />} />
-//       <Route path="/login" element={<Login />} />
-//       <Route path="/signin" element={<Sign_in />} />
-//       <Route path="/create-account" element={<CreateAcc />} />
-
-//       {/* 🧭 Dashboard Layout */}
-//       <Route path="/app" element={<Dashboard />}>
-//         {/* default → /app/board */}
-//         <Route index element={<Navigate to="board" replace />} />
-//         <Route path="board" element={<Board />} />
-//         <Route path="time-study" element={<TimeStudy />} />
-//         <Route path="follow" element={<Follow />} />
-//         <Route path="chat" element={<Chat />} />
-//         <Route path="notification" element={<Notifications />} />
-//         <Route path="account" element={<Account />} />
-//       </Route>
-
-//       {/* Dashboard Layout for admin */}
-//       <Route path="/app_admin" element={<Dashboard_admin />}>
-//         <Route index element={<Navigate to="overview" replace />} />
-//         <Route path="overview" element={<Overview />} />
-//         <Route path="acc-admin" element={<Account_admin />} />
-//         <Route path="report" element={<Report />} />
-//         <Route path="tags" element={<Tags />} />
-//         <Route path="noti-admin" element={<Notifications_admin />} />
-//       </Route>
-
-//       {/* ❌ ถ้าเส้นทางไม่ถูก → กลับไปหน้าแรก */}
-//       <Route path="*" element={<Navigate to="/" replace />} />
-//     </Routes>
-//   );
-// }
-// export default App;
-
 import React, { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
@@ -74,6 +17,7 @@ import UserProfile from './pages/Dashboard/UserProfile';
 import Tags from './pages/Dashboard/Tags';
 import TagDetail from './pages/Dashboard/TagDetail'; 
 import Setting from "./pages/Dashboard/Setting/Setting";
+import News from './pages/Dashboard/News';
 
 // ⬇admin: lazy imports (so they don't execute until visited)
 const Dashboard_admin     = lazy(() => import('./pages/Admin/Dashboard-admin.jsx'));
@@ -83,6 +27,10 @@ const Report              = lazy(() => import('./pages/Admin/Report.jsx'));
 const Notification_admin  = lazy(() => import('./pages/Admin/Notification-admin.jsx'));
 const PostDetail          = lazy(() => import('./pages/Admin/PostDetail.jsx'));
 const UserDetail          = lazy(() => import('./pages/Admin/UserDetail.jsx'));
+const News_admin          = lazy(() => import('./pages/Admin/News-admin.jsx'));
+const NewsCreate_admin    = lazy(() => import('./pages/Admin/NewsCreate-admin.jsx'));
+const ForHelp_admin = lazy(() => import('./pages/Admin/ForHelp-admin.jsx'));
+const CommentDetail = lazy(() => import('./pages/Admin/CommentDetail.jsx'));
 
 // Simple Error Boundary to isolate admin crashes
 class AdminErrorBoundary extends React.Component {
@@ -126,6 +74,7 @@ export default function App() {
         <Route path="account" element={<Account />} />
         <Route path="user/:userId" element={<UserProfile />} />
         <Route path="tags" element={<Tags />} />
+        <Route path="news" element={<News />} />
         <Route path="tags/:tagName" element={<TagDetail />} /> 
         <Route path="setting" element={<Setting />} />
       </Route>
@@ -147,8 +96,11 @@ export default function App() {
         <Route path="report" element={<Suspense fallback={null}><Report /></Suspense>} />
         <Route path="report/:id" element={<Suspense fallback={null}><PostDetail /></Suspense>} />
         <Route path="report/user/:username" element={<Suspense fallback={null}><UserDetail /></Suspense>} />
-        {/* <Route path="tags-admin" element={<Suspense fallback={null}><Tags /></Suspense>} /> */}
+        <Route path="/app_admin/report/comment/:commentId" element={<CommentDetail />} />
         <Route path="noti-admin" element={<Suspense fallback={null}><Notification_admin /></Suspense>} />
+        <Route path="news" element={<Suspense fallback={null}><News_admin /></Suspense>} />
+        <Route path="news/create" element={<Suspense fallback={null}><NewsCreate_admin /></Suspense>} />
+        <Route path="forhelp-admin" element={<Suspense fallback={null}><ForHelp_admin /></Suspense>} />
       </Route>
 
       {/* fallback */}
