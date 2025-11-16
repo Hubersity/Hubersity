@@ -1,0 +1,243 @@
+{
+  "sidebar": {
+    "board": "المنشورات",
+    "time": "وقت الدراسة",
+    "follow": "المتابعة",
+    "chat": "الدردشة",
+    "notification": "الإشعارات",
+    "tags": "الوسوم",
+    "news": "الأخبار",
+    "account": "الحساب",
+    "setting": "الإعدادات"
+  },
+  "board": {
+    "search": "ابحث في النص",
+    "universityTalk": "حديث الجامعة",
+    "followTalk": "منشورات المتابعة",
+    "newPostPlaceholder": "اكتب ما تفكر فيه...",
+    "postButton": "نشر",
+    "comment": "تعليق",
+    "writeComment": "اكتب تعليقًا...",
+    "send": "إرسال",
+    "noPosts": "لا توجد منشورات."
+  },
+  "editPost": {
+    "title": "تعديل المنشور",
+    "cancel": "إلغاء",
+    "save": "حفظ التغييرات"
+  },
+  "common": {
+    "cancel": "إلغاء",
+    "saveChanges": "حفظ التغييرات",
+    "delete": "حذف",
+    "submit": "إرسال"
+  },
+  "post": {
+    "edit": "تعديل المنشور",
+    "delete": "حذف",
+    "report": "إبلاغ"
+  },
+  "report": {
+    "titlePost": "إبلاغ عن منشور",
+    "titleComment": "إبلاغ عن تعليق",
+    "description": "يرجى اختيار سبب الإبلاغ عن هذا المنشور",
+    "harassment": "مضايقة (تنمّر، تمييز، أو استهداف دين/جنس/مجموعة).",
+    "sexual": "محتوى جنسي (محتوى غير لائق أو إباحي).",
+    "illegal": "نشاط غير قانوني (الترويج لأفعال أو خدمات غير قانونية).",
+    "spam": "رسائل مزعجة (تكرار نشر نفس المحتوى).",
+    "privacy": "انتهاك الخصوصية (مشاركة معلومات أو صور للآخرين دون إذن).",
+    "other": "أخرى (يرجى التحديد)",
+    "otherPlaceholder": "يرجى توضيح السبب",
+    "additional": "تفاصيل إضافية",
+    "optional": "اختياري",
+    "postId": "معرّف المنشور",
+    "detailsPlaceholder": "صف ما حدث أو أي سياق يساعدنا في مراجعة الإبلاغ.",
+    "submit": "إرسال الإبلاغ"
+  },
+  "delete": {
+    "title": "حذف المنشور",
+    "confirm": "هل أنت متأكد أنك تريد حذف هذا المنشور؟",
+    "warning": "لا يمكن التراجع عن هذا الإجراء.",
+    "cancel": "إلغاء",
+    "delete": "حذف"
+  },
+  "deleteComment": {
+    "title": "حذف التعليق",
+    "confirm": "هل أنت متأكد أنك تريد حذف هذا التعليق؟",
+    "warning": "لا يمكن التراجع عن هذا الإجراء.",
+    "cancel": "إلغاء",
+    "delete": "حذف"
+  },
+  "account": {
+    "title": "معلومات الحساب",
+    "username": "اسم المستخدم",
+    "following": "يتابع",
+    "followers": "المتابعون",
+
+    "name": "الاسم",
+    "birthdate": "تاريخ الميلاد",
+    "age": "العمر",
+    "bio": "نبذة",
+    "university": "الجامعة",
+    "selectUniversity": "اختر الجامعة",
+    "visibility": "الظهور",
+    "private": "خاص",
+    "public": "عام",
+    "saveChanges": "حفظ التغييرات",
+
+    "myPosts": "منشوراتي",
+    "noPosts": "لم تقم بنشر أي شيء بعد.",
+
+    "edit": "تعديل",
+    "delete": "حذف",
+
+    "editPostTitle": "تعديل المنشور",
+    "deletePostTitle": "حذف المنشور",
+    "deletePostConfirm": "هل أنت متأكد أنك تريد حذف هذا المنشور؟",
+    "deleteWarning": "لا يمكن التراجع عن هذا الإجراء.",
+    "cancel": "إلغاء",
+    "confirmDelete": "حذف"
+  },
+  "follow": {
+    "title": "المتابعة",
+    "searchPlaceholder": "ابحث عن حساب...",
+    "noFollow": "أنت لا تتابع أي شخص بعد.",
+    "following": "يتابع",
+
+    "modalTitle": "إلغاء المتابعة",
+    "modalMessage": "هل تريد إلغاء متابعة",
+    "modalSubMessage": "لن تظهر منشورات هذا المستخدم في قائمة المتابعة.",
+
+    "cancel": "إلغاء",
+    "unfollow": "إلغاء المتابعة"
+  },
+  "notification": {
+    "title": "الإشعارات",
+
+    "today": "اليوم",
+    "yesterday": "الأمس",
+    "thisWeek": "هذا الأسبوع",
+
+    "followBack": "متابعة متبادلة",
+    "following": "يتابع",
+
+    "noNotification": "لا توجد إشعارات حتى الآن."
+  },
+  "userProfile": {
+    "follow": "متابعة",
+    "following": "يتابع",
+    "block": "حظر",
+    "blocked": "محظور",
+    "report": "إبلاغ",
+
+    "age": "العمر",
+    "bioEmpty": "لا توجد نبذة.",
+    "private": "هذا الحساب خاص",
+
+    "history": "السجل",
+    "comments": "التعليقات",
+    "noPosts": "لا توجد منشورات.",
+    "studyToday": "دراسة اليوم",
+
+    "postDetail": "تفاصيل المنشور",
+    "close": "إغلاق",
+
+    "reportPostTitle": "إبلاغ عن منشور",
+    "reportAccountTitle": "إبلاغ عن حساب",
+    "selectReasonPost": "يرجى اختيار سبب الإبلاغ عن هذا المنشور:",
+    "selectReasonAccount": "يرجى اختيار سبب الإبلاغ عن هذا الحساب:",
+    "additionalDetails": "تفاصيل إضافية (اختياري)",
+
+    "submitReport": "إرسال الإبلاغ",
+    "cancel": "إلغاء",
+
+    "blockUser": "حظر المستخدم",
+    "blockConfirm": "هل أنت متأكد أنك تريد حظر",
+    "blockDetail": "لن يتمكن هذا المستخدم من رؤية منشوراتك أو التفاعل مع حسابك. يمكنك إلغاء الحظر لاحقًا.",
+    "confirmBlock": "تأكيد الحظر"
+  },
+  "settings": {
+    "changePassword": "تغيير كلمة المرور",
+    "blockedUsers": "المستخدمون المحظورون",
+    "deleteAccount": "حذف الحساب"
+  },
+  "setting": {
+    "accountSettings": "إعدادات الحساب",
+    "language": "اللغة",
+    "forHelp": "للمساعدة",
+    "fromHubersity": "من Hubersity"
+  },
+  "changePassword": {
+    "title": "تغيير كلمة المرور",
+    "current": "كلمة المرور الحالية",
+    "new": "كلمة المرور الجديدة",
+    "confirmNew": "تأكيد كلمة المرور الجديدة",
+    "confirmBtn": "تأكيد",
+
+    "errorCurrent": "يرجى إدخال كلمة المرور الحالية",
+    "errorMatch": "كلمتا المرور غير متطابقتين",
+
+    "rule1": "8 أحرف على الأقل",
+    "rule2": "تحتوي على حرف كبير واحد على الأقل",
+    "rule3": "تحتوي على رقم واحد على الأقل",
+    "rule4": "تحتوي على رمز خاص واحد على الأقل (!@#$...)"
+  },
+  "blockedUsers": {
+    "title": "المستخدمون المحظورون",
+    "loading": "جاري تحميل قائمة الحظر...",
+    "unblock": "إلغاء الحظر",
+    "noBlocked": "لم تقم بحظر أي مستخدم.",
+
+    "popupTitle": "إلغاء الحظر؟",
+    "popupMessage": "هل تريد إلغاء حظر",
+    "cancel": "إلغاء",
+    "confirm": "إلغاء الحظر"
+  },
+  "deleteAccount": {
+    "title": "إدارة الحساب",
+    "logout": "تسجيل الخروج",
+    "dangerTitle": "منطقة الخطر",
+    "dangerText": "حذف الحساب إجراء دائم ولا يمكن التراجع عنه.",
+    "deleteButton": "حذف الحساب",
+
+    "modalTitle": "تأكيد حذف الحساب",
+    "modalText1": "هل أنت متأكد تمامًا أنك تريد حذف حسابك؟",
+    "modalText2": "هذا الإجراء نهائي ولا يمكن التراجع عنه.",
+    "cancel": "إلغاء",
+    "confirmDelete": "حذف الحساب",
+
+    "deletedSuccess": "تم حذف حسابك.",
+    "deleteFailed": "فشل في حذف الحساب.",
+    "networkError": "خطأ في الشبكة."
+  },
+  "language": {
+    "title": "اللغة",
+    "appLanguage": "لغة التطبيق",
+    "description": "اختر اللغة المفضلة لقوائم Hubersity والتنقل.",
+    "save": "حفظ اللغة"
+  },
+  "settingHelp": {
+    "title": "للمساعدة",
+    "reportProblem": "الإبلاغ عن مشكلة",
+    "description": "يرجى تزويدنا بالتفاصيل حتى نتمكن من حل مشكلتك بسرعة.",
+    "placeholder": "صف مشكلتك هنا...",
+    "addFile": "إضافة ملف",
+    "confirm": "تأكيد",
+    "attached": "المرفقات:",
+    "success": "تم إرسال الإبلاغ بنجاح. شكرًا لك!"
+  },
+  "tagsPage": {
+    "popular6": "أعلى 6 وسوم",
+    "otherTags": "وسوم أخرى",
+    "noTags": "لا توجد وسوم بعد",
+    "loadMore": "تحميل المزيد",
+    "loading": "جارٍ التحميل…",
+    "noMore": "لا مزيد من الوسوم",
+    "noOtherTags": "لا توجد وسوم أخرى",
+    "searchPlaceholder": "ابحث عن الوسوم...",
+    "postWithTag": "أنشر مع وسم #{{tag}}...",
+    "noPostsForTag": "لا توجد منشورات لهذا الوسم",
+    "trending": "الشائع",
+    "postsCount": "منشورات"
+  }
+}

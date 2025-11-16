@@ -14,6 +14,7 @@ import {
   Trash,
   Flag,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
@@ -26,45 +27,54 @@ function normalizeFilePath(path) {
 }
 
 function DeleteCommentModal({ open, onClose, onConfirm }) {
+  const { t } = useTranslation();
+
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
         onClick={onClose}
       />
 
+      {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 border overflow-hidden animate-fadeIn">
+        {/* Header */}
         <div className="px-5 py-4 border-b bg-gradient-to-r from-rose-50 to-amber-50 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">Delete Comment</h3>
+          <h3 className="text-lg font-semibold text-gray-800">
+            {t("deleteComment.title")}
+          </h3>
           <button onClick={onClose} className="text-gray-500 hover:text-red-500 p-1">
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* Body */}
         <div className="p-5 text-center">
           <p className="text-gray-700 mb-5">
-            Are you sure you want to delete this comment?
+            {t("deleteComment.confirm")}
             <br />
             <span className="text-gray-500 text-sm">
-              This action cannot be undone.
+              {t("deleteComment.warning")}
             </span>
           </p>
         </div>
 
+        {/* Footer */}
         <div className="px-5 py-4 bg-gray-50 border-t flex justify-end gap-3">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm"
           >
-            Cancel
+            {t("deleteComment.cancel")}
           </button>
           <button
             onClick={onConfirm}
             className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm"
           >
-            Delete
+            {t("deleteComment.delete")}
           </button>
         </div>
       </div>
@@ -73,40 +83,25 @@ function DeleteCommentModal({ open, onClose, onConfirm }) {
 }
 
 function ReportCommentModal({ open, onClose, onSubmit, commentId }) {
+  const { t } = useTranslation();
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [details, setDetails] = useState("");
 
   if (!open) return null;
 
+  // คง key เดิมไว้สำหรับส่ง backend, label ใช้ i18n
   const reasons = [
-    {
-      key: "Harassment",
-      label: "Harassment (Bullying, discrimination, or targeting a religion, gender, or group.)",
-    },
-    {
-      key: "Sexual Content",
-      label: "Sexual Content (Sexual, pornographic, or inappropriate material.)",
-    },
-    {
-      key: "Illegal Activity",
-      label: "Illegal Activity (Promoting illegal actions or services.)",
-    },
-    {
-      key: "Spam",
-      label: "Spam (Reposting the same content multiple times.)",
-    },
-    {
-      key: "Privacy Violation",
-      label: "Privacy Violation (Sharing personal information or photos of others without consent.)",
-    },
-    { key: "Other", label: "Other (Please specify)" },
+    { key: "Harassment",       label: t("report.harassment") },
+    { key: "Sexual Content",   label: t("report.sexual") },
+    { key: "Illegal Activity", label: t("report.illegal") },
+    { key: "Spam",             label: t("report.spam") },
+    { key: "Privacy Violation",label: t("report.privacy") },
+    { key: "Other",            label: t("report.other") },
   ];
 
   const handleSubmit = () => {
-    const finalReason =
-      reason === "Other" ? (customReason.trim() || "Other") : reason;
-
+    const finalReason = reason === "Other" ? (customReason.trim() || "Other") : reason;
     onSubmit({
       commentId,
       reason: finalReason,
@@ -117,18 +112,16 @@ function ReportCommentModal({ open, onClose, onSubmit, commentId }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" onClick={onClose} />
 
       <div className="relative w-full max-w-xl mx-4 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh] animate-fadeIn">
-        
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-emerald-50 to-amber-50 border-b">
           <div className="flex items-center gap-2">
             <Flag className="w-5 h-5 text-emerald-700" />
-            <h3 className="text-lg font-semibold text-gray-800">Report Comment</h3>
+            <h3 className="text-lg font-semibold text-gray-800">
+              {t("report.titleComment")}
+            </h3>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100">
             <X className="w-5 h-5 text-gray-500" />
@@ -138,7 +131,7 @@ function ReportCommentModal({ open, onClose, onSubmit, commentId }) {
         {/* Body */}
         <div className="p-6 space-y-5 overflow-y-auto">
           <p className="text-sm text-gray-600">
-            Please select a reason for reporting this comment.
+            {t("report.description")}
           </p>
 
           <div className="grid grid-cols-1 gap-2">
@@ -146,9 +139,7 @@ function ReportCommentModal({ open, onClose, onSubmit, commentId }) {
               <label
                 key={r.key}
                 className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
-                  reason === r.key
-                    ? "border-emerald-400 bg-emerald-50"
-                    : "border-gray-200 hover:border-gray-300"
+                  reason === r.key ? "border-emerald-400 bg-emerald-50" : "border-gray-200 hover:border-gray-300"
                 }`}
               >
                 <input
@@ -166,7 +157,7 @@ function ReportCommentModal({ open, onClose, onSubmit, commentId }) {
           {reason === "Other" && (
             <input
               type="text"
-              placeholder="Please specify your reason"
+              placeholder={t("report.otherPlaceholder")}
               value={customReason}
               onChange={(e) => setCustomReason(e.target.value)}
               className="w-full border rounded-lg px-3 py-2 text-sm"
@@ -176,11 +167,11 @@ function ReportCommentModal({ open, onClose, onSubmit, commentId }) {
           {/* Additional details */}
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
-              Additional details{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
+              {t("report.additional")}{" "}
+              <span className="text-gray-400 font-normal">({t("report.optional")})</span>
             </label>
             <textarea
-              placeholder="Describe what happened or any context that helps us review this report."
+              placeholder={t("report.detailsPlaceholder")}
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               rows={4}
@@ -195,7 +186,7 @@ function ReportCommentModal({ open, onClose, onSubmit, commentId }) {
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             disabled={!reason || (reason === "Other" && !customReason.trim())}
@@ -206,7 +197,7 @@ function ReportCommentModal({ open, onClose, onSubmit, commentId }) {
                 : "bg-emerald-600 hover:bg-emerald-700"
             }`}
           >
-            Submit Report
+            {t("report.submit")}
           </button>
         </div>
       </div>
@@ -214,8 +205,11 @@ function ReportCommentModal({ open, onClose, onSubmit, commentId }) {
   );
 }
 
+
 // ============ Edit Modal ============
 function EditPostModal({ open, onClose, text, setText, onSubmit }) {
+  const { t } = useTranslation();
+
   if (!open) return null;
 
   return (
@@ -228,8 +222,12 @@ function EditPostModal({ open, onClose, text, setText, onSubmit }) {
 
       {/* modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 border border-gray-100 overflow-hidden animate-fadeIn">
+        
+        {/* Header */}
         <div className="px-5 py-4 border-b bg-gradient-to-r from-green-50 to-amber-50 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">Edit Post</h3>
+          <h3 className="text-lg font-semibold text-gray-800">
+            {t("editPost.title")}
+          </h3>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-red-500 p-1"
@@ -238,6 +236,7 @@ function EditPostModal({ open, onClose, text, setText, onSubmit }) {
           </button>
         </div>
 
+        {/* Body */}
         <div className="p-5">
           <textarea
             value={text}
@@ -247,18 +246,19 @@ function EditPostModal({ open, onClose, text, setText, onSubmit }) {
           />
         </div>
 
+        {/* Footer */}
         <div className="px-5 py-3 bg-gray-50 border-t flex justify-end gap-3">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             onClick={onSubmit}
             className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm"
           >
-            Save Changes
+            {t("editPost.save")}
           </button>
         </div>
       </div>
@@ -266,8 +266,11 @@ function EditPostModal({ open, onClose, text, setText, onSubmit }) {
   );
 }
 
+
 // ============ Delete Modal ============
 function DeleteConfirmModal({ open, onClose, onConfirm }) {
+  const { t } = useTranslation();
+
   if (!open) return null;
 
   return (
@@ -280,37 +283,42 @@ function DeleteConfirmModal({ open, onClose, onConfirm }) {
 
       {/* modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 border border-gray-100 overflow-hidden animate-fadeIn">
+        
+        {/* HEADER */}
         <div className="px-5 py-4 border-b bg-gradient-to-r from-rose-50 to-amber-50 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">Delete Post</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-red-500 p-1"
-          >
+          <h3 className="text-lg font-semibold text-gray-800">
+            {t("delete.title")}
+          </h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-red-500 p-1">
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* BODY */}
         <div className="p-5 text-center">
           <p className="text-gray-700 mb-5">
-            Are you sure you want to delete this post? <br />
+            {t("delete.confirm")}
+            <br />
             <span className="text-gray-500 text-sm">
-              This action cannot be undone.
+              {t("delete.warning")}
             </span>
           </p>
         </div>
 
+        {/* FOOTER */}
         <div className="px-5 py-4 bg-gray-50 border-t flex justify-end gap-3">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
+
           <button
             onClick={onConfirm}
             className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm"
           >
-            Delete
+            {t("common.delete")}
           </button>
         </div>
       </div>
@@ -318,27 +326,29 @@ function DeleteConfirmModal({ open, onClose, onConfirm }) {
   );
 }
 
+
 // ============ Report Modal ============
 
+
 function ReportModal({ open, onClose, postId, onSubmit }) {
+  const { t } = useTranslation();
+
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [details, setDetails] = useState("");
-  const mountedRef = useRef(false); // ใช้กัน render ซ้ำ
+  const mountedRef = useRef(false);
 
   // ตรวจจับ mount / unmount
   useEffect(() => {
     if (open && !mountedRef.current) {
       mountedRef.current = true;
-      console.log("ReportModal mounted for post:", postId);
     }
     if (!open) {
       mountedRef.current = false;
-      console.log("ReportModal closed for post:", postId);
     }
-  }, [open, postId]);
+  }, [open]);
 
-  // ปิดด้วยปุ่ม Esc
+  // ปิดด้วย ESC
   useEffect(() => {
     if (!open) return;
     const onEsc = (e) => e.key === "Escape" && onClose();
@@ -346,7 +356,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
     return () => window.removeEventListener("keydown", onEsc);
   }, [open, onClose]);
 
-  // Reset เมื่อ modal ปิด
+  // Reset เมื่อปิด
   useEffect(() => {
     if (!open) {
       setReason("");
@@ -355,39 +365,22 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
     }
   }, [open]);
 
-  // ป้องกัน render ซ้ำตอน dev mode
   if (!open || !postId || (mountedRef.current && !open)) return null;
 
+  // ใช้ reason จากไฟล์แปล
   const reasons = [
-    {
-      key: "Harassment",
-      label:
-        "Harassment (Bullying, discrimination, or targeting a religion, gender, or group.)",
-    },
-    {
-      key: "Sexual Content",
-      label:
-        "Sexual Content (Sexual, pornographic, or inappropriate material.)",
-    },
-    {
-      key: "Illegal Activity",
-      label: "Illegal Activity (Promoting illegal actions or services.)",
-    },
-    {
-      key: "Spam",
-      label: "Spam (Reposting the same content multiple times.)",
-    },
-    {
-      key: "Privacy Violation",
-      label:
-        "Privacy Violation (Sharing personal information or photos of others without consent.)",
-    },
-    { key: "Other", label: "Other (Please specify)" },
+    { key: "harassment", label: t("report.harassment") },
+    { key: "sexual", label: t("report.sexual") },
+    { key: "illegal", label: t("report.illegal") },
+    { key: "spam", label: t("report.spam") },
+    { key: "privacy", label: t("report.privacy") },
+    { key: "other", label: t("report.other") },
   ];
 
   const handleSubmit = () => {
     const finalReason =
-      reason === "Other" ? customReason.trim() || "Other" : reason;
+      reason === "other" ? customReason.trim() || "other" : reason;
+
     onSubmit({
       postId,
       reason: finalReason,
@@ -409,14 +402,18 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
 
       {/* modal */}
       <div className="relative w-full max-w-xl mx-4 rounded-2xl bg-white shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh] animate-fadeIn">
-        {/* header */}
+        
+        {/* HEADER */}
         <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-emerald-50 to-amber-50 border-b">
           <div className="flex items-center gap-2">
             <Flag className="w-5 h-5 text-emerald-700" />
             <h3 className="text-lg font-semibold text-gray-800">
-              {postId?.toString().startsWith("comment-") ? "Report Comment" : "Report Post"}
+              {postId.toString().startsWith("comment-")
+                ? t("report.titleComment")
+                : t("report.titlePost")}
             </h3>
           </div>
+
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
@@ -426,55 +423,62 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
           </button>
         </div>
 
-        {/* scrollable body */}
+        {/* BODY */}
         <div className="p-5 space-y-5 overflow-y-auto">
-          <div>
-            <p className="text-sm text-gray-600 mb-3">
-              Please select a reason for reporting this post (Post ID:{" "}
-              <span className="font-medium text-gray-800">#{postId}</span>).
-            </p>
+          <p className="text-sm text-gray-600 mb-3">
+            {t("report.description")}  
+            <br />
+            <span className="font-medium text-gray-800">
+              ({t("report.postId")}: #{postId})
+            </span>
+          </p>
 
-            <div className="grid grid-cols-1 gap-2">
-              {reasons.map((r) => (
-                <label
-                  key={r.key}
-                  className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition
-                    ${
-                      reason === r.key
-                        ? "border-emerald-400 bg-emerald-50"
-                        : "border-gray-200 hover:border-gray-300"
-                    }`}
-                >
-                  <input
-                    type="radio"
-                    name="report-reason"
-                    className="mt-1"
-                    checked={reason === r.key}
-                    onChange={() => setReason(r.key)}
-                  />
-                  <span className="text-sm text-gray-800">{r.label}</span>
-                </label>
-              ))}
-            </div>
-
-            {reason === "Other" && (
-              <input
-                type="text"
-                placeholder="Please specify your reason"
-                value={customReason}
-                onChange={(e) => setCustomReason(e.target.value)}
-                className="mt-3 w-full border rounded-lg px-3 py-2 text-sm"
-              />
-            )}
+          {/* REASONS */}
+          <div className="grid grid-cols-1 gap-2">
+            {reasons.map((r) => (
+              <label
+                key={r.key}
+                className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition
+                  ${
+                    reason === r.key
+                      ? "border-emerald-400 bg-emerald-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+              >
+                <input
+                  type="radio"
+                  name="report-reason"
+                  className="mt-1"
+                  checked={reason === r.key}
+                  onChange={() => setReason(r.key)}
+                />
+                <span className="text-sm text-gray-800">{r.label}</span>
+              </label>
+            ))}
           </div>
 
+          {/* OTHER reason */}
+          {reason === "other" && (
+            <input
+              type="text"
+              placeholder={t("report.otherPlaceholder")}
+              value={customReason}
+              onChange={(e) => setCustomReason(e.target.value)}
+              className="mt-3 w-full border rounded-lg px-3 py-2 text-sm"
+            />
+          )}
+
+          {/* Additional details */}
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
-              Additional details{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
+              {t("report.additional")}{" "}
+              <span className="text-gray-400 font-normal">
+                ({t("report.optional")})
+              </span>
             </label>
+
             <textarea
-              placeholder="Describe what happened or any context that helps us review this report."
+              placeholder={t("report.detailsPlaceholder")}
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               rows={4}
@@ -483,25 +487,26 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
           </div>
         </div>
 
-        {/* footer */}
+        {/* FOOTER */}
         <div className="px-5 py-4 bg-gray-50 border-t flex items-center justify-end gap-3">
           <button
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
+
           <button
             onClick={handleSubmit}
-            disabled={!reason || (reason === "Other" && !customReason.trim())}
+            disabled={!reason || (reason === "other" && !customReason.trim())}
             className={`px-4 py-2 rounded-lg text-white text-sm transition
-                ${
-                  !reason || (reason === "Other" && !customReason.trim())
-                    ? "bg-emerald-300 cursor-not-allowed"
-                    : "bg-emerald-600 hover:bg-emerald-700"
-                }`}
+              ${
+                !reason || (reason === "other" && !customReason.trim())
+                  ? "bg-emerald-300 cursor-not-allowed"
+                  : "bg-emerald-600 hover:bg-emerald-700"
+              }`}
           >
-            Submit Report
+            {t("common.submit")}
           </button>
         </div>
       </div>
@@ -510,9 +515,11 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
 }
 
 
+
 export default function TagDetail() {
   const { tagName } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState("");
@@ -765,15 +772,15 @@ export default function TagDetail() {
         );
     }
     };
-// ========== COMMENTS ==========
-const handleCommentFile = (pid, e) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  setCommentFiles((prev) => ({
-    ...prev,
-    [pid]: [...(prev[pid] || []), file],
-  }));
-};
+  // ========== COMMENTS ==========
+  const handleCommentFile = (pid, e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCommentFiles((prev) => ({
+      ...prev,
+      [pid]: [...(prev[pid] || []), file],
+    }));
+  };
 
     const handleCommentChange = (pid, text) => {
     setCommentInputs((prev) => ({ ...prev, [pid]: text }));
@@ -967,9 +974,9 @@ const handleCommentFile = (pid, e) => {
             <Search className="w-5 h-5 text-gray-500" />
             <input
               type="text"
-              placeholder="Search tags..."
+              placeholder={t("tagsPage.searchPlaceholder")}
               value={search}
-              onFocus={() => setIsTyping(true)}          // เริ่มพิมพ์
+              onFocus={() => setIsTyping(true)}      
               onChange={(e) => {
                   setIsTyping(true);
                   setSearch(e.target.value);
@@ -986,15 +993,15 @@ const handleCommentFile = (pid, e) => {
 
           {isTyping && suggestions.length > 0 && (
             <div className="absolute w-full bg-white border rounded-lg shadow-lg mt-1 z-50">
-              {suggestions.map((t, i) => (
+              {suggestions.map((tag, i) => (
                 <div
                   key={i}
-                  onClick={() => handleSelectTag(t.name)}
+                  onClick={() => handleSelectTag(tag.name)}
                   className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 >
-                  #{t.name}{" "}
+                  #{tag.name}{" "}
                   <span className="text-gray-400 text-sm">
-                    ({t.count} posts)
+                    ({tag.count} {t("tagsPage.postsCount")})
                   </span>
                 </div>
               ))}
@@ -1006,7 +1013,7 @@ const handleCommentFile = (pid, e) => {
         <div className="flex flex-col gap-3 mb-6 p-4 rounded-xl bg-[#fdfaf6] shadow-sm">
           <input
             type="text"
-            placeholder={`Post with #${tagName}...`}
+            placeholder={t("tagsPage.postWithTag", { tag: tagName })}
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
             className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-400"
@@ -1039,7 +1046,7 @@ const handleCommentFile = (pid, e) => {
               onClick={handlePost}
               className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-full text-sm font-medium transition"
             >
-              <Send className="w-4 h-4" /> Post
+              <Send className="w-4 h-4" /> {t("board.postButton")}
             </button>
           </div>
         </div>
@@ -1048,7 +1055,7 @@ const handleCommentFile = (pid, e) => {
         <div className="space-y-6">
           {posts.length === 0 ? (
             <p className="text-gray-500 text-center py-6">
-              No posts for this tag yet 🌱
+              {t("tagsPage.noPostsForTag")}
             </p>
           ) : (
             posts.map((p) => (
@@ -1108,14 +1115,14 @@ const handleCommentFile = (pid, e) => {
                             onClick={() => openEditModal(p)}
                             className="flex items-center gap-2 w-full px-3 py-2 text-sm text-blue-600 hover:bg-blue-50"
                             >
-                            <Edit className="w-4 h-4" /> Edit
+                            <Edit className="w-4 h-4" /> {t("post.edit")}
                             </button>
 
                             <button
                             onClick={() => handleDeletePost(p.id)}
                             className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
                             >
-                            <Trash className="w-4 h-4" /> Delete
+                            <Trash className="w-4 h-4" /> {t("post.delete")}
                             </button>
                         </>
                         ) : (
@@ -1123,7 +1130,7 @@ const handleCommentFile = (pid, e) => {
                             onClick={() => openReport(p.id)}
                             className="flex items-center gap-2 w-full px-3 py-2 text-sm text-amber-700 hover:bg-amber-50"
                         >
-                            <Flag className="w-4 h-4" /> Report
+                            <Flag className="w-4 h-4" /> {t("post.report")}
                         </button>
                         )}
                     </div>
@@ -1392,7 +1399,7 @@ const handleCommentFile = (pid, e) => {
                     {/* กล่องข้อความ */}
                     <input
                         type="text"
-                        placeholder="Write a comment..."
+                        placeholder={t("board.writeComment")}
                         value={commentInputs[p.id] || ""}
                         onChange={(e) =>
                         setCommentInputs({
@@ -1408,7 +1415,7 @@ const handleCommentFile = (pid, e) => {
                         onClick={() => handleCommentSubmit(p.id)}
                         className="bg-green-600 text-white px-3 py-1 rounded-full text-sm hover:bg-green-700"
                     >
-                        Send
+                        {t("board.send")}
                     </button>
                     </div>
 
@@ -1462,7 +1469,7 @@ const handleCommentFile = (pid, e) => {
 
       {/* ขวา */}
       <div className="w-72 pl-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-3">Trending</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-3">{t("tagsPage.trending")}</h3>
         <ol className="list-decimal pl-5 space-y-1 text-gray-700">
           {trending.map((tag, i) => (
             <li
@@ -1472,7 +1479,7 @@ const handleCommentFile = (pid, e) => {
             >
               #{tag.name}{" "}
               <span className="text-gray-400 text-sm">
-                ({tag.count} posts)
+                ({tag.count} {t("tagsPage.postsCount")})
               </span>
             </li>
           ))}
