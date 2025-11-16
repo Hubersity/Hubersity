@@ -1,41 +1,25 @@
 // ForHelp-admin.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { AlertTriangle, Mail, Paperclip } from "lucide-react";
 
+const API_URL = "http://localhost:8000";  // เปลี่ยนตาม backend ของคุณ
+
 export default function ForHelpAdmin() {
-  const reportsData = [
-    {
-      id: 1,
-      user: "zaza123",
-      avatar: "/images/Watcharapat.jpg",
-      message: "I can't post in Board. I don't know why.",
-      time: "2 hours ago",
-      attachment: true,
-      resolved: false,
-    },
-    {
-      id: 2,
-      user: "Meme",
-      avatar: "/images/Patthiaon.jpg",
-      message: "I can't change password.",
-      time: "5 hours ago",
-      attachment: false,
-      resolved: false,
-    },
-    {
-      id: 3,
-      user: "mintyy",
-      avatar: "/images/Karnpon.jpg",
-      message: "Notifications don’t show on mobile.",
-      time: "Yesterday",
-      attachment: true,
-      resolved: false,
-    },
-  ];
+  const [reports, setReports] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [adminReply, setAdminReply] = useState("");
 
-  const [reports, setReports] = useState(reportsData);
-  const [selected, setSelected] = useState(reports[0]);
+  // โหลดข้อมูลจาก backend
+  useEffect(() => {
+    fetch(`${API_URL}/help_reports/`)
+      .then((res) => res.json())
+      .then((data) => {
+        setReports(data);
+        setSelected(data[0] || null);
+      });
+  }, []);
 
+  // ปุ่ม style
   const buttonClass = `
     px-7 py-2 rounded-full
     bg-gradient-to-r from-[#d9f2dd] to-[#e0ebe2]
@@ -51,12 +35,37 @@ export default function ForHelpAdmin() {
     shadow-sm transition hover:bg-gray-100
   `;
 
-  const markResolved = () => {
-    const updated = reports.map((r) =>
-      r.id === selected.id ? { ...r, resolved: true } : r
-    );
-    setReports(updated);
-    setSelected({ ...selected, resolved: true });
+  // ส่งข้อความตอบกลับ Admin → User
+  const sendReply = async () => {
+    if (!adminReply.trim()) return;
+
+    const formData = new FormData();
+    formData.append("reply", adminReply);
+
+    const res = await fetch(`${API_URL}/help_reports/${selected.id}/reply`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (res.ok) {
+      alert("Reply sent to user!");
+      setAdminReply("");
+    }
+  };
+
+  // Mark as resolved
+  const markResolved = async () => {
+    const res = await fetch(`${API_URL}/help_reports/${selected.id}/resolve`, {
+      method: "PUT",
+    });
+
+    if (res.ok) {
+      const updated = reports.map((r) =>
+        r.id === selected.id ? { ...r, resolved: true } : r
+      );
+      setReports(updated);
+      setSelected({ ...selected, resolved: true });
+    }
   };
 
   return (
@@ -106,18 +115,21 @@ export default function ForHelpAdmin() {
                 )}
 
                 <img
-                  src={r.avatar}
-                  alt={r.user}
+                  src={r.avatar || "/images/default.png"}
+                  alt={r.username}
                   className="w-12 h-12 rounded-full object-cover border"
                 />
+
                 <div className="min-w-0">
-                  <p className="font-medium text-gray-800 truncate">{r.user}</p>
+                  <p className="font-medium text-gray-800 truncate">{r.username}</p>
                   <p className="text-sm text-gray-600 line-clamp-1">{r.message}</p>
                 </div>
 
                 <div className="ml-auto flex items-center gap-2">
-                  {r.attachment && <Paperclip className="text-gray-500 w-5 h-5" />}
-                  <span className="text-[11px] text-gray-500 whitespace-nowrap">{r.time}</span>
+                  {r.file_path && <Paperclip className="text-gray-500 w-5 h-5" />}
+                  <span className="text-[11px] text-gray-500 whitespace-nowrap">
+                    {new Date(r.created_at).toLocaleString()}
+                  </span>
                 </div>
               </button>
             ))}
@@ -137,13 +149,15 @@ export default function ForHelpAdmin() {
               {/* User info */}
               <div className="flex items-center gap-4">
                 <img
-                  src={selected.avatar}
+                  src={selected.avatar || "/images/default.png"}
                   className="w-16 h-16 rounded-full border shadow"
-                  alt={selected.user}
+                  alt={selected.username}
                 />
                 <div>
-                  <p className="text-xl font-semibold text-gray-900">{selected.user}</p>
-                  <p className="text-gray-500 text-sm">{selected.time}</p>
+                  <p className="text-xl font-semibold text-gray-900">{selected.username}</p>
+                  <p className="text-gray-500 text-sm">
+                    {new Date(selected.created_at).toLocaleString()}
+                  </p>
                 </div>
               </div>
 
@@ -153,18 +167,25 @@ export default function ForHelpAdmin() {
               </div>
 
               {/* Attachment */}
-              {selected.attachment && (
-                <div className="cursor-pointer bg-white p-4 rounded-xl border shadow-sm flex items-center gap-3 hover:bg-[#e0ebe2]/30 transition">
+              {selected.file_path && (
+                <a
+                  href={`${API_URL}/${selected.file_path}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="cursor-pointer bg-white p-4 rounded-xl border shadow-sm flex items-center gap-3 hover:bg-[#e0ebe2]/30 transition"
+                >
                   <Paperclip className="text-gray-600" />
-                  <p className="text-sm text-gray-700 truncate">Click to preview file</p>
+                  <p className="text-sm text-gray-700 truncate">{selected.file_path}</p>
                   <span className="ml-auto text-emerald-600 font-medium text-sm">View</span>
-                </div>
+                </a>
               )}
 
               {/* Admin Response */}
               <div>
                 <p className="text-gray-700 font-medium mb-2">Admin Response</p>
                 <textarea
+                  value={adminReply}
+                  onChange={(e) => setAdminReply(e.target.value)}
                   placeholder="Write a helpful reply…"
                   className="w-full p-4 bg-white border rounded-xl outline-none focus:ring-2 focus:ring-emerald-300"
                   rows={4}
@@ -172,7 +193,9 @@ export default function ForHelpAdmin() {
 
                 {/* Buttons */}
                 <div className="mt-4 flex gap-4">
-                  <button className={buttonClass}>Send Response</button>
+                  <button className={buttonClass} onClick={sendReply}>
+                    Send Response
+                  </button>
 
                   <button className={whiteButton} onClick={markResolved}>
                     Mark as Resolved

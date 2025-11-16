@@ -1,6 +1,8 @@
 from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from datetime import datetime, date
 from typing import List, Optional, Dict, Literal
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
+from app.database import Base
 import re
 
 # สร้างบัญชีใหม่ (Sign Up)
@@ -192,8 +194,6 @@ class NotificationResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-    # class Config:
-    #     from_attributes = True
 
 class PostUpdate(BaseModel):
     post_content: Optional[str] = None
@@ -204,4 +204,24 @@ class BlockOut(BaseModel):
     blocker_id: int
     blocked_id: int
 
+
+    class Config:
+        orm_mode = True
+
+class HelpReportCreate(BaseModel):  # Pydantic
+    user_id: int
+    message: str
+
+
+class HelpReportResponse(BaseModel):
+    id: int
+    message: str
+    file_path: Optional[str]
+    resolved: bool
+    created_at: Optional[datetime]
+    username: Optional[str] = None
+    avatar: Optional[str] = None
+
+    class Config:
+        from_attributes = False   
     model_config = ConfigDict(orm_mode=True)
