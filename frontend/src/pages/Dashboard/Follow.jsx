@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
 function UnfollowConfirmModal({ open, onClose, onConfirm, user }) {
+  const { t } = useTranslation();
+
   if (!open) return null;
 
   return (
@@ -17,10 +20,12 @@ function UnfollowConfirmModal({ open, onClose, onConfirm, user }) {
 
       {/* modal */}
       <div className="relative bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-md mx-4 animate-fadeIn overflow-hidden">
-
+        
         {/* header */}
         <div className="px-5 py-4 bg-gradient-to-r from-emerald-50 to-green-50 border-b">
-          <h3 className="text-lg font-semibold text-gray-800">Unfollow</h3>
+          <h3 className="text-lg font-semibold text-gray-800">
+            {t("follow.modalTitle")}
+          </h3>
         </div>
 
         {/* body */}
@@ -30,7 +35,7 @@ function UnfollowConfirmModal({ open, onClose, onConfirm, user }) {
               user?.profile_image
                 ? user.profile_image.startsWith("http")
                   ? user.profile_image
-                  : `http://localhost:8000${user.profile_image}`
+                  : `${API_URL}${user.profile_image}`
                 : "/images/default.jpg"
             }
             alt={user?.name}
@@ -38,12 +43,12 @@ function UnfollowConfirmModal({ open, onClose, onConfirm, user }) {
           />
 
           <p className="text-gray-700 text-base">
-            Are you sure you want to unfollow{" "}
+            {t("follow.modalMessage")}{" "}
             <span className="font-semibold text-gray-900">@{user?.username}</span>?
           </p>
 
           <p className="text-sm text-gray-500">
-            You will stop seeing their posts in your follow list.
+            {t("follow.modalSubMessage")}
           </p>
         </div>
 
@@ -53,14 +58,14 @@ function UnfollowConfirmModal({ open, onClose, onConfirm, user }) {
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white transition"
           >
-            Cancel
+            {t("follow.cancel")}
           </button>
 
           <button
             onClick={onConfirm}
             className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700 transition"
           >
-            Unfollow
+            {t("follow.unfollow")}
           </button>
         </div>
       </div>
@@ -70,13 +75,17 @@ function UnfollowConfirmModal({ open, onClose, onConfirm, user }) {
 
 export default function Follow() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState([]);
-  const token = JSON.parse(localStorage.getItem(localStorage.getItem("currentUserKey") || ""))?.token;
+
+  const token =
+    JSON.parse(localStorage.getItem(localStorage.getItem("currentUserKey") || ""))?.token;
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [targetUser, setTargetUser] = useState(null);
 
-  // โหลดรายชื่อคนที่เราติดตาม
+  // โหลดรายชื่อผู้ใช้ที่เราติดตาม
   useEffect(() => {
     if (!token) return;
 
@@ -95,42 +104,6 @@ export default function Follow() {
     fetchFollowing();
   }, [token]);
 
-  // Follow user
-  const handleFollow = async (uid) => {
-    try {
-      const res = await fetch(`${API_URL}/follow/${uid}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        // รีโหลดรายการ follow ใหม่
-        const newRes = await fetch(`${API_URL}/follow/following`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await newRes.json();
-        setUsers(data);
-      }
-    } catch (err) {
-      console.error("Follow failed:", err);
-    }
-  };
-
-  // Unfollow user
-  const handleUnfollow = async (uid) => {
-    try {
-      const res = await fetch(`${API_URL}/follow/${uid}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        // ลบจาก state ทันที
-        setUsers((prev) => prev.filter((u) => u.uid !== uid));
-      }
-    } catch (err) {
-      console.error("Unfollow failed:", err);
-    }
-  };
-
   // ค้นหา user
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -141,31 +114,32 @@ export default function Follow() {
 
   return (
     <div className="p-10 w-full h-full">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Follow</h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">
+        {t("follow.title")}
+      </h1>
 
       {/* Search bar */}
       <form onSubmit={handleSearchSubmit} className="relative mb-8 max-w-md">
         <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
         <input
           type="text"
-          placeholder="Find account..."
+          placeholder={t("follow.searchPlaceholder")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full border rounded-full py-2 pl-10 pr-4 focus:ring-2 focus:ring-[#e0ebe2] bg-white text-gray-700"
         />
       </form>
 
-      {/* รายชื่อผู้ใช้ที่เราติดตามอยู่ */}
+      {/* รายชื่อผู้ใช้ที่เราติดตาม */}
       <div className="flex flex-col gap-4">
         {users.length === 0 ? (
-          <p className="text-gray-500 text-sm">You haven't followed anyone yet.</p>
+          <p className="text-gray-500 text-sm">{t("follow.noFollow")}</p>
         ) : (
           users.map((u) => (
             <div
               key={u.uid}
               className="flex items-center justify-between bg-white border rounded-xl p-3 shadow-sm hover:shadow-md transition-all"
             >
-              {/* ซ้าย: avatar + ชื่อ */}
               <div className="flex items-center gap-4">
                 <img
                   src={
@@ -175,39 +149,41 @@ export default function Follow() {
                         : `${API_URL}${u.profile_image}`
                       : "/images/default.jpg"
                   }
-                  alt={u.name}
                   className="w-12 h-12 rounded-full object-cover border border-gray-200"
+                  alt={u.name}
                 />
+
                 <div>
-                  <p className="font-semibold text-gray-800">{u.name || u.username}</p>
+                  <p className="font-semibold text-gray-800">
+                    {u.name || u.username}
+                  </p>
                   <p className="text-sm text-gray-500">@{u.username}</p>
                 </div>
               </div>
 
-              {/* ปุ่ม Follow / Following */}
               <button
-                  onClick={() => {
-                    setTargetUser(u);
-                    setConfirmOpen(true);
-                  }}
+                onClick={() => {
+                  setTargetUser(u);
+                  setConfirmOpen(true);
+                }}
                 className="px-5 py-1.5 rounded-full font-medium text-sm bg-[#6dbf74] text-white hover:bg-[#5aa862] transition-all"
               >
-                Following
+                {t("follow.following")}
               </button>
             </div>
           ))
         )}
       </div>
+
+      {/* Modal */}
       <UnfollowConfirmModal
-      open={confirmOpen}
-      onClose={() => setConfirmOpen(false)}
-      user={targetUser}
-      onConfirm={() => {
-        handleUnfollow(targetUser.uid);
-        setConfirmOpen(false);
-      }}
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        user={targetUser}
+        onConfirm={() => {
+          setConfirmOpen(false);
+        }}
       />
     </div>
-    
   );
 }

@@ -1,0 +1,126 @@
+{
+  "sidebar": {
+    "board": "Board",
+    "time": "Time study",
+    "follow": "Follow",
+    "chat": "Chat",
+    "notification": "Notification",
+    "tags": "Tags",
+    "news": "News",
+    "account": "Account",
+    "setting": "Setting"
+  },
+  "board": {
+    "search": "Search text",
+    "universityTalk": "University Talk",
+    "followTalk": "Follow Talk",
+    "newPostPlaceholder": "Type here what do you think...",
+    "postButton": "Post",
+    "comment": "Comment",
+    "writeComment": "Write a comment...",
+    "send": "Send",
+    "noPosts": "No posts found."
+  },
+  "editPost": {
+    "title": "Edit Post",
+    "cancel": "Cancel",
+    "save": "Save Changes"
+  },
+    "common": {
+    "cancel": "Cancel",
+    "saveChanges": "Save Changes",
+    "delete": "Delete",
+    "submit": "Submit"
+    },
+    "post": {
+    "edit": "Edit Post",
+    "delete": "Delete",
+    "report": "Report"
+    },
+    "report": {
+    "titlePost": "Report Post",
+    "titleComment": "Report Comment",
+    "description": "Please select a reason for reporting this post",
+    "harassment": "Harassment (Bullying, discrimination, or targeting a religion, gender, or group.)",
+    "sexual": "Sexual Content (Sexual, pornographic, or inappropriate material.)",
+    "illegal": "Illegal Activity (Promoting illegal actions or services.)",
+    "spam": "Spam (Reposting the same content multiple times.)",
+    "privacy": "Privacy Violation (Sharing personal information or photos of others without consent.)",
+    "other": "Other (Please specify)",
+    "otherPlaceholder": "Please specify your reason",
+    "additional": "Additional details",
+    "optional": "optional",
+    "postId": "Post ID",
+    "detailsPlaceholder": "Describe what happened or any context that helps us review this report.",
+    "submit": "Submit Report"
+    },
+    "delete": {
+    "title": "Delete Post",
+    "confirm": "Are you sure you want to delete this post?",
+    "warning": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "delete": "Delete"
+    },
+    "deleteComment": {
+    "title": "Delete Comment",
+    "confirm": "Are you sure you want to delete this comment?",
+    "warning": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "delete": "Delete"
+    },
+    "account": {
+    "title": "Account Information",
+    "username": "User Name",
+    "following": "Following",
+    "followers": "Follower",
+
+    "name": "Name",
+    "birthdate": "Birthdate",
+    "age": "Age",
+    "bio": "Bio",
+    "university": "University",
+    "selectUniversity": "Select University",
+    "visibility": "Visibility",
+    "private": "Private",
+    "public": "Public",
+    "saveChanges": "Save Changes",
+
+    "myPosts": "My Posts",
+    "noPosts": "You haven’t posted anything yet.",
+
+    "edit": "Edit",
+    "delete": "Delete",
+
+    "editPostTitle": "Edit Post",
+    "deletePostTitle": "Delete Post",
+    "deletePostConfirm": "Are you sure you want to delete this post?",
+    "deleteWarning": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirmDelete": "Delete"
+    },
+    "follow": {
+    "title": "Follow",
+    "searchPlaceholder": "Find account...",
+    "noFollow": "You haven't followed anyone yet.",
+    "following": "Following",
+
+    "modalTitle": "Unfollow",
+    "modalMessage": "Are you sure you want to unfollow",
+    "modalSubMessage": "You will stop seeing their posts in your follow list.",
+
+    "cancel": "Cancel",
+    "unfollow": "Unfollow"
+    },
+    "notification": {
+    "title": "Notification",
+
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This week",
+
+    "followBack": "Follow back",
+    "following": "Following",
+
+    "noNotification": "You don't have any notifications yet."
+    }
+}
