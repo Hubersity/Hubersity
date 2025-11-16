@@ -63,11 +63,14 @@ export default function Chat() {
 
       const mapped = list.map((c) => ({
         id: c.id,
-        name: c.name, 
+        name: c.name,
         username: c.username,
         avatar: toAbs(c.avatar || "/images/default.jpg"),
-        lastMessage: c.lastMessage || "", messages: []
-      }));
+        lastMessage: c.lastMessage || "",
+        lastTs: c.last_ts ? new Date(c.last_ts).getTime() : 0,
+        unread: c.unread || 0,
+        messages: [],
+      }))
 
       setFriends(mapped);
       const lastId = Number(localStorage.getItem("lastChatId") || 0);
@@ -117,6 +120,19 @@ export default function Chat() {
     setSelected(f);
     localStorage.setItem("lastChatId", String(f.id));
     await loadMessages(f.id);
+  
+    // mark as read ที่ backend
+    await fetch(`${API_URL}/chats/${f.id}/read?me_id=${meId}`, {
+      method: "POST",
+      headers: { ...authHeaders },
+    });
+
+    // เคลียร์ unread ใน frontend ทันที
+    setFriends(prev =>
+      prev.map(c =>
+        c.id === f.id ? { ...c, unread: 0 } : c
+      )
+    );
   };
 
   // upload helpers
@@ -309,6 +325,8 @@ export default function Chat() {
 
         <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-white">
           {uniqueFriendsAll
+            .slice()
+            .sort((a, b) => (b.lastTs || 0) - (a.lastTs || 0))   // sort ตามเวลา
             .filter((f) => f.name.toLowerCase().includes(search.toLowerCase()))
             .map((f) => (
               <div
@@ -318,7 +336,21 @@ export default function Chat() {
                   selected?.id === f.id ? "bg-[#e0ebe2]" : "hover:bg-gray-100"
                 }`}
               >
-                <img src={f.avatar} alt={f.name} className="w-12 h-12 rounded-full object-cover border" />
+                {/* avatar + badge */}
+                <div className="relative">
+                  <img
+                    src={f.avatar}
+                    alt={f.name}
+                    className="w-12 h-12 rounded-full object-cover border"
+                  />
+                  {f.unread > 0 && (
+                    <span
+                      className="absolute -top-1 -left-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs font-semibold"
+                    >
+                      {f.unread}
+                    </span>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-800 truncate">
                     {f.name} 

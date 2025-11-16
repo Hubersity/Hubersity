@@ -74,14 +74,16 @@ export default function NewDetail() {
                 ←
             </button>
             {/* main content */}
-            <div className="max-w-5xl mx-auto px-4 flex flex-col items-center">
-                <p className="text-2xl font-semibold text-center mb-6">{news.title}</p>
-                <img src={toAbs(news.image_url)}
-                 className="w-full max-w-md rounded-xl mb-6"/>
-                <p className="whitespace-pre-line text-center text-lg max-w-2xl mb-4">
-                    {news.summary}
-                </p>
-                <hr className="w-full max-w-5xl border-t border-gray-300 mb-4" />
+            <div className="max-w-5xl mx-auto px-4 flex flex-col">
+                <div className="flex flex-col items-center">
+                    <p className="text-2xl font-semibold text-center mb-6">{news.title}</p>
+                    <img src={toAbs(news.image_url)}
+                    className="w-full max-w-md rounded-xl mb-6"/>
+                    <p className="whitespace-pre-line text-center text-lg max-w-2xl mb-4">
+                        {news.summary}
+                    </p>
+                    <hr className="w-full max-w-5xl border-t border-gray-300 mb-4" />
+                </div>
                 <p className="whitespace-pre-line max-w-5xl">
                     {renderWithLinks(news.detail)}
                 </p>

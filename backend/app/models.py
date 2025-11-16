@@ -239,6 +239,9 @@ class Chat(Base):
     user1_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
     user2_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
 
+    user1_last_read_at = Column(DateTime(timezone=True), nullable=True)
+    user2_last_read_at = Column(DateTime(timezone=True), nullable=True)
+
     user1 = relationship("User", foreign_keys=[user1_id])
     user2 = relationship("User", foreign_keys=[user2_id])
 

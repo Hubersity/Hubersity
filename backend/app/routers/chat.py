@@ -9,6 +9,8 @@ from typing import List
 import os, uuid
 from fastapi import HTTPException, Body
 from starlette.status import HTTP_404_NOT_FOUND
+from datetime import datetime, timezone
+from sqlalchemy import or_, and_, func
 # from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/chats", tags=["Chat"])
@@ -90,7 +92,7 @@ def list_my_chats(
 
         friend = c.user2 if c.user1_id == me_id else c.user1
 
-        # ดึงข้อความล่าสุดแบบรวดเร็ว
+        # ข้อความล่าสุด
         last = (
             db.query(models.ChatMessage)
             .options(selectinload(models.ChatMessage.attachments))
@@ -99,13 +101,8 @@ def list_my_chats(
             .first()
         )
 
-
-        preview = ""
-
-        # ✅ ถ้าข้อความล่าสุดถูกลบ ให้ขึ้น "This message was deleted."
-        if last and (last.kind or "").lower() == "deleted":
-            preview = ""
-        elif last and last.attachments:
+        # preview เหมือนเดิม
+        if last and last.attachments:
             a = last.attachments[0]
             if a.kind == "image":
                 preview = "[image]"
@@ -116,13 +113,37 @@ def list_my_chats(
         else:
             preview = last.text or "" if last else ""
 
+        # ---------- นับ unread ----------
+        my_last_read = (
+            c.user1_last_read_at if me_id == c.user1_id else c.user2_last_read_at
+        )
+
+        # ถ้าไม่เคยอ่านเลย → นับตั้งแต่เริ่มต้น
+        base_time = my_last_read or datetime.min.replace(tzinfo=timezone.utc)
+
+        unread_count = (
+            db.query(func.count(models.ChatMessage.id))
+            .filter(
+                models.ChatMessage.chat_id == c.id,
+                models.ChatMessage.sender_id != me_id,      # ไม่รวมของตัวเอง
+                models.ChatMessage.created_at > base_time,  # หลังเวลาที่อ่านล่าสุด
+            )
+            .scalar()
+        )
+
         result.append({
             "id": c.id,
             "name": friend.name or friend.username,
             "username": friend.username,
             "avatar": getattr(friend, "profile_image", None) or "/images/default.jpg",
-            "lastMessage": preview,   # << ใช้ preview เสมอ
+            "lastMessage": preview,
+            "last_ts": last.created_at.isoformat() if last else None,
+            "unread": unread_count,
         })
+
+    # ---------- sort: ห้องที่มีข้อความล่าสุดอยู่ข้างบน ----------
+    result.sort(key=lambda x: x["last_ts"] or "", reverse=True)
+
     return result
 
 
@@ -495,3 +516,25 @@ def list_messages(chat_id: int, me_id: int = Query(...), db: Session = Depends(d
         })
 
     return out
+
+@router.post("/{chat_id}/read")
+def mark_read(
+    chat_id: int,
+    me_id: int = Query(...),
+    db: Session = Depends(database.get_db),
+):
+    chat = db.query(models.Chat).filter(models.Chat.id == chat_id).first()
+    if not chat:
+        raise HTTPException(404, "Chat not found")
+
+    now = datetime.now(timezone.utc)
+
+    if me_id == chat.user1_id:
+        chat.user1_last_read_at = now
+    elif me_id == chat.user2_id:
+        chat.user2_last_read_at = now
+    else:
+        raise HTTPException(403, "Not in this chat")
+
+    db.commit()
+    return {"ok": True}
