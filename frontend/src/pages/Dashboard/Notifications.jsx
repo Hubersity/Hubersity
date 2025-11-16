@@ -1,59 +1,12 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
 export default function Notifications() {
-  // mock data สำหรับการแจ้งเตือน
-  // const [notifications, setNotifications] = useState([
-  //   {
-  //     id: 1,
-  //     type: "comment",
-  //     name: "Skibidi",
-  //     avatar: "/images/Patthiaon.jpg",
-  //     time: "today",
-  //     text: `commented your post “Yes, I’ve taken the ISP course before. If you have any questions, you can DM me.”`,
-  //     isFollowing: false,
-  //   },
-  //   {
-  //     id: 2,
-  //     type: "like",
-  //     name: "Skibidi",
-  //     avatar: "/images/Patthiaon.jpg",
-  //     time: "today",
-  //     text: "and 47 others liked your post.",
-  //     isFollowing: false,
-  //   },
-  //   {
-  //     id: 3,
-  //     type: "follow",
-  //     name: "Rose",
-  //     avatar: "/images/Karnpon.jpg",
-  //     time: "yesterday",
-  //     text: "started following you.",
-  //     isFollowing: false,
-  //   },
-  //   {
-  //     id: 4,
-  //     type: "like",
-  //     name: "Pysart",
-  //     avatar: "/images/Watcharapat.jpg",
-  //     time: "this week",
-  //     text: "and 102 others liked your post.",
-  //     isFollowing: true,
-  //   },
-  //   {
-  //     id: 5,
-  //     type: "follow",
-  //     name: "Pysart",
-  //     avatar: "/images/Watcharapat.jpg",
-  //     time: "this week",
-  //     text: "started following you.",
-  //     isFollowing: false,
-  //   },
-  // ]);
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState([]);
 
-  // กด follow / unfollow
   const handleFollowBack = (id) => {
     setNotifications((prev) =>
       prev.map((n) =>
@@ -84,7 +37,7 @@ export default function Notifications() {
 
         const formatted = raw.map((n) => ({
           id: n.id,
-          type: "system", // or infer from n.title/message if needed
+          type: n.type || "system",
           name: n.sender_username,
           avatar: n.sender_avatar ? `${API_URL}${n.sender_avatar}` : "/images/default-avatar.png",
           time: groupTime(n.created_at),
@@ -101,7 +54,6 @@ export default function Notifications() {
     fetchNotifications();
   }, []);
 
-
   function groupTime(dateStr) {
     const created = new Date(dateStr);
     const now = new Date();
@@ -113,20 +65,20 @@ export default function Notifications() {
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
 
-    if (created >= today && created < new Date(today.getTime() + 86400000)) return "today";
+    if (created >= today && created < new Date(today.getTime() + 86400000))
+      return "today";
     if (created >= yesterday && created < today) return "yesterday";
-    if (created >= startOfWeek && created <= endOfWeek) return "this week";
+    if (created >= startOfWeek && created <= endOfWeek) return "thisWeek";
     return created.toISOString().split("T")[0];
   }
 
-  // ✅ Group notifications by time
   const grouped = notifications.reduce((acc, cur) => {
     acc[cur.time] = acc[cur.time] ? [...acc[cur.time], cur] : [cur];
     return acc;
   }, {});
 
-  // ✅ Order sections
-  const order = ["today", "yesterday", "this week"];
+  const order = ["today", "yesterday", "thisWeek"];
+
   const sections = order
     .filter((key) => grouped[key])
     .concat(
@@ -136,20 +88,27 @@ export default function Notifications() {
         .reverse()
     );
 
-
   return (
     <div className="flex flex-col w-full h-[calc(100vh-64px)] bg-white overflow-hidden">
+
       {/* Header */}
       <div className="p-6 border-b bg-white">
-        <h1 className="text-2xl font-semibold text-gray-800">Notification</h1>
+        <h1 className="text-2xl font-semibold text-gray-800">
+          {t("notification.title")}
+        </h1>
       </div>
 
-      {/* รายการแจ้งเตือน */}
+      {/* Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
-        {Object.keys(grouped).map((section) => (
+
+        {sections.length === 0 && (
+          <p className="text-gray-500 text-sm">{t("notification.noNotification")}</p>
+        )}
+
+        {sections.map((section) => (
           <div key={section}>
             <h2 className="text-gray-500 font-medium mb-4 capitalize">
-              {section}
+              {t(`notification.${section}`, section)}
             </h2>
 
             <div className="flex flex-col gap-4">
@@ -174,7 +133,6 @@ export default function Notifications() {
                     </div>
                   </div>
 
-                  {/* ปุ่ม Follow back เฉพาะ type follow */}
                   {n.type === "follow" && (
                     <button
                       onClick={() => handleFollowBack(n.id)}
@@ -184,7 +142,9 @@ export default function Notifications() {
                           : "bg-[#6dbf74] text-white hover:bg-[#5aa862]"
                       }`}
                     >
-                      {n.isFollowing ? "Following" : "Follow back"}
+                      {n.isFollowing
+                        ? t("notification.following")
+                        : t("notification.followBack")}
                     </button>
                   )}
                 </div>
@@ -192,6 +152,7 @@ export default function Notifications() {
             </div>
           </div>
         ))}
+
       </div>
     </div>
   );

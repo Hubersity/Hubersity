@@ -205,8 +205,8 @@ class BlockOut(BaseModel):
     blocked_id: int
 
 
-    class Config:
-        orm_mode = True
+    class SomeModel(BaseModel):
+        model_config = ConfigDict(from_attributes=True)
 
 class HelpReportCreate(BaseModel):  # Pydantic
     user_id: int
@@ -222,6 +222,6 @@ class HelpReportResponse(BaseModel):
     username: Optional[str] = None
     avatar: Optional[str] = None
 
-    class Config:
-        from_attributes = False   
-    model_config = ConfigDict(orm_mode=True)
+
+    class SomeModel(BaseModel):
+        model_config = ConfigDict(from_attributes=True)
