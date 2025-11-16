@@ -2,6 +2,7 @@ import { useState } from "react";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { FcGoogle } from "react-icons/fc";
 
 export default function Login() {
   const [show, setShow] = useState(false);
@@ -227,6 +228,17 @@ export default function Login() {
                 Sign Up
               </Link>
             </motion.div>
+
+            {/* ปุ่ม Google */}
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-3 px-5 py-2 rounded-lg hover:text-[#4caf50] transition block mx-auto w-fit text-black"
+            >
+              <FcGoogle className="text-2xl md:text-3xl" />
+              <span className="text-lg md:text-2xl">Login with Google</span>
+            </motion.button>
           </form>
         </div>
       </motion.div>

@@ -1,74 +1,86 @@
 import React, { useState } from "react";
 import { Globe2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function Language() {
-  const [selectedLang, setSelectedLang] = useState("English");
+  const { t, i18n } = useTranslation();
 
+  const [selectedLang, setSelectedLang] = useState(
+    localStorage.getItem("appLang") || "en"
+  );
+
+  // เพิ่ม 3 ภาษาใหม่: เกาหลี / ฝรั่งเศส / อาหรับ
   const languages = [
-    { name: "Thai", emoji: "🇹🇭" },
-    { name: "English", emoji: "🇬🇧" },
-    { name: "Chinese", emoji: "🇨🇳" },
-    { name: "Japanese", emoji: "🇯🇵" },
+    { code: "th", label: "Thai", emoji: "🇹🇭" },
+    { code: "en", label: "English", emoji: "🇬🇧" },
+    { code: "cn", label: "Chinese", emoji: "🇨🇳" },
+    { code: "jp", label: "Japanese", emoji: "🇯🇵" },
+    { code: "kr", label: "Korean", emoji: "🇰🇷" },
+    { code: "fr", label: "French", emoji: "🇫🇷" },
+    { code: "ar", label: "Arabic", emoji: "🇸🇦" }
   ];
+
+  const handleSave = () => {
+    i18n.changeLanguage(selectedLang);
+    localStorage.setItem("appLang", selectedLang);
+    window.location.reload();
+  };
 
   return (
     <div className="p-6">
-      {/* หัวข้อ */}
+      {/* Title */}
       <div className="flex items-center gap-3 mb-6">
         <Globe2 className="text-[#8cab93]" size={26} />
         <h2 className="text-2xl font-bold text-gray-800">
-          Language
+          {t("language.title")}
         </h2>
       </div>
 
-      {/* คำอธิบาย */}
+      {/* Description */}
       <div className="mb-6">
         <p className="text-gray-800 font-medium text-base mb-1">
-          App Language
+          {t("language.appLanguage")}
         </p>
         <p className="text-sm text-gray-500 leading-relaxed">
-          Select your preferred language for Hubersity menus, buttons, and navigation text.
+          {t("language.description")}
         </p>
       </div>
 
-      {/* กล่องเลือกภาษา */}
-      <div className="bg-[#f7f6f6] border border-gray-200 rounded-2xl p-6 w-full max-w-md shadow-sm hover:shadow-md transition-all duration-300">
-        {languages.map((lang, index) => (
+      {/* Language Options */}
+      <div className="bg-[#f7f6f6] border border-gray-200 rounded-2xl p-6 w-full max-w-md shadow-sm">
+        {languages.map((lang) => (
           <label
-            key={index}
-            htmlFor={lang.name}
-            className={`flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer transition-all duration-300 border border-transparent ${
-              selectedLang === lang.name
+            key={lang.code}
+            className={`flex items-center justify-between py-3 px-4 rounded-xl cursor-pointer transition border ${
+              selectedLang === lang.code
                 ? "bg-[#e8f3ec] border-[#8cab93]"
-                : "hover:bg-[#ececec]"
+                : "border-transparent hover:bg-[#ececec]"
             }`}
           >
-            {/* ชื่อภาษา + ธง */}
             <div className="flex items-center gap-3">
               <span className="text-xl">{lang.emoji}</span>
-              <span className="text-gray-800 font-medium">{lang.name}</span>
+              <span className="text-gray-800 font-medium">{lang.label}</span>
             </div>
 
-            {/* ปุ่มเลือก */}
             <input
-              id={lang.name}
               type="radio"
               name="language"
-              value={lang.name}
-              checked={selectedLang === lang.name}
+              value={lang.code}
+              checked={selectedLang === lang.code}
               onChange={(e) => setSelectedLang(e.target.value)}
-              className="w-5 h-5 accent-[#8cab93] cursor-pointer"
+              className="w-5 h-5 accent-[#8cab93]"
             />
           </label>
         ))}
       </div>
 
-      {/* ปุ่ม Save */}
+      {/* Save Button */}
       <div className="mt-10">
         <button
-          className="bg-[#8cab93] text-white font-medium px-8 py-2.5 rounded-full shadow-sm hover:bg-[#7da186] transition-all duration-300"
+          onClick={handleSave}
+          className="bg-[#8cab93] text-white font-medium px-8 py-2.5 rounded-full shadow-sm hover:bg-[#7da186]"
         >
-          Save Language
+          {t("language.save")}
         </button>
       </div>
     </div>

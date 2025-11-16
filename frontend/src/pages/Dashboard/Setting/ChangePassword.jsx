@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
 export default function ChangePassword() {
+  const { t } = useTranslation();
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordAgain, setNewPasswordAgain] = useState("");
@@ -20,13 +23,16 @@ export default function ChangePassword() {
     ? JSON.parse(localStorage.getItem(currentKey) || "{}")
     : null;
 
-  // Password validation (IG style checklist)
+  // IG-style password rules
   const validateNewPassword = (password) => {
     return [
-      { text: "At least 8 characters long", valid: password.length >= 8 },
-      { text: "Contains at least one uppercase letter", valid: /[A-Z]/.test(password) },
-      { text: "Contains at least one number", valid: /\d/.test(password) },
-      { text: "Contains at least one special character (!@#$...)", valid: /[!@#$%^&*(),.?\":{}|<>]/.test(password) },
+      { text: t("changePassword.rule1"), valid: password.length >= 8 },
+      { text: t("changePassword.rule2"), valid: /[A-Z]/.test(password) },
+      { text: t("changePassword.rule3"), valid: /\d/.test(password) },
+      {
+        text: t("changePassword.rule4"),
+        valid: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+      },
     ];
   };
 
@@ -34,14 +40,14 @@ export default function ChangePassword() {
     let newErrors = { current: "", newPass: [], confirm: "", api: "" };
 
     const rules = validateNewPassword(newPassword);
-    newErrors.newPass = rules.filter((rule) => !rule.valid);
+    newErrors.newPass = rules.filter((r) => !r.valid);
 
     if (newPassword !== newPasswordAgain) {
-      newErrors.confirm = "Passwords do not match";
+      newErrors.confirm = t("changePassword.errorMatch");
     }
 
     if (!currentPassword) {
-      newErrors.current = "Please enter your current password";
+      newErrors.current = t("changePassword.errorCurrent");
     }
 
     setErrors(newErrors);
@@ -82,20 +88,23 @@ export default function ChangePassword() {
 
   return (
     <div className="flex flex-col items-start px-10 py-8 w-full">
-      <h2 className="text-xl font-semibold text-gray-800 mb-6">Change Password</h2>
+      <h2 className="text-xl font-semibold text-gray-800 mb-6">
+        {t("changePassword.title")}
+      </h2>
 
       <div className="flex flex-col space-y-6 w-full">
 
-        {/* CURRENT PASSWORD */}
+        {/* Current Password */}
         <div className="flex flex-col">
-          <label className="text-gray-700 text-sm font-medium mb-1">Current Password</label>
+          <label className="text-gray-700 text-sm font-medium mb-1">
+            {t("changePassword.current")}
+          </label>
 
           <input
             type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
-            className="w-full bg-[#f4f4f4] border border-gray-300 rounded-lg px-4 py-2
-            outline-none focus:ring-2 focus:ring-emerald-400 transition"
+            className="w-full bg-[#f4f4f4] border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-400 transition"
           />
 
           {errors.current && (
@@ -110,19 +119,19 @@ export default function ChangePassword() {
           )}
         </div>
 
-        {/* NEW PASSWORD */}
+        {/* New Password */}
         <div className="flex flex-col">
-          <label className="text-gray-700 text-sm font-medium mb-1">New Password</label>
+          <label className="text-gray-700 text-sm font-medium mb-1">
+            {t("changePassword.new")}
+          </label>
 
           <input
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full bg-[#f4f4f4] border border-gray-300 rounded-lg px-4 py-2
-            outline-none focus:ring-2 focus:ring-emerald-400 transition"
+            className="w-full bg-[#f4f4f4] border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-400 transition"
           />
 
-          {/* IG-STYLE CHECKLIST — show ONLY when user starts typing */}
           {newPassword.length > 0 && (
             <div className="mt-3 space-y-1">
               {validateNewPassword(newPassword).map((rule, idx) => (
@@ -149,16 +158,17 @@ export default function ChangePassword() {
           )}
         </div>
 
-        {/* CONFIRM PASSWORD */}
+        {/* Confirm Password */}
         <div className="flex flex-col">
-          <label className="text-gray-700 text-sm font-medium mb-1">New Password again</label>
+          <label className="text-gray-700 text-sm font-medium mb-1">
+            {t("changePassword.confirmNew")}
+          </label>
 
           <input
             type="password"
             value={newPasswordAgain}
             onChange={(e) => setNewPasswordAgain(e.target.value)}
-            className="w-full bg-[#f4f4f4] border border-gray-300 rounded-lg px-4 py-2
-            outline-none focus:ring-2 focus:ring-emerald-400 transition"
+            className="w-full bg-[#f4f4f4] border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-400 transition"
           />
 
           {errors.confirm && (
@@ -173,22 +183,19 @@ export default function ChangePassword() {
           )}
         </div>
 
-        {/* API ERROR */}
         {errors.api && (
           <p className="text-red-500 text-sm text-center">{errors.api}</p>
         )}
 
-        {/* SUBMIT BUTTON */}
+        {/* Submit Button */}
         <div className="pt-2 flex justify-center">
           <button
             onClick={handleSubmit}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium 
-            shadow-md px-8 py-2 rounded-full transition"
+            className="bg-[#8cab93] hover:bg-[#7fa586] text-white font-medium shadow-md px-8 py-2 rounded-full transition"
           >
-            Confirm
+            {t("changePassword.confirmBtn")}
           </button>
         </div>
-
       </div>
     </div>
   );

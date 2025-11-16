@@ -1,0 +1,244 @@
+{
+  "sidebar": {
+    "board": "Board",
+    "time": "Time study",
+    "follow": "Follow",
+    "chat": "Chat",
+    "notification": "Notification",
+    "tags": "Tags",
+    "news": "News",
+    "account": "Account",
+    "setting": "Setting"
+  },
+  "board": {
+    "search": "Search text",
+    "universityTalk": "University Talk",
+    "followTalk": "Follow Talk",
+    "newPostPlaceholder": "Type here what do you think...",
+    "postButton": "Post",
+    "comment": "Comment",
+    "writeComment": "Write a comment...",
+    "send": "Send",
+    "noPosts": "No posts found."
+  },
+  "editPost": {
+    "title": "Edit Post",
+    "cancel": "Cancel",
+    "save": "Save Changes"
+  },
+    "common": {
+    "cancel": "Cancel",
+    "saveChanges": "Save Changes",
+    "delete": "Delete",
+    "submit": "Submit"
+    },
+    "post": {
+    "edit": "Edit Post",
+    "delete": "Delete",
+    "report": "Report"
+    },
+    "report": {
+    "titlePost": "Report Post",
+    "titleComment": "Report Comment",
+    "description": "Please select a reason for reporting this post",
+    "harassment": "Harassment (Bullying, discrimination, or targeting a religion, gender, or group.)",
+    "sexual": "Sexual Content (Sexual, pornographic, or inappropriate material.)",
+    "illegal": "Illegal Activity (Promoting illegal actions or services.)",
+    "spam": "Spam (Reposting the same content multiple times.)",
+    "privacy": "Privacy Violation (Sharing personal information or photos of others without consent.)",
+    "other": "Other (Please specify)",
+    "otherPlaceholder": "Please specify your reason",
+    "additional": "Additional details",
+    "optional": "optional",
+    "postId": "Post ID",
+    "detailsPlaceholder": "Describe what happened or any context that helps us review this report.",
+    "submit": "Submit Report"
+    },
+    "delete": {
+    "title": "Delete Post",
+    "confirm": "Are you sure you want to delete this post?",
+    "warning": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "delete": "Delete"
+    },
+    "deleteComment": {
+    "title": "Delete Comment",
+    "confirm": "Are you sure you want to delete this comment?",
+    "warning": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "delete": "Delete"
+    },
+    "account": {
+    "title": "Account Information",
+    "username": "User Name",
+    "following": "Following",
+    "followers": "Follower",
+
+    "name": "Name",
+    "birthdate": "Birthdate",
+    "age": "Age",
+    "bio": "Bio",
+    "university": "University",
+    "selectUniversity": "Select University",
+    "visibility": "Visibility",
+    "private": "Private",
+    "public": "Public",
+    "saveChanges": "Save Changes",
+
+    "myPosts": "My Posts",
+    "noPosts": "You haven’t posted anything yet.",
+
+    "edit": "Edit",
+    "delete": "Delete",
+
+    "editPostTitle": "Edit Post",
+    "deletePostTitle": "Delete Post",
+    "deletePostConfirm": "Are you sure you want to delete this post?",
+    "deleteWarning": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "confirmDelete": "Delete"
+    },
+    "follow": {
+    "title": "Follow",
+    "searchPlaceholder": "Find account...",
+    "noFollow": "You haven't followed anyone yet.",
+    "following": "Following",
+
+    "modalTitle": "Unfollow",
+    "modalMessage": "Are you sure you want to unfollow",
+    "modalSubMessage": "You will stop seeing their posts in your follow list.",
+
+    "cancel": "Cancel",
+    "unfollow": "Unfollow"
+    },
+    "notification": {
+    "title": "Notification",
+
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This week",
+
+    "followBack": "Follow back",
+    "following": "Following",
+
+    "noNotification": "You don't have any notifications yet."
+    },
+    "userProfile": {
+    "follow": "Follow",
+    "following": "Following",
+    "block": "Block",
+    "blocked": "Blocked",
+    "report": "Report",
+
+    "age": "Age",
+    "bioEmpty": "No bio provided.",
+    "private": "This account is private",
+
+    "history": "History",
+    "comments": "Comments",
+    "noPosts": "No posts yet.",
+    "studyToday": "Study Today",
+
+    "postDetail": "Post Detail",
+    "close": "Close",
+
+    "reportPostTitle": "Report Post",
+    "reportAccountTitle": "Report Account",
+    "selectReasonPost": "Please select a reason for reporting this post:",
+    "selectReasonAccount": "Please select a reason for reporting this account:",
+    "additionalDetails": "Additional details (optional)",
+
+    "submitReport": "Submit Report",
+    "cancel": "Cancel",
+
+    "blockUser": "Block User",
+    "blockConfirm": "Are you sure you want to block",
+    "blockDetail": "They will not be able to see your posts or interact with your account anymore. You can unblock them anytime.",
+    "confirmBlock": "Confirm Block"
+
+  },
+    "settings": {
+    "changePassword": "Change Password",
+    "blockedUsers": "Blocked Users",
+    "deleteAccount": "Delete Account"
+    },
+    "setting": {
+    "accountSettings": "Account Settings",
+    "language": "Language",
+    "forHelp": "For Help",
+    "fromHubersity": "From Hubersity"
+    },
+    "changePassword": {
+    "title": "Change Password",
+    "current": "Current Password",
+    "new": "New Password",
+    "confirmNew": "New Password again",
+    "confirmBtn": "Confirm",
+
+    "errorCurrent": "Please enter your current password",
+    "errorMatch": "Passwords do not match",
+
+    "rule1": "At least 8 characters long",
+    "rule2": "Contains at least one uppercase letter",
+    "rule3": "Contains at least one number",
+    "rule4": "Contains at least one special character (!@#$...)"
+    },
+    "blockedUsers": {
+    "title": "Blocked Users",
+    "loading": "Loading blocked users...",
+    "unblock": "Unblock",
+    "noBlocked": "You have not blocked anyone.",
+
+    "popupTitle": "Unblock User?",
+    "popupMessage": "Do you want to unblock",
+    "cancel": "Cancel",
+    "confirm": "Unblock"
+    },
+    "deleteAccount": {
+    "title": "Account Management",
+    "logout": "Log Out",
+    "dangerTitle": "Danger Zone",
+    "dangerText": "Deleting your account is permanent and cannot be undone.",
+    "deleteButton": "Delete Account",
+
+    "modalTitle": "Confirm Account Deletion",
+    "modalText1": "Are you absolutely sure you want to delete your account?",
+    "modalText2": "This action is permanent and cannot be undone.",
+    "cancel": "Cancel",
+    "confirmDelete": "Delete Account",
+
+    "deletedSuccess": "Your account has been deleted.",
+    "deleteFailed": "Failed to delete account.",
+    "networkError": "Network error."
+    },
+    "language": {
+    "title": "Language",
+    "appLanguage": "App Language",
+    "description": "Select your preferred language for Hubersity menus and navigation.",
+    "save": "Save Language"
+    },
+    "settingHelp": {
+    "title": "For Help",
+    "reportProblem": "Report a Problem",
+    "description": "Please provide details so we can resolve your issue quickly.",
+    "placeholder": "Describe your issue here...",
+    "addFile": "Add File",
+    "confirm": "Confirm",
+    "attached": "Attached:",
+    "success": "Report submitted successfully. Thank you!"
+    },
+    "tagsPage": {
+    "popular6": "6 Popular Tags",
+    "otherTags": "Other Tags",
+    "noTags": "No tags found yet",
+    "loadMore": "Load more",
+    "loading": "Loading…",
+    "noMore": "No more tags to load",
+    "noOtherTags": "No other tags",
+    "searchPlaceholder": "Search tags...",
+    "postWithTag": "Post with #{{tag}}...",
+    "noPostsForTag": "No posts for this tag yet",
+    "trending": "Trending",
+    "postsCount": "posts"
+    }
+}

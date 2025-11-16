@@ -4,6 +4,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
+from datetime import datetime
 
 from .database import Base
 
@@ -16,6 +17,7 @@ class User(Base):
     name = Column(String, nullable=True)                    # ชื่อโปรไฟล์ (แก้ได้)
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
+    # is_admin = Column(Boolean, default=False)
 
     birthdate = Column(TIMESTAMP(timezone=False), nullable=True)  # วันเกิด
     university = Column(String, nullable=True)                    # มหาวิทยาลัย
@@ -237,6 +239,9 @@ class Chat(Base):
     user1_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
     user2_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
 
+    user1_last_read_at = Column(DateTime(timezone=True), nullable=True)
+    user2_last_read_at = Column(DateTime(timezone=True), nullable=True)
+
     user1 = relationship("User", foreign_keys=[user1_id])
     user2 = relationship("User", foreign_keys=[user2_id])
 
@@ -309,3 +314,42 @@ class Block(Base):
 
     blocker = relationship("User", foreign_keys=[blocker_id])
     blocked = relationship("User", foreign_keys=[blocked_id])
+
+class HelpReport(Base):
+    __tablename__ = "help_reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
+    message = Column(String, nullable=False)
+    file_path = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    resolved = Column(Boolean, default=False)
+
+    user = relationship("User")
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,      # จะใส่เวลาอัตโนมัติ
+        nullable=False
+    )
+
+class News(Base):
+    __tablename__ = "news"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    summary = Column(Text, nullable=True)        # ใช้โชว์ใน card / hover
+    detail = Column(Text, nullable=True)         # เนื้อหาทั้งหมด
+    hover_text = Column(String(255), nullable=True)  # text เล็ก ๆ ตอน hover card
+    image_url = Column(String(255), nullable=True)   # path รูป เช่น /uploads/news/1.jpg
+
+    is_published = Column(Boolean, default=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    created_by = Column(Integer, ForeignKey("users.uid"), nullable=True)
+    creator = relationship("User", backref="news_items")

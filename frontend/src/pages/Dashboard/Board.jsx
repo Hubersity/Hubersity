@@ -13,6 +13,7 @@ import {
   Flag,
   Edit,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
@@ -34,6 +35,7 @@ const initialPosts = [
 
 // ============ Edit Modal ============
 function EditPostModal({ open, onClose, text, setText, onSubmit }) {
+  const { t } = useTranslation(); 
   if (!open) return null;
 
   return (
@@ -47,7 +49,9 @@ function EditPostModal({ open, onClose, text, setText, onSubmit }) {
       {/* modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 border border-gray-100 overflow-hidden animate-fadeIn">
         <div className="px-5 py-4 border-b bg-gradient-to-r from-green-50 to-amber-50 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">Edit Post</h3>
+          <h3 className="text-lg font-semibold text-gray-800">
+            {t("editPost.title")}
+          </h3>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-red-500 p-1"
@@ -70,13 +74,13 @@ function EditPostModal({ open, onClose, text, setText, onSubmit }) {
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             onClick={onSubmit}
             className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm"
           >
-            Save Changes
+            {t("common.saveChanges")}
           </button>
         </div>
       </div>
@@ -86,6 +90,7 @@ function EditPostModal({ open, onClose, text, setText, onSubmit }) {
 
 // ============ Delete Modal ============
 function DeleteConfirmModal({ open, onClose, onConfirm }) {
+  const { t } = useTranslation();
   if (!open) return null;
 
   return (
@@ -99,7 +104,7 @@ function DeleteConfirmModal({ open, onClose, onConfirm }) {
       {/* modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 border border-gray-100 overflow-hidden animate-fadeIn">
         <div className="px-5 py-4 border-b bg-gradient-to-r from-rose-50 to-amber-50 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">Delete Post</h3>
+          <h3 className="text-lg font-semibold text-gray-800">{t("delete.title")}</h3>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-red-500 p-1"
@@ -110,9 +115,9 @@ function DeleteConfirmModal({ open, onClose, onConfirm }) {
 
         <div className="p-5 text-center">
           <p className="text-gray-700 mb-5">
-            Are you sure you want to delete this post? <br />
+            {t("delete.confirm")} <br />
             <span className="text-gray-500 text-sm">
-              This action cannot be undone.
+              {t("delete.warning")}
             </span>
           </p>
         </div>
@@ -122,13 +127,13 @@ function DeleteConfirmModal({ open, onClose, onConfirm }) {
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
           >
-            Cancel
+            {t("delete.cancel")}
           </button>
           <button
             onClick={onConfirm}
             className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm"
           >
-            Delete
+            {t("delete.delete")}
           </button>
         </div>
       </div>
@@ -137,6 +142,7 @@ function DeleteConfirmModal({ open, onClose, onConfirm }) {
 }
 // ============ Delete Comment Modal ============
 function DeleteCommentModal({ open, onClose, onConfirm }) {
+  const { t } = useTranslation(); 
   if (!open) return null;
 
   return (
@@ -150,7 +156,7 @@ function DeleteCommentModal({ open, onClose, onConfirm }) {
       {/* modal */}
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 border border-gray-100 overflow-hidden animate-fadeIn">
         <div className="px-5 py-4 border-b bg-gradient-to-r from-amber-50 to-rose-50 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">Delete Comment</h3>
+          <h3 className="text-lg font-semibold text-gray-800">{t("deleteComment.title")}</h3>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-red-500 p-1"
@@ -161,10 +167,10 @@ function DeleteCommentModal({ open, onClose, onConfirm }) {
 
         <div className="p-5 text-center">
           <p className="text-gray-700 mb-5">
-            Are you sure you want to delete this comment?
+            {t("deleteComment.confirm")}
             <br />
             <span className="text-gray-500 text-sm">
-              This action cannot be undone.
+              {t("deleteComment.warning")}
             </span>
           </p>
         </div>
@@ -174,13 +180,13 @@ function DeleteCommentModal({ open, onClose, onConfirm }) {
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
           >
-            Cancel
+            {t("deleteComment.cancel")}
           </button>
           <button
             onClick={onConfirm}
             className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm"
           >
-            Delete
+            {t("deleteComment.delete")}
           </button>
         </div>
       </div>
@@ -194,6 +200,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [details, setDetails] = useState("");
+  const { t } = useTranslation();
   const mountedRef = useRef(false); // ใช้กัน render ซ้ำ
 
   async function handleReportSubmit({ postId, reason, details }) {
@@ -265,30 +272,12 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
   if (!open || !postId || (mountedRef.current && !open)) return null;
 
   const reasons = [
-    {
-      key: "Harassment",
-      label:
-        "Harassment (Bullying, discrimination, or targeting a religion, gender, or group.)",
-    },
-    {
-      key: "Sexual Content",
-      label:
-        "Sexual Content (Sexual, pornographic, or inappropriate material.)",
-    },
-    {
-      key: "Illegal Activity",
-      label: "Illegal Activity (Promoting illegal actions or services.)",
-    },
-    {
-      key: "Spam",
-      label: "Spam (Reposting the same content multiple times.)",
-    },
-    {
-      key: "Privacy Violation",
-      label:
-        "Privacy Violation (Sharing personal information or photos of others without consent.)",
-    },
-    { key: "Other", label: "Other (Please specify)" },
+    { key: "harassment", label: t("report.harassment") },
+    { key: "sexual", label: t("report.sexual") },
+    { key: "illegal", label: t("report.illegal") },
+    { key: "spam", label: t("report.spam") },
+    { key: "privacy", label: t("report.privacy") },
+    { key: "other", label: t("report.other") },
   ];
 
   const handleSubmit = () => {
@@ -319,7 +308,9 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
           <div className="flex items-center gap-2">
             <Flag className="w-5 h-5 text-emerald-700" />
             <h3 className="text-lg font-semibold text-gray-800">
-              {postId?.toString().startsWith("comment-") ? "Report Comment" : "Report Post"}
+            {postId?.toString().startsWith("comment-")
+              ? t("report.titleComment")
+              : t("report.titlePost")}
             </h3>
           </div>
           <button
@@ -335,7 +326,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
         <div className="p-5 space-y-5 overflow-y-auto">
           <div>
             <p className="text-sm text-gray-600 mb-3">
-              Please select a reason for reporting this post (Post ID:{" "}
+              {t("report.description")} ({t("report.postId")}:{" "}
               <span className="font-medium text-gray-800">#{postId}</span>).
             </p>
 
@@ -375,11 +366,11 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1">
-              Additional details{" "}
-              <span className="text-gray-400 font-normal">(optional)</span>
+              {t("report.additional")}{" "}
+              <span className="text-gray-400 font-normal">{t("report.optional")}</span>
             </label>
             <textarea
-              placeholder="Describe what happened or any context that helps us review this report."
+              placeholder={t("report.detailsPlaceholder")}
               value={details}
               onChange={(e) => setDetails(e.target.value)}
               rows={4}
@@ -394,7 +385,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
             onClick={onClose}
             className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             onClick={handleSubmit}
@@ -406,7 +397,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
                     : "bg-emerald-600 hover:bg-emerald-700"
                 }`}
           >
-            Submit Report
+            {t("report.submit")}
           </button>
         </div>
       </div>
@@ -455,6 +446,7 @@ export default function Board() {
   const [menuOpen, setMenuOpen] = useState(null);
   const [selectedUni, setSelectedUni] = useState(null);
   const currentKey = localStorage.getItem("currentUserKey");
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [previewImage, setPreviewImage] = useState(null);
   const authData = currentKey
@@ -900,7 +892,7 @@ const handlePost = async () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
-            placeholder="Search text"
+            placeholder={t("board.search")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full border rounded-full pl-10 pr-10 py-2"
@@ -924,7 +916,7 @@ const handlePost = async () => {
             }`}
             onClick={() => setActiveTab("university")}
           >
-            {selectedUni ? `${selectedUni} Talk` : "University Talk"}
+            {selectedUni ? `${selectedUni} Talk` : t("board.universityTalk")}
           </button>
           <button
             className={`px-4 py-2 rounded-full transition ${
@@ -934,7 +926,7 @@ const handlePost = async () => {
             }`}
             onClick={() => setActiveTab("follow")}
           >
-            Follow Talk
+            {t("board.followTalk")}
           </button>
         </div>
       </div>
@@ -949,7 +941,7 @@ const handlePost = async () => {
         <div className="flex items-center gap-3">
           <input
             type="text"
-            placeholder="Type here what do you think..."
+            placeholder={t("board.newPostPlaceholder")}
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
             className="flex-1 bg-transparent outline-none px-2 text-gray-700 placeholder-gray-400"
@@ -1004,7 +996,7 @@ const handlePost = async () => {
             onClick={handlePost}
             className="bg-green-600 text-white px-4 py-1.5 rounded-full hover:bg-green-700 text-sm font-medium"
           >
-            POST
+            {t("board.postButton")}
           </button>
         </div>
 
@@ -1115,7 +1107,7 @@ const handlePost = async () => {
                           onClick={() => openEditModal(p)}
                           className="flex items-center gap-2 w-full px-3 py-2 text-sm text-blue-600 hover:bg-blue-50"
                         >
-                          <Edit className="w-4 h-4" /> Edit Post
+                          <Edit className="w-4 h-4" /> {t("post.edit")}
                         </button>
                         <button
                           onClick={() => {
@@ -1125,7 +1117,7 @@ const handlePost = async () => {
                           }}
                           className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
                         >
-                          <Trash className="w-4 h-4" /> Delete
+                          <Trash className="w-4 h-4" /> {t("post.delete")}
                         </button>
                       </>
                     ) : (
@@ -1133,7 +1125,7 @@ const handlePost = async () => {
                         onClick={() => openReport(p.id)}
                         className="flex items-center gap-2 w-full px-3 py-2 text-sm text-amber-700 hover:bg-amber-50"
                       >
-                        <Flag className="w-4 h-4" /> Report
+                        <Flag className="w-4 h-4" /> {t("post.report")}
                       </button>
                     )}
                   </div>
@@ -1415,7 +1407,7 @@ const handlePost = async () => {
                     {/* กล่องข้อความ */}
                     <input
                       type="text"
-                      placeholder="Write a comment..."
+                      placeholder={t("board.writeComment")}
                       value={commentInputs[p.id] || ""}
                       onChange={(e) =>
                         setCommentInputs({
@@ -1431,7 +1423,7 @@ const handlePost = async () => {
                       onClick={() => handleAddComment(p.id)}
                       className="bg-green-600 text-white px-3 py-1 rounded-full text-sm hover:bg-green-700"
                     >
-                      Send
+                      {t("board.send")}
                     </button>
                   </div>
 
@@ -1481,7 +1473,7 @@ const handlePost = async () => {
         ))}
 
         {filteredPosts.length === 0 && (
-          <p className="text-center text-gray-500">No posts found.</p>
+          <p className="text-center text-gray-500">{t("board.noPosts")}</p>
         )}
       </div>
 

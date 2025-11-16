@@ -1,6 +1,8 @@
 from pydantic import BaseModel, EmailStr, field_validator, ConfigDict
 from datetime import datetime, date
 from typing import List, Optional, Dict, Literal
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
+from app.database import Base
 import re
 
 # สร้างบัญชีใหม่ (Sign Up)
@@ -37,6 +39,27 @@ class UserCreate(BaseModel):
             raise ValueError("Passwords do not match")
         return v
 
+# # ใช้เวลาส่งข้อมูล user ออกไปให้ frontend
+# class UserOut(BaseModel):
+#     uid: int
+#     username: str
+#     email: EmailStr
+#     is_admin: bool
+
+#     class Config:
+#         orm_mode = True
+
+# # ใช้เป็น response ตอน /login
+# class LoginResponse(BaseModel):
+#     access_token: str
+#     username: str
+#     uid: int
+#     is_admin: bool
+#     token_type: str = "bearer"
+
+# class LoginRequest(BaseModel):
+#     email: EmailStr
+#     password: str
 
 # ตอบกลับหลังจากสร้างบัญชี หรือดึงโปรไฟล์
 class UserResponse(BaseModel):
@@ -200,8 +223,66 @@ class PostUpdate(BaseModel):
     forum_id: Optional[int] = None
     tags: Optional[List[int]] = None
 
+class NewsBase(BaseModel):
+    title: str
+    summary: Optional[str] = None
+    detail: Optional[str] = None
+    hover_text: Optional[str] = None
+    image_url: Optional[str] = None
+    is_published: Optional[bool] = True
+
+
+class NewsCreate(NewsBase):
+    pass
+
+
+class NewsUpdate(BaseModel):
+    title: Optional[str] = None
+    summary: Optional[str] = None
+    detail: Optional[str] = None
+    hover_text: Optional[str] = None
+    image_url: Optional[str] = None
+    is_published: Optional[bool] = None
+
+
+class NewsResponse(NewsBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class NewsOut(NewsBase):
+    id: int
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    class Config:
+        orm_mode = True
+        
 class BlockOut(BaseModel):
     blocker_id: int
     blocked_id: int
 
-    model_config = ConfigDict(orm_mode=True)
+
+    class SomeModel(BaseModel):
+        model_config = ConfigDict(from_attributes=True)
+
+class HelpReportCreate(BaseModel):  # Pydantic
+    user_id: int
+    message: str
+
+
+class HelpReportResponse(BaseModel):
+    id: int
+    message: str
+    file_path: Optional[str]
+    resolved: bool
+    created_at: Optional[datetime]
+    username: Optional[str] = None
+    avatar: Optional[str] = None
+
+
+    class SomeModel(BaseModel):
+        model_config = ConfigDict(from_attributes=True)

@@ -3,6 +3,7 @@ import { Camera, GraduationCap, Lock, Globe, Calendar, Edit2, Trash2 } from "luc
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker-fix.css";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
@@ -21,6 +22,7 @@ export default function Account() {
   const [editingPost, setEditingPost] = useState(null);
   const [deletingPost, setDeletingPost] = useState(null);
   const [editContent, setEditContent] = useState("");
+  const { t } = useTranslation();
 
   // ดึงข้อมูลผู้ใช้ + โพสต์ของตัวเอง
   useEffect(() => {
@@ -283,11 +285,11 @@ export default function Account() {
           />
 
           <p className="mt-6 text-lg font-semibold">
-            User Name : {username || "Loading..."}
+            {t("account.username")} : {username || "Loading..."}
           </p>
           <p className="text-sm text-gray-600 mt-1">
-            Following:{" "}
-            <span className="font-medium text-black">{following}</span> | Follower:{" "}
+            {t("account.following")}{" "}
+            <span className="font-medium text-black">{following}</span> | {t("account.followers")}{" "}
             <span className="font-medium text-black">{followers}</span>
           </p>
         </div>
@@ -295,12 +297,12 @@ export default function Account() {
         {/* ข้อมูลบัญชี */}
         <div className="flex-1 space-y-5">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            Account Information
+            {t("account.title")}
           </h2>
 
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium mb-1">Name :</label>
+            <label className="block text-sm font-medium mb-1">{t("account.name")} :</label>
             <input
               type="text"
               value={name}
@@ -312,7 +314,7 @@ export default function Account() {
           {/* Birthdate */}
           <div className="flex items-end gap-1">
             <div className="flex-1">
-              <label className="block text-sm font-medium mb-1">Birthdate :</label>
+              <label className="block text-sm font-medium mb-1">{t("account.birthdate")} :</label>
               <div className="relative">
                 <DatePicker
                   selected={birthdate}
@@ -329,7 +331,7 @@ export default function Account() {
 
             <div className="flex flex-col w-[80px] ml-[-6px]">
               <label className="block text-sm font-medium mb-1 text-center">
-                Age :
+                {t("account.age")} :
               </label>
               <input
                 type="text"
@@ -342,7 +344,7 @@ export default function Account() {
 
           {/* Bio */}
           <div>
-            <label className="block text-sm font-medium mb-1">Bio :</label>
+            <label className="block text-sm font-medium mb-1">{t("account.bio")} :</label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
@@ -353,7 +355,7 @@ export default function Account() {
 
           {/* University */}
           <div>
-            <label className="block text-sm font-medium mb-2">University :</label>
+            <label className="block text-sm font-medium mb-2">{t("account.university")} :</label>
             <div className="relative">
               <GraduationCap
                 className="absolute left-3 top-2.5 text-[#6d8c75]"
@@ -364,7 +366,7 @@ export default function Account() {
                 onChange={(e) => setUniversity(e.target.value)}
                 className="w-full border rounded-full pl-10 pr-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-[#e0ebe2] appearance-none hover:bg-[#f6faf7]"
               >
-                <option value="">Select University</option>
+                <option value="">{t("account.selectUniversity")}</option>
                 <option value="Kasetsart University">Kasetsart University</option>
                 <option value="Chulalongkorn University">Chulalongkorn University</option>
                 <option value="Thammasat University">Thammasat University</option>
@@ -376,11 +378,11 @@ export default function Account() {
 
           {/* Visibility */}
           <div>
-            <label className="block text-sm font-medium mb-2">Visibility :</label>
+            <label className="block text-sm font-medium mb-2">{t("account.visibility")} :</label>
             <div className="flex gap-3">
               {[
-                { value: "private", label: "Private", icon: <Lock size={16} /> },
-                { value: "public", label: "Public", icon: <Globe size={16} /> },
+                { value: "private", label: t("account.private"), icon: <Lock size={16} /> },
+                { value: "public", label: t("account.public"), icon: <Globe size={16} /> },
               ].map((opt) => (
                 <button
                   key={opt.value}
@@ -404,7 +406,7 @@ export default function Account() {
               onClick={handleSave}
               className="bg-[#3ab153] hover:bg-[#2f9246] text-white px-6 py-2 rounded-full font-medium transition"
             >
-              Save Changes
+              {t("account.saveChanges")}
             </button>
           </div>
         </div>
@@ -412,10 +414,10 @@ export default function Account() {
 
       {/* My Posts Section */}
       <div className="mt-10 bg-[#fff3e6] rounded-2xl w-[80%] max-w-5xl p-8 shadow-lg border border-[#f1dcc9]">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">My Posts</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">{t("account.myPosts")}</h3>
 
         {myPosts.length === 0 ? (
-          <p className="text-gray-500 italic">You haven’t posted anything yet.</p>
+          <p className="text-gray-500 italic">{t("account.noPosts")}</p>
         ) : (
           myPosts.map((p) => (
         <div
@@ -441,14 +443,14 @@ export default function Account() {
                 className="flex items-center gap-1 px-3 py-1.5 text-sm bg-[#E3F2FD] hover:bg-[#BBDEFB] text-[#1976D2] rounded-lg transition"
               >
                 <Edit2 size={14} />
-                Edit
+                {t("account.edit")}
               </button>
               <button
                 onClick={() => openDeleteModal(p)}
                 className="flex items-center gap-1 px-3 py-1.5 text-sm bg-[#FDECEA] hover:bg-[#F8D7DA] text-[#D32F2F] rounded-lg transition"
               >
                 <Trash2 size={14} />
-                Delete
+                {t("account.delete")}
               </button>
             </div>
           </div>
@@ -557,7 +559,7 @@ export default function Account() {
           {/* modal */}
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 border border-gray-100 overflow-hidden animate-fadeIn">
             <div className="px-5 py-4 border-b bg-gradient-to-r from-green-50 to-amber-50 flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-800">Edit Post</h3>
+              <h3 className="text-lg font-semibold text-gray-800">{t("account.editPostTitle")}</h3>
               <button
                 onClick={() => setEditingPost(null)}
                 className="text-gray-500 hover:text-red-500 p-1"
@@ -580,13 +582,13 @@ export default function Account() {
                 onClick={() => setEditingPost(null)}
                 className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
               >
-                Cancel
+                {t("account.cancel")}
               </button>
               <button
                 onClick={confirmEdit}
                 className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm"
               >
-                Save Changes
+                {t("account.saveChanges")}
               </button>
             </div>
           </div>
@@ -604,7 +606,7 @@ export default function Account() {
           {/* modal */}
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 border border-gray-100 overflow-hidden animate-fadeIn">
             <div className="px-5 py-4 border-b bg-gradient-to-r from-rose-50 to-amber-50 flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-800">Delete Post</h3>
+              <h3 className="text-lg font-semibold text-gray-800">{t("account.deletePostTitle")}</h3>
               <button
                 onClick={() => setDeletingPost(null)}
                 className="text-gray-500 hover:text-red-500 p-1"
@@ -615,10 +617,10 @@ export default function Account() {
 
             <div className="p-5 text-center">
               <p className="text-gray-700 mb-5">
-                Are you sure you want to delete this post?
+                {t("account.deletePostConfirm")}
                 <br />
                 <span className="text-gray-500 text-sm">
-                  This action cannot be undone.
+                  {t("account.deleteWarning")}
                 </span>
               </p>
             </div>
@@ -628,13 +630,13 @@ export default function Account() {
                 onClick={() => setDeletingPost(null)}
                 className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
               >
-                Cancel
+                {t("account.cancel")}
               </button>
               <button
                 onClick={confirmDelete}
                 className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm"
               >
-                Delete
+                {t("account.confirmDelete")}
               </button>
             </div>
           </div>
