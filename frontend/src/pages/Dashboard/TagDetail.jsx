@@ -17,6 +17,203 @@ import {
 
 const API_URL = "http://localhost:8000";
 
+function normalizeFilePath(path) {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  if (path.startsWith("/uploads/")) return `${API_URL}${path}`;
+  if (path.startsWith("/")) return `${API_URL}${path}`;
+  return `${API_URL}/uploads/post/${path}`;
+}
+
+function DeleteCommentModal({ open, onClose, onConfirm }) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 border overflow-hidden animate-fadeIn">
+        <div className="px-5 py-4 border-b bg-gradient-to-r from-rose-50 to-amber-50 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-800">Delete Comment</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-red-500 p-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-5 text-center">
+          <p className="text-gray-700 mb-5">
+            Are you sure you want to delete this comment?
+            <br />
+            <span className="text-gray-500 text-sm">
+              This action cannot be undone.
+            </span>
+          </p>
+        </div>
+
+        <div className="px-5 py-4 bg-gray-50 border-t flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReportCommentModal({ open, onClose, onSubmit, commentId }) {
+  const [reason, setReason] = useState("");
+  const [customReason, setCustomReason] = useState("");
+  const [details, setDetails] = useState("");
+
+  if (!open) return null;
+
+  const reasons = [
+    {
+      key: "Harassment",
+      label: "Harassment (Bullying, discrimination, or targeting a religion, gender, or group.)",
+    },
+    {
+      key: "Sexual Content",
+      label: "Sexual Content (Sexual, pornographic, or inappropriate material.)",
+    },
+    {
+      key: "Illegal Activity",
+      label: "Illegal Activity (Promoting illegal actions or services.)",
+    },
+    {
+      key: "Spam",
+      label: "Spam (Reposting the same content multiple times.)",
+    },
+    {
+      key: "Privacy Violation",
+      label: "Privacy Violation (Sharing personal information or photos of others without consent.)",
+    },
+    { key: "Other", label: "Other (Please specify)" },
+  ];
+
+  const handleSubmit = () => {
+    const finalReason =
+      reason === "Other" ? (customReason.trim() || "Other") : reason;
+
+    onSubmit({
+      commentId,
+      reason: finalReason,
+      details: details.trim(),
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Overlay */}
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+
+      <div className="relative w-full max-w-xl mx-4 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col max-h-[90vh] animate-fadeIn">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-emerald-50 to-amber-50 border-b">
+          <div className="flex items-center gap-2">
+            <Flag className="w-5 h-5 text-emerald-700" />
+            <h3 className="text-lg font-semibold text-gray-800">Report Comment</h3>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="p-6 space-y-5 overflow-y-auto">
+          <p className="text-sm text-gray-600">
+            Please select a reason for reporting this comment.
+          </p>
+
+          <div className="grid grid-cols-1 gap-2">
+            {reasons.map((r) => (
+              <label
+                key={r.key}
+                className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                  reason === r.key
+                    ? "border-emerald-400 bg-emerald-50"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="report-reason"
+                  className="mt-1"
+                  checked={reason === r.key}
+                  onChange={() => setReason(r.key)}
+                />
+                <span className="text-sm text-gray-800">{r.label}</span>
+              </label>
+            ))}
+          </div>
+
+          {reason === "Other" && (
+            <input
+              type="text"
+              placeholder="Please specify your reason"
+              value={customReason}
+              onChange={(e) => setCustomReason(e.target.value)}
+              className="w-full border rounded-lg px-3 py-2 text-sm"
+            />
+          )}
+
+          {/* Additional details */}
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">
+              Additional details{" "}
+              <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <textarea
+              placeholder="Describe what happened or any context that helps us review this report."
+              value={details}
+              onChange={(e) => setDetails(e.target.value)}
+              rows={4}
+              className="w-full border rounded-lg px-3 py-2 text-sm resize-y"
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 bg-gray-50 border-t flex items-center justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm hover:bg-white"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={!reason || (reason === "Other" && !customReason.trim())}
+            onClick={handleSubmit}
+            className={`px-4 py-2 rounded-lg text-white text-sm transition ${
+              !reason || (reason === "Other" && !customReason.trim())
+                ? "bg-emerald-300 cursor-not-allowed"
+                : "bg-emerald-600 hover:bg-emerald-700"
+            }`}
+          >
+            Submit Report
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ============ Edit Modal ============
 function EditPostModal({ open, onClose, text, setText, onSubmit }) {
   if (!open) return null;
@@ -341,8 +538,11 @@ export default function TagDetail() {
   const [commentFiles, setCommentFiles] = useState({});
   const [openComments, setOpenComments] = useState({});
 
-  const [reportCommentId, setReportCommentId] = useState(null);
-  const [deleteCommentId, setDeleteCommentId] = useState(null);
+  const [deleteCommentOpen, setDeleteCommentOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  const [reportCommentOpen, setReportCommentOpen] = useState(false);
+  const [reportTarget, setReportTarget] = useState(null);
 
   const handleToggleComment = (id) => {
     setOpenComments((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -439,10 +639,22 @@ export default function TagDetail() {
         text: p.post_content,
         likes: p.like_count || 0,
         liked: p.liked || false,
-        comments: p.comments || [],
+        comments: Array.isArray(p.comments)
+          ? p.comments.map(c => ({
+              ...c,
+              files: Array.isArray(c.files)
+                ? c.files.map(f => ({
+                    ...f,
+                    path: normalizeFilePath(f.path)
+                  }))
+                : []
+            }))
+          : [],
         created_at: p.created_at,
         profile_image: p.profile_image,
-        images: Array.isArray(p.images) ? p.images : [],
+        images: Array.isArray(p.images)
+          ? p.images.map(img => ({ ...img, path: normalizeFilePath(img.path) }))
+          : [],
         }));
         setPosts(mapped);
     } catch (err) {
@@ -632,7 +844,7 @@ const handleCommentFile = (pid, e) => {
         body: formData,
       });
       const created = await res.json();
-      setPosts((prev) => [
+      setPosts(prev => [
         {
           id: created.pid || Date.now(),
           username: authData.username || "You",
@@ -643,7 +855,13 @@ const handleCommentFile = (pid, e) => {
           comments: [],
           created_at: new Date().toISOString(),
           profile_image: created.profile_image,
-          images: created.images || [],
+
+          images: Array.isArray(created.images)
+            ? created.images.map(img => ({
+                ...img,
+                path: normalizeFilePath(img.path)
+              }))
+            : [],
         },
         ...prev,
       ]);
@@ -861,15 +1079,7 @@ const handleCommentFile = (pid, e) => {
                     className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 hover:opacity-80 transition"
                   >
                     <img
-                    src={
-                        p.profile_image
-                        ? p.profile_image.startsWith("http") // กรณี full URL
-                            ? p.profile_image
-                            : p.profile_image.includes("/uploads/")
-                            ? `${API_URL}${p.profile_image}` // ถ้ามี /uploads/ แล้ว
-                            : `${API_URL}/uploads/user/${p.profile_image}` // ถ้าเป็นชื่อไฟล์อย่างเดียว
-                        : "/images/default.jpg" // default
-                    }
+                    src={p.profile_image ? normalizeFilePath(p.profile_image) : "/images/default.jpg"}
                     alt={p.username}
                     className="w-full h-full object-cover"
                     />
@@ -949,22 +1159,22 @@ const handleCommentFile = (pid, e) => {
                         <div key={i}>
                             {isImg && (
                             <img
-                                src={`${API_URL}${img.path}`}
+                                src={img.path}
                                 alt=""
                                 className="w-44 h-44 object-cover rounded-lg border hover:opacity-80"
-                                onClick={() => setPreviewImage(`${API_URL}${img.path}`)}
+                                onClick={() => setPreviewImage(img.path)}
                             />
                             )}
                             {isVid && (
                             <video
-                                src={`${API_URL}${img.path}`}
+                                src={img.path}
                                 controls
                                 className="w-64 h-40 rounded-lg border bg-black"
                             />
                             )}
                             {isPdf && (
                             <a
-                                href={`${API_URL}${img.path}`}
+                                href={img.path}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="text-blue-600 underline text-sm"
@@ -1012,14 +1222,11 @@ const handleCommentFile = (pid, e) => {
                     <div key={i} className="flex gap-2 ml-6 items-start">
                         <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
                         <img
-                            src={
+                          src={
                             c.profile_image
-                                ? c.profile_image.startsWith("http") ||
-                                c.profile_image.includes("/uploads/")
-                                ? `${API_URL}${c.profile_image.replace(API_URL, "")}`
-                                : `${API_URL}/uploads/user/${c.profile_image}`
-                                : "/images/default.jpg"
-                            }
+                              ? normalizeFilePath(c.profile_image)
+                              : "/images/default.jpg"
+                          }
                             alt={c.username}
                             className="w-full h-full object-cover"
                         />
@@ -1028,7 +1235,10 @@ const handleCommentFile = (pid, e) => {
                         <div className="flex-1 p-2 rounded-lg bg-[#fff6ee] relative">
                         {c.username === currentUser?.username ? (
                             <button
-                            onClick={() => handleDeleteComment(p.id, i, c.cid)}
+                              onClick={() => {
+                                setDeleteTarget({ pid: p.id, cid: c.cid });
+                                setDeleteCommentOpen(true);
+                              }}
                             className="absolute top-1 right-1 text-gray-400 hover:text-red-600"
                             title="Delete comment"
                             >
@@ -1036,7 +1246,10 @@ const handleCommentFile = (pid, e) => {
                             </button>
                         ) : (
                             <button
-                            onClick={() => handleReportComment(c.cid)}
+                              onClick={() => {
+                                setReportTarget(c.cid);
+                                setReportCommentOpen(true);
+                              }}
                             className="absolute top-1 right-1 text-gray-400 hover:text-amber-600"
                             title="Report comment"
                             >
@@ -1053,7 +1266,7 @@ const handleCommentFile = (pid, e) => {
                             <div className="mt-2 flex flex-wrap gap-2">
                             {c.files.map((file, j) => {
                                 const type = file.file_type || "";
-                                const path = `${API_URL}${file.path}`;
+                                const path = file.path;
                                 const isImage =
                                 type.startsWith("image") || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.path);
                                 const isVideo =
@@ -1293,6 +1506,25 @@ const handleCommentFile = (pid, e) => {
       onClose={() => setDeleteOpen(false)}
       onConfirm={confirmDelete}
       />
+
+      <DeleteCommentModal
+      open={deleteCommentOpen}
+      onClose={() => setDeleteCommentOpen(false)}
+      onConfirm={() => {
+        handleDeleteComment(deleteTarget.pid, deleteTarget.cid);
+        setDeleteCommentOpen(false);
+      }}
+    />
+
+    <ReportCommentModal
+      open={reportCommentOpen}
+      onClose={() => setReportCommentOpen(false)}
+      commentId={reportTarget}
+      onSubmit={({ commentId, reason }) => {
+        handleReportComment(commentId, reason);
+        setReportCommentOpen(false);
+      }}
+    />
 
       {reportOpen && (
       <ReportModal

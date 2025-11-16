@@ -16,21 +16,13 @@ export default function Login() {
     setError("");
 
     const apiUrl = `http://localhost:8000/login`;
-    console.log("🔗 Sending login request to:", apiUrl);
 
     try {
       const res = await fetch(apiUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
-
-      console.log("Response status:", res.status);
 
       if (!res.ok) {
         const errMsg =
@@ -38,32 +30,47 @@ export default function Login() {
             ? "Invalid email or password"
             : "Cannot connect to server";
         setError(errMsg);
-        console.warn("Login failed:", res.status, errMsg);
         return;
       }
 
+      // 1) ได้ token
       const data = await res.json();
-      console.log("✅ Login success:", data);
+      const token = data.access_token;
 
+      // 2) ดึงข้อมูล user จาก /users/me
+      const meRes = await fetch("http://localhost:8000/users/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      const username = data.username || email.split("@")[0] || "guest";
+      if (!meRes.ok) {
+        setError("Cannot load user profile.");
+        return;
+      }
 
-      // เก็บข้อมูลแยกเป็น authData_<username>
-      localStorage.setItem(
-        `authData_${username}`,
-        JSON.stringify({
-          token: data.access_token,
-          username: username,
-          uid: data.uid || null,
-        })
-      );
+      const userData = await meRes.json();
 
-      // เก็บ key ปัจจุบันไว้บอกว่าใคร login อยู่
-      localStorage.setItem("currentUserKey", `authData_${username}`);
+      // 3) เก็บข้อมูลแบบสมบูรณ์ลง LocalStorage
+      const key = `authData_${userData.username}`;
+      const saveData = {
+        token: token,
+        uid: userData.uid,
+        username: userData.username,
+        name: userData.name,
+        email: userData.email,
+        profile_image: userData.profile_image,
+        birthdate: userData.birthdate,
+        university: userData.university,
+        privacy: userData.privacy,
+        description: userData.description,
+      };
 
-      console.log("Saved session for:", username);
+      localStorage.setItem(key, JSON.stringify(saveData));
+      localStorage.setItem("currentUserKey", key);
 
-      // ไปหน้า board
+      console.log("✨ User session saved:", saveData);
+
       navigate("/app/board");
     } catch (err) {
       console.error("Connection error:", err);
