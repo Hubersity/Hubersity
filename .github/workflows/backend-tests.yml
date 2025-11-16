@@ -2,7 +2,7 @@ name: Backend Tests
 
 on:
   push:
-    branches: [ main, 'feature/**', 'fix/**', 'test/**' ]
+    branches: [ main, 'feature/**', 'fix/**', 'test/**', 'backend/**' ]
   pull_request:
     branches: [ main ]
 
