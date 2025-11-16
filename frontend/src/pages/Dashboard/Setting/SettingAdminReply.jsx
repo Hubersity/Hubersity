@@ -1,87 +1,151 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Mail } from "lucide-react";
 
+const API_URL = "http://localhost:8000";
+
+function timeAgo(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const diff = (Date.now() - d.getTime()) / 1000;
+
+  if (diff < 60) return "just now";
+  if (diff < 3600) return `${Math.floor(diff / 60)} mins ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+  if (diff < 172800) return "yesterday";
+  return d.toLocaleString();
+}
+
 export default function SettingAdminReply() {
-  const replies = [
-    {
-      id: 1,
-      title: "Your report has been resolved",
-      message:
-        "We have checked your issue about not being able to post on Board. It is now fixed!",
-      time: "2 hours ago",
-    },
-    {
-      id: 2,
-      title: "Password issue checked",
-      message:
-        "We reviewed your problem about changing password. Everything should work properly now.",
-      time: "Yesterday",
-    },
-    {
-      id: 3,
-      title: "Notification issue status",
-      message:
-        "Thanks for reporting. We are still working on your notification problem.",
-      time: "2 days ago",
-    },
-  ];
+  const [items, setItems] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [selected, setSelected] = useState(replies[0]);
+  // =========================
+  //  LOAD USER
+  // =========================
+  const currentKey = localStorage.getItem("currentUserKey");
 
+  const authData = useMemo(() => {
+    try {
+      return currentKey ? JSON.parse(localStorage.getItem(currentKey)) : null;
+    } catch (e) {
+      console.error("❌ parse error:", e);
+      return null;
+    }
+  }, [currentKey]);
+
+  const rawUser = authData?.user || authData;
+  const uid =
+    rawUser?.uid ||
+    rawUser?.id ||
+    rawUser?.user_id ||
+    rawUser?.userId ||
+    null;
+
+  const token = authData?.token;
+
+  // ============================
+  //  FETCH NOTIFICATION
+  // ============================
+  useEffect(() => {
+    if (!uid) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchNotifs = async () => {
+      try {
+        setLoading(true);
+
+        const res = await fetch(`${API_URL}/notification/user/${uid}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (!res.ok) {
+          console.error("❌ Error:", await res.text());
+          setItems([]);
+          return;
+        }
+
+        const data = await res.json();
+        const sorted = data.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+
+        setItems(sorted);
+        setSelected(sorted[0] || null);
+      } catch (e) {
+        console.error(e);
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifs();
+  }, [uid, token]);
+
+  // ============================
+  //  UI
+  // ============================
   return (
-    <div className="w-full flex gap-6">
+    <div className="w-full flex gap-6 items-stretch">
 
-      {/* LEFT SIDE LIST */}
-      <aside className="w-1/3 bg-[#fdfaf6] border rounded-2xl shadow-sm overflow-hidden">
-        {/* header */}
+    {/* LEFT LIST */}
+    <aside className="w-1/3 bg-[#fdfaf6] border rounded-2xl shadow-sm overflow-hidden flex flex-col h-[86.5vh]">
         <div className="px-5 py-4 border-b bg-white flex items-center gap-2">
-          <Mail className="text-emerald-600" />
-          <p className="font-semibold text-gray-800">From App</p>
+        <Mail className="text-emerald-600" />
+        <p className="font-semibold text-gray-800">From App</p>
         </div>
 
-        {/* item list */}
-        <div className="overflow-y-auto h-[70vh]">
-          {replies.map((item) => (
+        <div className="overflow-y-auto flex-1">
+        {loading && <div className="p-4 text-sm text-gray-500">Loading…</div>}
+        {!loading && items.length === 0 && (
+            <div className="p-4 text-sm text-gray-500">No messages yet.</div>
+        )}
+
+        {!loading &&
+            items.map((n) => (
             <button
-              key={item.id}
-              onClick={() => setSelected(item)}
-              className={`w-full text-left px-4 py-4 border-b flex items-start gap-3 transition ${
-                selected?.id === item.id
-                  ? "bg-[#e0ebe2]/40"
-                  : "hover:bg-gray-100"
-              }`}
+                key={n.id}
+                onClick={() => setSelected(n)}
+                className={`w-full text-left px-4 py-4 border-b flex items-start gap-3 transition ${
+                selected?.id === n.id ? "bg-[#e0ebe2]/40" : "hover:bg-gray-100"
+                }`}
             >
-              <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1">
                 <p className="font-semibold text-gray-800 truncate">
-                  {item.title}
+                    {n.title || "(No title)"}
                 </p>
                 <p className="text-sm text-gray-600 line-clamp-1">
-                  {item.message}
+                    {n.message || ""}
                 </p>
-              </div>
+                </div>
 
-              <span className="ml-auto text-[11px] text-gray-500 whitespace-nowrap pt-1">
-                {item.time}
-              </span>
+                <span className="ml-auto text-[11px] text-gray-500 whitespace-nowrap pt-1">
+                {timeAgo(n.created_at)}
+                </span>
             </button>
-          ))}
+            ))}
         </div>
-      </aside>
+    </aside>
 
-      {/* RIGHT SIDE DETAIL */}
-      <section className="w-2/3 bg-[#fdfaf6] border rounded-2xl shadow-sm p-8 space-y-6">
-        <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-          <Mail className="text-emerald-600" /> Admin Reply
+    {/* RIGHT DETAIL */}
+    <section className="w-2/3 bg-[#fdfaf6] border rounded-2xl shadow-sm p-8 flex flex-col h-[86.5vh] overflow-y-auto">
+        <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
+        <Mail className="text-emerald-600" /> Admin Reply
         </h2>
 
-        {/* message card */}
-        <div className="bg-white border rounded-xl p-6 shadow-sm">
-          <p className="text-xl font-semibold text-gray-900">{selected.title}</p>
-          <p className="text-sm text-gray-500 mb-4">{selected.time}</p>
-
-          <p className="text-gray-700 leading-relaxed">{selected.message}</p>
+        {selected ? (
+        <div className="bg-white border rounded-xl p-6 shadow-sm w-full max-w-[85%]">
+            <p className="text-xl font-semibold text-gray-900">{selected.title}</p>
+            <p className="text-sm text-gray-500 mb-4">{timeAgo(selected.created_at)}</p>
+            <p className="text-gray-700 leading-relaxed">{selected.message}</p>
         </div>
-      </section>
+        ) : (
+        <div className="text-sm text-gray-500">Select a message.</div>
+        )}
+    </section>
     </div>
   );
 }
