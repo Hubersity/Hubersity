@@ -63,9 +63,6 @@ os.makedirs("uploads/user", exist_ok=True)
 # ให้โหลดไฟล์จากโฟลเดอร์ uploads ได้
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-os.makedirs("/app/uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
-
 # ตรวจสอบการเชื่อมต่อฐานข้อมูล (skippable in tests)
 if not SKIP_DB_INIT:
     try:

@@ -8,7 +8,7 @@ from app.database import get_db
 
 router = APIRouter()
 
-BASE_UPLOAD_DIR = "/app/uploads"
+BASE_UPLOAD_DIR = "uploads"
 NEWS_UPLOAD_DIR = os.path.join(BASE_UPLOAD_DIR, "news")
 os.makedirs(NEWS_UPLOAD_DIR, exist_ok=True)
 
@@ -23,7 +23,7 @@ async def upload_news_image(
     if not news:
         raise HTTPException(status_code=404, detail="News not found")
 
-    # โฟลเดอร์ของข่าวแต่ละ id => /app/uploads/news/<id>/
+    # โฟลเดอร์ของข่าวแต่ละ id => uploads/news/<id>/
     upload_dir = os.path.join(NEWS_UPLOAD_DIR, str(news_id))
     os.makedirs(upload_dir, exist_ok=True)
 
