@@ -4,6 +4,25 @@ import { Search, Send, Image, Paperclip, Video } from "lucide-react";
 const API_URL = "http://localhost:8000";
 const toAbs = (u) => (u?.startsWith?.("http") ? u : `${API_URL}${u || ""}`);
 
+const formatDate = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleDateString("th-TH", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }); // 18/11/2025
+};
+
+const formatTime = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleTimeString("th-TH", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }); // 20:29
+};
+
 export default function Chat() {
   // auth
   const { meId, token } = useMemo(() => {
@@ -70,6 +89,7 @@ export default function Chat() {
       kind: m.kind ?? "text",
       url: m.url ?? null,
       name: m.name ?? null,
+      createdAt: m.created_at ?? null, //time the message send
     }));
     setSelected((prev) =>
       prev && prev.id === chatId ? { ...prev, messages: normalized } : prev
@@ -374,6 +394,7 @@ export default function Chat() {
           xhr.onload = () => {
             if (xhr.status >= 200 && xhr.status < 300) {
               const data = JSON.parse(xhr.responseText);
+              const nowIso = new Date().toISOString(); // time that send message
               const newMsgs = (data.attachments || []).map((a) => ({
                 id: `${data.message_id}:${a.id}`,
                 sender: "me",
@@ -381,6 +402,7 @@ export default function Chat() {
                 url: toAbs(a.url || a.path),
                 name: a.name || "",
                 text: a.kind === "file" ? a.name || "" : "",
+                createdAt: nowIso,
               }));
               setSelected((prev) =>
                 prev
@@ -395,10 +417,12 @@ export default function Chat() {
                 : first.kind === "video"
                 ? "[video]"
                 : first.name || "[file]";
-              setFriends((prev) =>
-                prev.map((it) =>
-                  it.id === selected.id ? { ...it, lastMessage: label } : it
-                )
+                setFriends((prev) =>
+                  prev.map((it) =>
+                    it.id === selected.id
+                      ? { ...it, lastMessage: label, lastTs: Date.now() }
+                      : it
+                  )
               );
               setPendingFiles((prev) => {
                 prev.forEach((p) => URL.revokeObjectURL(p.url));
@@ -440,6 +464,7 @@ export default function Chat() {
                     text: saved.text ?? "",
                     kind: saved.kind ?? "text",
                     url: saved.url ? toAbs(saved.url) : null,
+                    createdAt: saved.created_at || new Date().toISOString(),
                   },
                 ],
               }
@@ -447,7 +472,9 @@ export default function Chat() {
         );
         setFriends((prev) =>
           prev.map((it) =>
-            it.id === selected.id ? { ...it, lastMessage: text } : it
+            it.id === selected.id
+              ? { ...it, lastMessage: text, lastTs: Date.now() }
+              : it
           )
         );
       }
@@ -546,143 +573,171 @@ export default function Chat() {
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3">
-              {selected?.messages?.map((msg) => {
-                const isMe = msg.sender === "me";
-                const url = toAbs(msg.url);
+              {(() => {
+                let lastDate = null; // ใช้จำว่า วันที่ล่าสุดคืออะไร
 
-                return (
-                  <div
-                    key={msg.id}
-                    className={`relative group flex ${
-                      isMe ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    {/* ⋯ menu button */}
-                    {msg.kind !== "deleted" && (
-                      <button
-                        type="button"
-                        className={`absolute -top-2 ${
-                          isMe ? "-right-2" : "-left-2"
-                        } opacity-0 group-hover:opacity-100 transition bg-white/90 hover:bg-white shadow rounded-full px-2 py-0.5 text-xs`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMenuMsgId(msg.id);
-                        }}
-                        aria-haspopup="menu"
-                        aria-expanded={menuMsgId === msg.id}
-                        title="Options"
-                      >
-                        ⋯
-                      </button>
-                    )}
+                return selected?.messages?.map((msg) => {
+                  const isMe = msg.sender === "me";
+                  const url = toAbs(msg.url);
 
-                    {/* bubble */}
-                    <div
-                      className={`px-3 py-2 rounded-2xl max-w-[70%] ${
-                        isMe
-                          ? "bg-[#e0ebe2] text-gray-800"
-                          : "bg-gray-100 text-gray-800"
-                      } break-words whitespace-pre-wrap`}
-                    >
-                      {msg.kind === "deleted" ? (
-                        <i className="text-gray-500 italic">
-                          This message was deleted.
-                        </i>
-                      ) : msg.kind === "image" && url ? (
-                        <img
-                          src={url}
-                          alt=""
-                          className="rounded-lg max-w-full cursor-zoom-in"
-                          onClick={() =>
-                            setViewer({ open: true, url })
-                          }
-                        />
-                      ) : msg.kind === "video" && url ? (
-                        <video
-                          src={url}
-                          controls
-                          className="rounded-lg max-w-full"
-                        />
-                      ) : msg.kind === "file" && url ? (
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="underline break-all"
-                        >
-                          📎 {msg.name || url.split("/").pop()}
-                        </a>
-                      ) : (
-                        msg.text ?? ""
+                  // ใช้ createdAt จาก frontend (ต้องมีในแต่ละ message)
+                  const dateLabel = msg.createdAt ? formatDate(msg.createdAt) : "";
+                  const timeLabel = msg.createdAt ? formatTime(msg.createdAt) : "";
+                  const dateKey = dateLabel;
+
+                  const showDateHeader = dateKey && dateKey !== lastDate;
+                  if (showDateHeader) {
+                    lastDate = dateKey;
+                  }
+
+                  return (
+                    <React.Fragment key={msg.id}>
+                      {/* header แสดงวันที่ 1 ครั้งต่อวัน */}
+                      {showDateHeader && (
+                        <div className="text-center text-xs text-gray-400 my-2">
+                          {dateLabel}
+                        </div>
                       )}
-                    </div>
 
-                    {/* floating menu */}
-                    {menuMsgId === msg.id && (
                       <div
-                        ref={menuRef}
-                        role="menu"
-                        className={`absolute z-20 mt-6 ${
-                          isMe ? "right-0" : "left-0"
-                        } w-40 rounded-xl border bg-white shadow-lg overflow-hidden`}
-                        onClick={(e) => e.stopPropagation()}
+                        className={`relative group flex ${
+                          isMe ? "justify-end" : "justify-start"
+                        }`}
                       >
-                        {/* delete (only mine) */}
-                        {isMe && (
+                        {/* ⋯ menu button */}
+                        {msg.kind !== "deleted" && (
                           <button
-                            className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50"
-                            onClick={() => {
-                              setMenuMsgId(null);
-                              handleDelete(msg.id);
+                            type="button"
+                            className={`absolute -top-2 ${
+                              isMe ? "-right-2" : "-left-2"
+                            } opacity-0 group-hover:opacity-100 transition bg-white/90 hover:bg-white shadow rounded-full px-2 py-0.5 text-xs`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setMenuMsgId(msg.id);
                             }}
-                            role="menuitem"
+                            aria-haspopup="menu"
+                            aria-expanded={menuMsgId === msg.id}
+                            title="Options"
                           >
-                            Delete message
+                            ⋯
                           </button>
                         )}
 
-                        {/* forward */}
-                        <button
-                          className="w-full px-3 py-2 text-left hover:bg-gray-50"
-                          onClick={() => {
-                            setMenuMsgId(null);
-                            setForward({ open: true, msg });
-                          }}
-                          role="menuitem"
-                        >
-                          Forward message
-                        </button>
-
-                        {/* copy (text only) */}
-                        {msg.kind === "text" && msg.text && (
-                          <button
-                            className="w-full px-3 py-2 text-left hover:bg-gray-50"
-                            onClick={() => {
-                              navigator.clipboard.writeText(msg.text);
-                              setMenuMsgId(null);
-                            }}
+                        {/* bubble + เวลาใต้ bubble */}
+                        <div className="max-w-[70%] flex flex-col items-end">
+                          <div
+                            className={`px-3 py-2 rounded-2xl w-full ${
+                              isMe
+                                ? "bg-[#e0ebe2] text-gray-800"
+                                : "bg-gray-100 text-gray-800"
+                            } break-words whitespace-pre-wrap`}
                           >
-                            Copy message
-                          </button>
-                        )}
+                            {msg.kind === "deleted" ? (
+                              <i className="text-gray-500 italic">
+                                This message was deleted.
+                              </i>
+                            ) : msg.kind === "image" && url ? (
+                              <img
+                                src={url}
+                                alt=""
+                                className="rounded-lg max-w-full cursor-zoom-in"
+                                onClick={() => setViewer({ open: true, url })}
+                              />
+                            ) : msg.kind === "video" && url ? (
+                              <video
+                                src={url}
+                                controls
+                                className="rounded-lg max-w-full"
+                              />
+                            ) : msg.kind === "file" && url ? (
+                              <a
+                                href={url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="underline break-all"
+                              >
+                                📎 {msg.name || url.split("/").pop()}
+                              </a>
+                            ) : (
+                              msg.text ?? ""
+                            )}
+                          </div>
 
-                        {/* download (attachments only) */}
-                        {["image", "video", "file"].includes(msg.kind) &&
-                          msg.url && (
-                            <a
-                              className="block px-3 py-2 hover:bg-gray-50"
-                              href={toAbs(msg.url)}
-                              download
-                              onClick={() => setMenuMsgId(null)}
-                            >
-                              Download file
-                            </a>
+                          {/* เวลาใต้ข้อความ */}
+                          {timeLabel && (
+                            <div className="mt-1 text-[10px] text-gray-400">
+                              {timeLabel}
+                            </div>
                           )}
+                        </div>
+
+                        {/* floating menu */}
+                        {menuMsgId === msg.id && (
+                          <div
+                            ref={menuRef}
+                            role="menu"
+                            className={`absolute z-20 mt-6 ${
+                              isMe ? "right-0" : "left-0"
+                            } w-40 rounded-xl border bg-white shadow-lg overflow-hidden`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {/* delete (only mine) */}
+                            {isMe && (
+                              <button
+                                className="w-full px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                                onClick={() => {
+                                  setMenuMsgId(null);
+                                  handleDelete(msg.id);
+                                }}
+                                role="menuitem"
+                              >
+                                Delete message
+                              </button>
+                            )}
+
+                            {/* forward */}
+                            <button
+                              className="w-full px-3 py-2 text-left hover:bg-gray-50"
+                              onClick={() => {
+                                setMenuMsgId(null);
+                                setForward({ open: true, msg });
+                              }}
+                              role="menuitem"
+                            >
+                              Forward message
+                            </button>
+
+                            {/* copy (text only) */}
+                            {msg.kind === "text" && msg.text && (
+                              <button
+                                className="w-full px-3 py-2 text-left hover:bg-gray-50"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(msg.text);
+                                  setMenuMsgId(null);
+                                }}
+                              >
+                                Copy message
+                              </button>
+                            )}
+
+                            {/* download (attachments only) */}
+                            {["image", "video", "file"].includes(msg.kind) && msg.url && (
+                              <a
+                                className="block px-3 py-2 hover:bg-gray-50"
+                                href={toAbs(msg.url)}
+                                download
+                                onClick={() => setMenuMsgId(null)}
+                              >
+                                Download file
+                              </a>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                    </React.Fragment>
+                  );
+                });
+              })()}
               <div ref={messagesEndRef} />
             </div>
 
