@@ -32,7 +32,6 @@ const News_admin          = lazy(() => import('./pages/Admin/News-admin.jsx'));
 const NewsCreate_admin    = lazy(() => import('./pages/Admin/NewsCreate-admin.jsx'));
 
 const News_Detail          = lazy(() => import('./pages/Admin/News-Detail.jsx'));
-const CommentDetail       = lazy(() => import('./pages/Admin/CommentDetail.jsx'));
 
 const ForHelp_admin = lazy(() => import('./pages/Admin/ForHelp-admin.jsx'));
 const CommentDetail = lazy(() => import('./pages/Admin/CommentDetail.jsx'));
