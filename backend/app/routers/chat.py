@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import (
+    APIRouter, Depends, HTTPException, Query,
+    File, UploadFile, Form, Body, WebSocket, BackgroundTasks
+)
 from sqlalchemy.orm import Session, selectinload
 from .. import models, database
 from fastapi import File, UploadFile, Form
@@ -27,6 +30,18 @@ async def send_to_user(user_id: int, data: dict):
     ws = active_connections.get(user_id)
     if ws:
         await ws.send_json(data)
+
+async def notify_new_message(chat_id: int, user1: int, user2: int):
+    data = {
+        "type": "new_message",
+        "chat_id": chat_id
+    }
+
+    # ส่งให้คนที่เกี่ยวข้องทั้ง 2 คน
+    for uid in [user1, user2]:
+        ws = active_connections.get(uid)
+        if ws:
+            await ws.send_json(data)
 
 # ---------- Helper functions ----------
 
@@ -245,8 +260,6 @@ def get_messages(chat_id: int, me_id: int = Query(...), db: Session = Depends(da
             })
     return out
 
-
-# ส่งข้อความใหม่ในห้อง
 @router.post("/{chat_id}/messages")
 async def send_message(
     chat_id: int,
@@ -269,10 +282,9 @@ async def send_message(
     db.commit()
     db.refresh(message)
 
-    # หาอีกฝั่งของห้อง (คนที่จะต้องได้รับแจ้งเตือน)
     other_id = chat.user2_id if me_id == chat.user1_id else chat.user1_id
 
-    # ส่ง event ผ่าน WebSocket ไปหาอีกฝั่ง
+    # ✅ ใช้อันเดิมตัวเดียวพอ
     await send_to_user(other_id, {
         "type": "new_message",
         "chat_id": chat_id,
@@ -284,7 +296,6 @@ async def send_message(
         },
     })
 
-    # ฝั่งคนส่งเอง frontend มักจะ append message เองอยู่แล้ว
     return {
         "id": message.id,
         "sender": "me",
@@ -298,6 +309,7 @@ async def send_message(
 @router.post("/{chat_id}/upload")
 def upload_attachments(
     chat_id: int,
+    background_tasks: BackgroundTasks = None,
     me_id: int = Query(...),
     files: List[UploadFile] = File(...),
     db: Session = Depends(database.get_db),
@@ -344,6 +356,14 @@ def upload_attachments(
         saved.append(att)
 
     db.commit()
+    if background_tasks:
+        background_tasks.add_task(
+            notify_new_message,
+            chat.id,
+            chat.user1_id,
+            chat.user2_id,
+        )
+    # background_tasks.add_task(notify_new_message, chat.id, chat.user1_id, chat.user2_id)
 
     return {
         "message_id": msg.id,
@@ -363,6 +383,7 @@ def upload_attachments(
 def delete_message(
     chat_id: int,
     message_id: int,
+    background_tasks: BackgroundTasks = None,
     me_id: int = Query(...),
     db: Session = Depends(database.get_db),
 ):
@@ -394,6 +415,13 @@ def delete_message(
     msg.text = None
     db.add(msg)
     db.commit()
+    if background_tasks:
+        background_tasks.add_task(
+            notify_new_message,
+            chat.id,
+            chat.user1_id,
+            chat.user2_id,
+        )
 
     return {"ok": True}
 
