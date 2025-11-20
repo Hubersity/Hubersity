@@ -42,10 +42,20 @@ def upsert_daily_progress(db, user_id: int, add_seconds: int, badge: int, target
         )
 
         # หา record ของวันนั้นจาก field date (ใช้ date() → ได้ 'YYYY-MM-DD')
+        # dp = (
+        #     db.query(models.DailyProgress)
+        #     .filter(models.DailyProgress.user_id == user_id)
+        #     .filter(func.date(models.DailyProgress.date) == target_date_bangkok)
+        #     .first()
+        # )
+        target_date = target_day_utc.date()
+
         dp = (
             db.query(models.DailyProgress)
             .filter(models.DailyProgress.user_id == user_id)
-            .filter(func.date(models.DailyProgress.date) == target_date_bangkok.isoformat())
+            .filter(
+                func.date(models.DailyProgress.date) == target_date
+            )
             .first()
         )
 
