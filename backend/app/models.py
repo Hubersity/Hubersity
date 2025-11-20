@@ -16,7 +16,10 @@ class User(Base):
     username = Column(String, nullable=False, unique=True)  # ใช้ตอนสมัคร (login)
     name = Column(String, nullable=True)                    # ชื่อโปรไฟล์ (แก้ได้)
     email = Column(String, nullable=False, unique=True)
-    password = Column(String, nullable=False)
+    password = Column(String, nullable=True)
+
+    oauth_provider = Column(String, nullable=True)
+    oauth_id = Column(String, nullable=True, unique=True)
 
     birthdate = Column(TIMESTAMP(timezone=False), nullable=True)  # วันเกิด
     university = Column(String, nullable=True)                    # มหาวิทยาลัย
