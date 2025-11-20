@@ -30,19 +30,29 @@ def upsert_daily_progress(db, user_id: int, add_seconds: int, badge: int, target
     dialect_name = db.bind.dialect.name
     
     if dialect_name == 'sqlite':
-        # SQLite-friendly implementation using SQLAlchemy ORM
-        target_date_bangkok = target_day_utc.astimezone(TZ).date().isoformat()
-        
+        # ใน SQLite ไม่มี timezone จริง ๆ → เราเก็บเป็น "เที่ยงคืนเวลาไทย (naive)" แทน
+        target_date_bangkok = target_day_utc.astimezone(TZ).date()
+
+        # สร้าง datetime เที่ยงคืนของวันนั้น (local) แบบไม่มี tz
+        day_start_local = datetime(
+            target_date_bangkok.year,
+            target_date_bangkok.month,
+            target_date_bangkok.day,
+            0, 0, 0,
+        )
+
+        # หา record ของวันนั้นจาก field date (ใช้ date() → ได้ 'YYYY-MM-DD')
         dp = (
             db.query(models.DailyProgress)
             .filter(models.DailyProgress.user_id == user_id)
-            .filter(func.date(models.DailyProgress.date) == target_date_bangkok)
+            .filter(func.date(models.DailyProgress.date) == target_date_bangkok.isoformat())
             .first()
         )
+
         if not dp:
             dp = models.DailyProgress(
                 user_id=user_id,
-                date=target_day_utc,
+                date=day_start_local,  # <- ไม่เก็บเป็น UTC แล้ว แต่เก็บเป็น local midnight
                 total_seconds=add_seconds,
                 total_minutes=add_seconds // 60,
                 badge_level=badge,
@@ -52,8 +62,13 @@ def upsert_daily_progress(db, user_id: int, add_seconds: int, badge: int, target
             dp.total_seconds = (dp.total_seconds or 0) + add_seconds
             dp.total_minutes = (dp.total_seconds or 0) // 60
             dp.badge_level = max(dp.badge_level or 0, badge)
+
         db.commit()
-        return {"total_seconds": dp.total_seconds, "total_minutes": dp.total_minutes, "badge_level": dp.badge_level}
+        return {
+            "total_seconds": dp.total_seconds,
+            "total_minutes": dp.total_minutes,
+            "badge_level": dp.badge_level,
+        }
     else:
         # PostgreSQL raw SQL (production)
         q = text("""
@@ -74,17 +89,29 @@ def upsert_daily_progress(db, user_id: int, add_seconds: int, badge: int, target
 def get_today_study(user_id: int, db: Session = Depends(get_db)):
     now = datetime.now(TZ)
     today = datetime(now.year, now.month, now.day, tzinfo=TZ)
+    today_date = today.date()
+    dialect_name = db.bind.dialect.name
 
-    rec = (
-        db.query(models.DailyProgress)
-        .filter(models.DailyProgress.user_id == user_id)
-        .filter(
-            func.date(
-                func.timezone("Asia/Bangkok", models.DailyProgress.date)
-            ) == today.date()
+    if dialect_name == 'sqlite':
+        # SQLite: เราเก็บ date เป็น local midnight (naive) แล้ว
+        rec = (
+            db.query(models.DailyProgress)
+            .filter(models.DailyProgress.user_id == user_id)
+            .filter(func.date(models.DailyProgress.date) == today_date.isoformat())
+            .first()
         )
-        .first()
-    )
+    else:
+        # PostgreSQL: ใช้ timezone('Asia/Bangkok', ...) ได้ปกติ
+        rec = (
+            db.query(models.DailyProgress)
+            .filter(models.DailyProgress.user_id == user_id)
+            .filter(
+                func.date(
+                    func.timezone("Asia/Bangkok", models.DailyProgress.date)
+                ) == today_date
+            )
+            .first()
+        )
 
     if not rec:
         return {"seconds": 0, "time": "00:00:00", "image": "/images/ts_l0-rebg.png"}
