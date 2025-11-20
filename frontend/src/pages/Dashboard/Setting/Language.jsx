@@ -3,25 +3,26 @@ import { Globe2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 export default function Language() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
-  // ใช้ค่าภาษาของ i18n (en/th/jp/cn)
   const [selectedLang, setSelectedLang] = useState(
     localStorage.getItem("appLang") || "en"
   );
 
+  // เพิ่ม 3 ภาษาใหม่: เกาหลี / ฝรั่งเศส / อาหรับ
   const languages = [
     { code: "th", label: "Thai", emoji: "🇹🇭" },
     { code: "en", label: "English", emoji: "🇬🇧" },
     { code: "cn", label: "Chinese", emoji: "🇨🇳" },
     { code: "jp", label: "Japanese", emoji: "🇯🇵" },
+    { code: "kr", label: "Korean", emoji: "🇰🇷" },
+    { code: "fr", label: "French", emoji: "🇫🇷" },
+    { code: "ar", label: "Arabic", emoji: "🇸🇦" }
   ];
 
   const handleSave = () => {
     i18n.changeLanguage(selectedLang);
     localStorage.setItem("appLang", selectedLang);
-
-    // รีโหลดเพื่อให้ sidebar/topbar เปลี่ยนภาษา
     window.location.reload();
   };
 
@@ -30,16 +31,18 @@ export default function Language() {
       {/* Title */}
       <div className="flex items-center gap-3 mb-6">
         <Globe2 className="text-[#8cab93]" size={26} />
-        <h2 className="text-2xl font-bold text-gray-800">Language</h2>
+        <h2 className="text-2xl font-bold text-gray-800">
+          {t("language.title")}
+        </h2>
       </div>
 
       {/* Description */}
       <div className="mb-6">
         <p className="text-gray-800 font-medium text-base mb-1">
-          App Language
+          {t("language.appLanguage")}
         </p>
         <p className="text-sm text-gray-500 leading-relaxed">
-          Select your preferred language for Hubersity menus and navigation.
+          {t("language.description")}
         </p>
       </div>
 
@@ -77,7 +80,7 @@ export default function Language() {
           onClick={handleSave}
           className="bg-[#8cab93] text-white font-medium px-8 py-2.5 rounded-full shadow-sm hover:bg-[#7da186]"
         >
-          Save Language
+          {t("language.save")}
         </button>
       </div>
     </div>

@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import (
+    APIRouter, Depends, HTTPException, Query,
+    File, UploadFile, Form, Body, WebSocket, BackgroundTasks
+)
 from sqlalchemy.orm import Session, selectinload
 from .. import models, database
 from fastapi import File, UploadFile, Form
@@ -7,14 +10,38 @@ import os, uuid
 # from fastapi import status
 from typing import List
 import os, uuid
-from fastapi import HTTPException, Body
+from fastapi import HTTPException, Body, WebSocket, APIRouter
 from starlette.status import HTTP_404_NOT_FOUND
+from datetime import datetime, timezone
+from sqlalchemy import or_, and_, func
 # from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/chats", tags=["Chat"])
 UPLOAD_ROOT = "uploads"  # มี mount /uploads แล้วใน main.py
-UPLOAD_DIR = "/app/uploads"  # โฟลเดอร์เก็บไฟล์ในคอนเทนเนอร์
+UPLOAD_DIR = "uploads/chat"  # Use relative path for compatibility with GitHub Actions
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+active_connections = {}
+
+async def connect_user(user_id: int, websocket: WebSocket):
+    await websocket.accept()
+    active_connections[user_id] = websocket
+
+async def send_to_user(user_id: int, data: dict):
+    ws = active_connections.get(user_id)
+    if ws:
+        await ws.send_json(data)
+
+async def notify_new_message(chat_id: int, user1: int, user2: int):
+    data = {
+        "type": "new_message",
+        "chat_id": chat_id
+    }
+
+    # ส่งให้คนที่เกี่ยวข้องทั้ง 2 คน
+    for uid in [user1, user2]:
+        ws = active_connections.get(uid)
+        if ws:
+            await ws.send_json(data)
 
 # ---------- Helper functions ----------
 
@@ -90,7 +117,7 @@ def list_my_chats(
 
         friend = c.user2 if c.user1_id == me_id else c.user1
 
-        # ดึงข้อความล่าสุดแบบรวดเร็ว
+        # ข้อความล่าสุด
         last = (
             db.query(models.ChatMessage)
             .options(selectinload(models.ChatMessage.attachments))
@@ -99,13 +126,8 @@ def list_my_chats(
             .first()
         )
 
-
-        preview = ""
-
-        # ✅ ถ้าข้อความล่าสุดถูกลบ ให้ขึ้น "This message was deleted."
-        if last and (last.kind or "").lower() == "deleted":
-            preview = ""
-        elif last and last.attachments:
+        # preview เหมือนเดิม
+        if last and last.attachments:
             a = last.attachments[0]
             if a.kind == "image":
                 preview = "[image]"
@@ -116,13 +138,37 @@ def list_my_chats(
         else:
             preview = last.text or "" if last else ""
 
+        # ---------- นับ unread ----------
+        my_last_read = (
+            c.user1_last_read_at if me_id == c.user1_id else c.user2_last_read_at
+        )
+
+        # ถ้าไม่เคยอ่านเลย → นับตั้งแต่เริ่มต้น
+        base_time = my_last_read or datetime.min.replace(tzinfo=timezone.utc)
+
+        unread_count = (
+            db.query(func.count(models.ChatMessage.id))
+            .filter(
+                models.ChatMessage.chat_id == c.id,
+                models.ChatMessage.sender_id != me_id,      # ไม่รวมของตัวเอง
+                models.ChatMessage.created_at > base_time,  # หลังเวลาที่อ่านล่าสุด
+            )
+            .scalar()
+        )
+
         result.append({
             "id": c.id,
             "name": friend.name or friend.username,
             "username": friend.username,
             "avatar": getattr(friend, "profile_image", None) or "/images/default.jpg",
-            "lastMessage": preview,   # << ใช้ preview เสมอ
+            "lastMessage": preview,
+            "last_ts": last.created_at.isoformat() if last else None,
+            "unread": unread_count,
         })
+
+    # ---------- sort: ห้องที่มีข้อความล่าสุดอยู่ข้างบน ----------
+    result.sort(key=lambda x: x["last_ts"] or "", reverse=True)
+
     return result
 
 
@@ -214,10 +260,8 @@ def get_messages(chat_id: int, me_id: int = Query(...), db: Session = Depends(da
             })
     return out
 
-
-# ส่งข้อความใหม่ในห้อง
 @router.post("/{chat_id}/messages")
-def send_message(
+async def send_message(
     chat_id: int,
     payload: dict,
     me_id: int = Query(...),
@@ -238,8 +282,22 @@ def send_message(
     db.commit()
     db.refresh(message)
 
+    other_id = chat.user2_id if me_id == chat.user1_id else chat.user1_id
+
+    # ✅ ใช้อันเดิมตัวเดียวพอ
+    await send_to_user(other_id, {
+        "type": "new_message",
+        "chat_id": chat_id,
+        "from_user_id": me_id,
+        "message": {
+            "id": message.id,
+            "text": message.text,
+            "created_at": message.created_at.isoformat(),
+        },
+    })
+
     return {
-        "id": message.id,        # ★ ส่ง id กลับไป
+        "id": message.id,
         "sender": "me",
         "text": message.text,
         "kind": "text",
@@ -251,6 +309,7 @@ def send_message(
 @router.post("/{chat_id}/upload")
 def upload_attachments(
     chat_id: int,
+    background_tasks: BackgroundTasks = None,
     me_id: int = Query(...),
     files: List[UploadFile] = File(...),
     db: Session = Depends(database.get_db),
@@ -266,7 +325,7 @@ def upload_attachments(
     db.flush()
 
     # >>> โฟลเดอร์ย่อยตามห้อง
-    chat_dir = os.path.join(UPLOAD_DIR, "chat", str(chat_id))
+    chat_dir = os.path.join(UPLOAD_DIR, str(chat_id))
     os.makedirs(chat_dir, exist_ok=True)
 
     saved = []
@@ -297,6 +356,14 @@ def upload_attachments(
         saved.append(att)
 
     db.commit()
+    if background_tasks:
+        background_tasks.add_task(
+            notify_new_message,
+            chat.id,
+            chat.user1_id,
+            chat.user2_id,
+        )
+    # background_tasks.add_task(notify_new_message, chat.id, chat.user1_id, chat.user2_id)
 
     return {
         "message_id": msg.id,
@@ -316,6 +383,7 @@ def upload_attachments(
 def delete_message(
     chat_id: int,
     message_id: int,
+    background_tasks: BackgroundTasks = None,
     me_id: int = Query(...),
     db: Session = Depends(database.get_db),
 ):
@@ -347,6 +415,13 @@ def delete_message(
     msg.text = None
     db.add(msg)
     db.commit()
+    if background_tasks:
+        background_tasks.add_task(
+            notify_new_message,
+            chat.id,
+            chat.user1_id,
+            chat.user2_id,
+        )
 
     return {"ok": True}
 
@@ -480,7 +555,7 @@ def list_messages(chat_id: int, me_id: int = Query(...), db: Session = Depends(d
             "mime_type": a.mime_type,
         } for a in (m.attachments or [])]
 
-        # เผื่อ frontend ของคุณใช้ฟิลด์ url/name เดี่ยว ๆ
+        # เผื่อ frontend ใช้ฟิลด์ url/name เดี่ยว ๆ
         url = atts[0]["url"] if atts else None
         name = atts[0]["name"] if atts else None
 
@@ -495,3 +570,34 @@ def list_messages(chat_id: int, me_id: int = Query(...), db: Session = Depends(d
         })
 
     return out
+
+@router.post("/{chat_id}/read")
+def mark_read(
+    chat_id: int,
+    me_id: int = Query(...),
+    db: Session = Depends(database.get_db),
+):
+    chat = db.query(models.Chat).filter(models.Chat.id == chat_id).first()
+    if not chat:
+        raise HTTPException(404, "Chat not found")
+
+    now = datetime.now(timezone.utc)
+
+    if me_id == chat.user1_id:
+        chat.user1_last_read_at = now
+    elif me_id == chat.user2_id:
+        chat.user2_last_read_at = now
+    else:
+        raise HTTPException(403, "Not in this chat")
+
+    db.commit()
+    return {"ok": True}
+
+@router.websocket("/ws/{user_id}")
+async def websocket_chat(websocket: WebSocket, user_id: int):
+    await connect_user(user_id, websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+    except:
+        active_connections.pop(user_id, None)

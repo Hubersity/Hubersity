@@ -26,19 +26,49 @@ def upsert_daily_progress(db, user_id: int, add_seconds: int, badge: int, target
     if add_seconds > 24*3600:
         add_seconds = 24*3600
 
-    q = text("""
-    INSERT INTO daily_progress (user_id, date, total_seconds, total_minutes, badge_level)
-    VALUES (:uid, :day_utc, :secs, :secs/60, :badge)
-    ON CONFLICT (user_id, ((date AT TIME ZONE 'Asia/Bangkok')::date))
-    DO UPDATE SET
-      total_seconds = daily_progress.total_seconds + EXCLUDED.total_seconds,
-      total_minutes = (daily_progress.total_seconds + EXCLUDED.total_seconds)/60,
-      badge_level   = GREATEST(daily_progress.badge_level, EXCLUDED.badge_level)
-    RETURNING total_seconds, total_minutes, badge_level
-    """)
-    row = db.execute(q, {"uid": user_id, "day_utc": target_day_utc, "secs": add_seconds, "badge": badge}).first()
-    db.commit()
-    return {"total_seconds": row[0], "total_minutes": row[1], "badge_level": row[2]}
+    # Check if we're using SQLite (for tests) or PostgreSQL (production)
+    dialect_name = db.bind.dialect.name
+    
+    if dialect_name == 'sqlite':
+        # SQLite-friendly implementation using SQLAlchemy ORM
+        target_date_bangkok = target_day_utc.astimezone(TZ).date().isoformat()
+        
+        dp = (
+            db.query(models.DailyProgress)
+            .filter(models.DailyProgress.user_id == user_id)
+            .filter(func.date(models.DailyProgress.date) == target_date_bangkok)
+            .first()
+        )
+        if not dp:
+            dp = models.DailyProgress(
+                user_id=user_id,
+                date=target_day_utc,
+                total_seconds=add_seconds,
+                total_minutes=add_seconds // 60,
+                badge_level=badge,
+            )
+            db.add(dp)
+        else:
+            dp.total_seconds = (dp.total_seconds or 0) + add_seconds
+            dp.total_minutes = (dp.total_seconds or 0) // 60
+            dp.badge_level = max(dp.badge_level or 0, badge)
+        db.commit()
+        return {"total_seconds": dp.total_seconds, "total_minutes": dp.total_minutes, "badge_level": dp.badge_level}
+    else:
+        # PostgreSQL raw SQL (production)
+        q = text("""
+        INSERT INTO daily_progress (user_id, date, total_seconds, total_minutes, badge_level)
+        VALUES (:uid, :day_utc, :secs, :secs/60, :badge)
+        ON CONFLICT (user_id, ((date AT TIME ZONE 'Asia/Bangkok')::date))
+        DO UPDATE SET
+          total_seconds = daily_progress.total_seconds + EXCLUDED.total_seconds,
+          total_minutes = (daily_progress.total_seconds + EXCLUDED.total_seconds)/60,
+          badge_level   = GREATEST(daily_progress.badge_level, EXCLUDED.badge_level)
+        RETURNING total_seconds, total_minutes, badge_level
+        """)
+        row = db.execute(q, {"uid": user_id, "day_utc": target_day_utc, "secs": add_seconds, "badge": badge}).first()
+        db.commit()
+        return {"total_seconds": row[0], "total_minutes": row[1], "badge_level": row[2]}
 
 @router.post("/start")
 def start_session(user_id: int, db: Session = Depends(get_db)):

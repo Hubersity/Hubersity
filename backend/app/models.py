@@ -17,7 +17,6 @@ class User(Base):
     name = Column(String, nullable=True)                    # ชื่อโปรไฟล์ (แก้ได้)
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=True)
-
     oauth_provider = Column(String, nullable=True)
     oauth_id = Column(String, nullable=True, unique=True)
 
@@ -241,6 +240,9 @@ class Chat(Base):
     user1_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
     user2_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
 
+    user1_last_read_at = Column(DateTime(timezone=True), nullable=True)
+    user2_last_read_at = Column(DateTime(timezone=True), nullable=True)
+
     user1 = relationship("User", foreign_keys=[user1_id])
     user2 = relationship("User", foreign_keys=[user2_id])
 
@@ -330,3 +332,25 @@ class HelpReport(Base):
         default=datetime.utcnow,      # จะใส่เวลาอัตโนมัติ
         nullable=False
     )
+
+class News(Base):
+    __tablename__ = "news"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(255), nullable=False)
+    summary = Column(Text, nullable=True)        # ใช้โชว์ใน card / hover
+    detail = Column(Text, nullable=True)         # เนื้อหาทั้งหมด
+    hover_text = Column(String(255), nullable=True)  # text เล็ก ๆ ตอน hover card
+    image_url = Column(String(255), nullable=True)   # path รูป เช่น /uploads/news/1.jpg
+
+    is_published = Column(Boolean, default=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    created_by = Column(Integer, ForeignKey("users.uid"), nullable=True)
+    creator = relationship("User", backref="news_items")

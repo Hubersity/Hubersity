@@ -2,7 +2,7 @@ name: Backend Tests
 
 on:
   push:
-    branches: [ main, 'feature/**', 'fix/**', 'test/**' ]
+    branches: [ main, 'feature/**', 'fix/**', 'test/**', 'backend/**' ]
   pull_request:
     branches: [ main ]
 
@@ -27,6 +27,8 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run tests with coverage and junit
+        env:
+          PYTHONPATH: ${{ github.workspace }}/backend
         run: |
           pytest -q --maxfail=1 --disable-warnings --cov=app --cov-report=xml --junitxml=pytest-report.xml
 
@@ -84,6 +86,8 @@ jobs:
           for i in {1..10}; do pg_isready -h localhost -p 5432 && break || sleep 2; done
 
       - name: Run integration tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}/backend
         run: |
           pytest -q -m integration --maxfail=1 --disable-warnings --junitxml=integration-pytest-report.xml --cov=app --cov-report=xml
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Pencil, Image as ImageIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function NewsCreateAdmin() {
   const [image, setImage] = useState(null);
@@ -8,6 +9,28 @@ export default function NewsCreateAdmin() {
   const [summary, setSummary] = useState("");
   const [detail, setDetail] = useState("");
   const [detailHeight, setDetailHeight] = useState(40);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const API_URL = "http://localhost:8000";
+
+  // ดึง token แบบเดียวกับหน้าที่ใช้ login อยู่ (ตัวอย่าง)
+  const navigate = useNavigate();
+  const currentKey = localStorage.getItem("currentUserKey");
+  const auth = currentKey
+    ? JSON.parse(localStorage.getItem(currentKey) || "{}")
+    : {};
+  const token = auth?.token || null;
+
+  // เลือกไฟล์ + preview
+  function handleImageChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setImageFile(file);                        // เก็บไว้ส่งตอนหลัง
+    setImagePreview(URL.createObjectURL(file)); // ไว้โชว์บนหน้า
+  }
 
   function handleImageUpload(e) {
     const file = e.target.files[0];
@@ -17,6 +40,86 @@ export default function NewsCreateAdmin() {
   function handleDetailGrow(e) {
     setDetail(e.target.value);
     setDetailHeight(e.target.scrollHeight);
+  }
+
+  // ฟังก์ชันอัปโหลดรูปให้ข่าวที่สร้างแล้ว
+  async function uploadImageForNews(newsId, file) {
+    const form = new FormData();
+    form.append("file", file);
+
+    const res = await fetch(`${API_URL}/news/${newsId}/upload-image`, {
+      method: "POST",
+      body: form,
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      console.error("Upload failed:", res.status, txt);
+      throw new Error("Upload failed");
+    }
+
+    const data = await res.json();
+    // data.image_url = "/uploads/news/<id>/xxxx.jpg"
+    return data.image_url;
+  }
+
+  // สร้างข่าว + ถ้ามีรูปค่อยอัปโหลดต่อ
+  const handlePost = async () => {
+    if (!token) {
+      alert("No admin token found.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      // สร้างข่าวก่อน (ยังไม่ต้องส่งรูป)
+      const res = await fetch(`${API_URL}/news/admin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: topic,
+          summary,
+          detail,
+          hover_text: hoverText,
+          image_url: null, // ให้ backend เซ็ตทีหลังจาก upload
+        }),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        console.error("Create news failed:", res.status, txt);
+        alert("Create news failed");
+        return;
+      }
+
+      const created = await res.json(); // ควรได้ { id, ... }
+      const newsId = created.id;
+
+      // ถ้ามีไฟล์รูป ให้เรียก upload
+      if (imageFile) {
+        await uploadImageForNews(newsId, imageFile);
+      }
+
+      alert("News created");
+      navigate("/app_admin/news");
+    } catch (err) {
+      console.error("Post error:", err);
+      alert("Error while creating news");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+  
+    setImagePreview(URL.createObjectURL(file)); // แค่ preview
+    setImageFile(file);                          // เก็บไฟล์จริงไว้ upload ทีหลัง
   }
 
   return (
@@ -36,9 +139,9 @@ export default function NewsCreateAdmin() {
 
         {/* Upload box with animation */}
         <label className="relative cursor-pointer w-full transition hover:scale-[1.02]">
-          {image ? (
+          {imagePreview ? (
             <img
-              src={image}
+              src={imagePreview}
               className="w-full h-60 object-cover rounded-2xl border border-gray-200 shadow-md"
             />
           ) : (
@@ -77,7 +180,7 @@ export default function NewsCreateAdmin() {
             type="file"
             accept="image/*"
             className="hidden"
-            onChange={handleImageUpload}
+            onChange={handleImageChange}
           />
         </label>
 
@@ -166,6 +269,7 @@ export default function NewsCreateAdmin() {
               hover:shadow-xl hover:-translate-y-[3px]
               active:translate-y-0 active:shadow-sm
             "
+            onClick={handlePost}
           >
             Post
           </button>

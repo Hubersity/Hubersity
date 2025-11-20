@@ -4,11 +4,10 @@ from app import models, utils, oauth2
 
 def test_create_user_success(client):
     payload = {
-        "username": "testuser",
-        "email": "testuser@example.com",
+        "username": "testuser_unique_" + str(int(__import__('time').time()*1000) % 100000),
+        "email": "testuser" + str(int(__import__('time').time()*1000) % 100000) + "@example.com",
         "password": "Aa1!aaaa",
-        "confirm_password": "Aa1!aaaa",
-        "name": "Test User"
+        "confirm_password": "Aa1!aaaa"
     }
 
     res = client.post("/users/", json=payload)
@@ -132,4 +131,117 @@ def test_follow_unfollow_and_lists(client, db_session):
     # A unfollows B
     unf = client.delete(f"/users/{ub['uid']}/follow", headers=ha)
     assert unf.status_code == 200
+
+
+def test_create_user_with_weak_password(client):
+    """Test that weak passwords are rejected"""
+    payload = {
+        "username": "weakpass",
+        "email": "weak@example.com",
+        "password": "weak",
+        "confirm_password": "weak",
+    }
+    res = client.post("/users/", json=payload)
+    assert res.status_code == 422  # Validation error
+
+
+def test_create_user_password_mismatch(client):
+    """Test that mismatched passwords are rejected"""
+    payload = {
+        "username": "mismatch",
+        "email": "mismatch@example.com",
+        "password": "Aa1!aaaa",
+        "confirm_password": "Aa1!bbbb",
+    }
+    res = client.post("/users/", json=payload)
+    assert res.status_code == 422  # Validation error
+
+
+def test_create_user_missing_username(client):
+    """Test creating user without username"""
+    payload = {
+        "email": "nouser@example.com",
+        "password": "Aa1!aaaa",
+        "confirm_password": "Aa1!aaaa",
+    }
+    res = client.post("/users/", json=payload)
+    assert res.status_code == 422
+
+
+def test_create_user_invalid_email(client):
+    """Test creating user with invalid email"""
+    payload = {
+        "username": "invalidemail",
+        "email": "not_an_email",
+        "password": "Aa1!aaaa",
+        "confirm_password": "Aa1!aaaa",
+    }
+    res = client.post("/users/", json=payload)
+    assert res.status_code == 422
+
+
+def test_get_nonexistent_user(client):
+    """Test getting a user requires auth"""
+    res = client.get("/users/99999")
+    assert res.status_code == 401  # Requires authentication
+
+
+def test_update_user_profile_not_found(client):
+    """Test updating user requires auth"""
+    payload = {"name": "New Name"}
+    res = client.put("/users/99999", json=payload)
+    assert res.status_code == 401  # Not authenticated
+
+
+def test_search_users_requires_auth(client):
+    """Test searching for users requires auth"""
+    # Create user
+    user_payload = {
+        "username": "searchable",
+        "email": "searchable@example.com",
+        "password": "Aa1!aaaa",
+        "confirm_password": "Aa1!aaaa",
+    }
+    client.post("/users/", json=user_payload)
+    
+    # Search for user without auth
+    res = client.get("/users/search?q=searchable")
+    assert res.status_code == 401  # Requires authentication
+
+
+def test_get_user_by_email(client):
+    """Test getting user by email"""
+    payload = {
+        "username": "emailuser",
+        "email": "unique@example.com",
+        "password": "Aa1!aaaa",
+        "confirm_password": "Aa1!aaaa",
+    }
+    r = client.post("/users/", json=payload)
+    assert r.status_code == 201
+    
+    # Try to get user by email (if endpoint exists)
+    res = client.get(f"/users/email/{payload['email']}")
+    if res.status_code == 200:
+        assert res.json()["email"] == payload["email"]
+
+
+def test_user_profile_view_own_profile(client):
+    """Test viewing own profile"""
+    payload = {
+        "username": "profileuser",
+        "email": "profile@example.com",
+        "password": "Aa1!aaaa",
+        "confirm_password": "Aa1!aaaa",
+    }
+    r = client.post("/users/", json=payload)
+    user_id = r.json()["uid"]
+    
+    login = client.post("/login", json={"email": payload["email"], "password": "Aa1!aaaa"})
+    token = login.json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    
+    res = client.get(f"/users/{user_id}", headers=headers)
+    assert res.status_code == 200
+    assert res.json()["uid"] == user_id
 

@@ -132,5 +132,38 @@
     "following": "已关注",
 
     "noNotification": "你还没有任何通知。"
+  },
+  "userProfile": {
+    "follow": "关注",
+    "following": "已关注",
+    "block": "屏蔽",
+    "blocked": "已屏蔽",
+    "report": "举报",
+
+    "age": "年龄",
+    "bioEmpty": "没有个人简介。",
+    "private": "此账号为私人账号",
+
+    "history": "历史记录",
+    "comments": "评论",
+    "noPosts": "暂无发布内容。",
+    "studyToday": "今日学习时间",
+
+    "postDetail": "帖子详情",
+    "close": "关闭",
+
+    "reportPostTitle": "举报帖子",
+    "reportAccountTitle": "举报账号",
+    "selectReasonPost": "请选择举报该帖子的原因：",
+    "selectReasonAccount": "请选择举报该账号的原因：",
+    "additionalDetails": "其他说明（可选）",
+
+    "submitReport": "提交举报",
+    "cancel": "取消",
+
+    "blockUser": "屏蔽用户",
+    "blockConfirm": "你确定要屏蔽",
+    "blockDetail": "该用户将无法查看你的帖子或与你互动。你可以随时取消屏蔽。",
+    "confirmBlock": "确认屏蔽"
   }
 }
