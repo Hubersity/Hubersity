@@ -943,20 +943,3 @@ def delete_comment(
     return {"detail": "Comment deleted"}
 
 
-@router.post("/comments/{comment_id}/report")
-def report_comment(
-    comment_id: int,
-    reason: str = Form(...),
-    details: str = Form(""),
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
-):
-    comment = db.query(models.Comment).filter(models.Comment.cid == comment_id).first()
-    if not comment:
-        raise HTTPException(status_code=404, detail="Comment not found")
-
-    print(f"🧾 Comment {comment_id} reported by user {current_user.uid}: {reason} | {details}")
-
-    # ถ้าอยากให้บันทึกจริงไว้ใน DB ก็สามารถเพิ่ม model ใหม่ได้ทีหลัง
-    return {"detail": "Report received"}
-

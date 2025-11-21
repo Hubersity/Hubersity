@@ -215,30 +215,51 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
     }
 
     try {
-      const response = await fetch(`${API_URL}/posts/${postId}/report`, {
-        method: "POST",
-        headers: {
+      let endpoint;
+      let body;
+      let headers;
+
+      const idStr = String(postId);
+
+      if (idStr.startsWith("comment-")) {
+        // comment report → strip prefix and send to /comments/{id}/report
+        const commentId = postId.replace("comment-", "");
+        endpoint = `${API_URL}/posts/comments/${commentId}/report`;
+
+        // backend expects JSON (schemas.ReportRequest)
+        body = JSON.stringify({ reason, details });
+        headers = {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${authData.token}`
-        },
-        body: JSON.stringify({
-          reason,
-          details,
-        }),
+          Authorization: `Bearer ${authData.token}`,
+        };
+      } else {
+        // post report → /posts/{id}/report
+        endpoint = `${API_URL}/posts/${postId}/report`;
+
+        body = JSON.stringify({ reason, details });
+        headers = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authData.token}`,
+        };
+      }
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body,
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to report post: ${response.status}`);
+        throw new Error(`Failed to report: ${response.status}`);
       }
 
       console.log("Report submitted successfully");
       onClose();
-      // Optionally show a toast or close modal
     } catch (err) {
       console.error("Error submitting report:", err);
-      // Optionally show error feedback
     }
   }
+
   // ตรวจจับ mount / unmount
   useEffect(() => {
     if (open && !mountedRef.current) {
@@ -863,8 +884,9 @@ const handlePost = async () => {
 
       // ถ้าเป็น comment (prefix comment-)
       const endpoint = postId.startsWith("comment-")
-        ? `${API_URL}/posts/comments/${postId.replace("comment-", "")}/report`
-        : `${API_URL}/posts/${postId}/report`;
+      ? `${API_URL}/posts/comments/${postId.replace("comment-", "")}/report`
+      : `${API_URL}/posts/${postId}/report`;
+
 
       const res = await fetch(endpoint, {
         method: "POST",
