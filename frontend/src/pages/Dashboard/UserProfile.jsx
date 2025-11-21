@@ -32,6 +32,16 @@ function formatTimeAgo(createdAt) {
   });
 }
 
+// ฟังก์ชันแปลงวินาทีเป็น HH:MM:SS
+function formatSeconds(sec) {
+  if (sec == null) return "00:00:00";
+  const s = Number(sec);
+  const h = String(Math.floor(s / 3600)).padStart(2, "0");
+  const m = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+  const ss = String(s % 60).padStart(2, "0");
+  return `${h}:${m}:${ss}`;
+}
+
 export default function UserProfile() {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -39,7 +49,13 @@ export default function UserProfile() {
 
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
-  const [studyTime, setStudyTime] = useState(null);
+  // const [studyTime, setStudyTime] = useState(null); 
+  const [studyTime, setStudyTime] = useState({
+    seconds: 0,
+    time: "00:00:00",
+    image: "/images/ts_l0-rebg.png",
+    running: false,
+  });
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [authData, setAuthData] = useState(null);
@@ -97,7 +113,26 @@ export default function UserProfile() {
     }
   };
 
-
+  function buildStudyDisplayFromSeconds(totalSeconds) {
+    const secs = Math.max(0, Number(totalSeconds) || 0);
+  
+    const h = secs / 3600;
+    let img = "/images/ts_l0-rebg.png";
+    if (h > 0 && h < 3) img = "/images/ts_l1-rebg.png";
+    else if (h >= 3 && h < 6) img = "/images/ts_l2-rebg.png";
+    else if (h >= 6 && h < 9) img = "/images/ts_l3-rebg.png";
+    else if (h >= 9) img = "/images/ts_l4-rebg.png";
+  
+    const hh = String(Math.floor(secs / 3600)).padStart(2, "0");
+    const mm = String(Math.floor((secs % 3600) / 60)).padStart(2, "0");
+    const ss = String(secs % 60).padStart(2, "0");
+  
+    return {
+      seconds: secs,
+      time: `${hh}:${mm}:${ss}`,
+      image: img,
+    };
+  }
 
   // โหลด token จาก localStorage
   useEffect(() => {
@@ -145,8 +180,8 @@ export default function UserProfile() {
             headers: { Authorization: `Bearer ${authData.token}` },
           });
           if (postsRes.ok) setPosts(await postsRes.json());
-          const localStudy = JSON.parse(localStorage.getItem("study_today") || "{}");
-          setStudyTime(localStudy);
+          // const localStudy = JSON.parse(localStorage.getItem("study_today") || "{}");
+          // setStudyTime(localStudy);
         }
       } catch (err) {
         console.error("Error fetching user data:", err);
@@ -200,7 +235,75 @@ export default function UserProfile() {
     checkFollowing();
   }, [authData, user]);
 
-  
+  // ดึง study time + active session แล้วให้มันติ๊กทุก 1 วิ
+  useEffect(() => {
+    if (!authData?.token || !user) return;
+
+    let cancelled = false;
+
+    // ฟังก์ชันดึงจาก backend
+    const syncFromServer = async () => {
+      try {
+        const [todayRes, activeRes] = await Promise.all([
+          fetch(`${API_URL}/study/today/${userId}`, {
+            headers: { Authorization: `Bearer ${authData.token}` },
+          }),
+          fetch(`${API_URL}/study/active/${userId}`, {
+            headers: { Authorization: `Bearer ${authData.token}` },
+          }),
+        ]);
+
+        if (!todayRes.ok) return;
+        const todayData = await todayRes.json(); // { seconds, time, image }
+
+        let seconds = todayData.seconds || 0;
+        let running = false;
+
+        if (activeRes.ok) {
+          const activeData = await activeRes.json(); // { active, start_time, server_now }
+
+          if (activeData.active) {
+            running = true;
+
+            const start = new Date(activeData.start_time);
+            const now = new Date();
+
+            // กันเคสข้ามวัน → นับตั้งแต่เที่ยงคืนวันนี้
+            const midnight = new Date(now);
+            midnight.setHours(0, 0, 0, 0);
+
+            const effectiveStart = start < midnight ? midnight : start;
+            const extra = Math.max(
+              0,
+              Math.floor((now.getTime() - effectiveStart.getTime()) / 1000)
+            );
+
+            seconds += extra;
+          }
+        }
+
+        if (!cancelled) {
+          setStudyTime({
+            ...buildStudyDisplayFromSeconds(seconds),
+            running,
+          });
+        }
+      } catch (err) {
+        console.error("Error syncing study time:", err);
+      }
+    };
+
+    // sync ครั้งแรกตอนเข้า
+    syncFromServer();
+    // sync ทุก 1 วิ → ได้ทั้งตอนวิ่ง & ตอนหยุด
+    const id = setInterval(syncFromServer, 1000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [authData, user, userId]);
+
   if (error)
     return <div className="p-10 text-center text-red-500">Failed to load user: {error}</div>;
   if (!authData)
@@ -215,8 +318,6 @@ export default function UserProfile() {
   const profileImg = user.profile_image
     ? `${API_URL}${user.profile_image}`
     : "/images/default-avatar.png";
-
-    
 
   const handleFollowToggle = async () => {
     if (!authData?.token) return;
@@ -283,8 +384,13 @@ export default function UserProfile() {
       console.error("Block failed:", err);
     }
   };
-  
-  
+
+  // const fetchStudyTime = async () => {
+  //   const res = await fetch(`${API_URL}/study/today/${userId}`, {
+  //     headers: { Authorization: `Bearer ${authData.token}` },
+  //   });
+  //   if (res.ok) setStudyTime(await res.json());
+  // };
 
   return (
     <div className="flex flex-col items-center bg-white min-h-[calc(100vh-64px)] py-10 relative">
@@ -506,13 +612,13 @@ export default function UserProfile() {
             <div className="flex justify-center">
               <div className="flex flex-col items-center bg-[#fffdf9] p-6 rounded-[16px] shadow-md w-[200px] border border-[#f7dfc4]">
                 <img
-                  src={studyTime?.image || "/images/ts_l0-rebg.png"}
+                  src={studyTime.image || "/images/ts_l0-rebg.png"}
                   alt="study-status"
                   className="w-20 h-20 object-contain mb-2"
                 />
                 <h4 className="text-md font-semibold text-gray-700">{t("userProfile.studyToday")}</h4>
                 <p className="text-xl font-bold text-[#e65a2c] mt-1">
-                  {studyTime?.time || "00:00:00"}
+                  {studyTime.time}
                 </p>
               </div>
             </div>
