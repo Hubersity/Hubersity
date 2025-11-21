@@ -74,10 +74,12 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     }
   }, [userObj?.uid, token]);
 
+  // ส่งเวลาให้ parent
   useEffect(() => {
     if (typeof onSyncSeconds === "function") onSyncSeconds(time);
   }, [time, onSyncSeconds]);
 
+  // load เวลา + sync จาก server ตอน mount
   useEffect(() => {
     if (!userObj?.uid || !token) return;
     syncFromServer();
@@ -87,6 +89,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     };
   }, [userObj?.uid, token, syncFromServer]);
 
+  // ถ้า user สลับ tab ออกไป → กลับมาใหม่ มันจะเช็คเวลาใหม่จาก server ทันที เพื่อกันเวลาเพี้ยน
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
@@ -100,69 +103,67 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     };
   }, [syncFromServer]);
 
-
-  // every time "time" เปลี่ยน ส่งขึ้น parent เพื่อทำสีปฏิทิน
+  // auto split ตอนเที่ยงคืน (ตามเวลาเครื่อง user)
   // useEffect(() => {
-  //   if (typeof onSyncSeconds === "function") onSyncSeconds(time);
-  // }, [time, onSyncSeconds]);
+  //   if (!running || !sessionId) return;
 
-  // useEffect(() => {
-  //   if (!userObj?.uid || !token) return;
-  
-  //   (async () => {
-  //     // 1) โหลดเวลาวันนี้ที่ commit แล้วใน DB
-  //     const now = new Date();
-  //     const y = now.getFullYear();
-  //     const m = String(now.getMonth()+1).padStart(2,'0');
-  //     const d = String(now.getDate()).padStart(2,'0');
+  //   const now = new Date();
+  //   const midnight = new Date(now);
+  //   midnight.setHours(24, 0, 0, 0);
+  //   const ms = midnight.getTime() - now.getTime();
 
-  //     // 1) โหลดยอดที่ commit แล้ว
-  //     const res1 = await fetch(`http://localhost:8000/study/progress/${userObj.uid}/${y}/${m}/${d}`, {
-  //       headers: { Authorization: `Bearer ${token}` }
-  //     });
-  //     const prog = await res1.json();
-  //     const savedSecs = prog.total_seconds ?? (prog.total_minutes || 0) * 60;
-  
-  //     // 2) เช็คว่ามี session ค้างอยู่มั้ย
-  //     const res2 = await fetch(`http://localhost:8000/study/active/${userObj.uid}`, {
-  //       headers: { Authorization: `Bearer ${token}` }
-  //     });
-  //     const active = await res2.json();
-  
-  //     if (active.active) {
-  //       setSessionId(active.sid);
-  
-  //       // ใช้เวลา server เพื่อลดปัญหา clock เพี้ยน
-  //       const serverNow = new Date(active.server_now);
-  //       const start = new Date(active.start_time);
-  
-  //       // กันข้ามเที่ยงคืน: นับเพิ่มเฉพาะส่วนที่ทับวันนี้
-  //       const todayStart = new Date(serverNow);
-  //       todayStart.setHours(0,0,0,0);
-  //       const overlapStart = start > todayStart ? start : todayStart;
-  
-  //       // const extra = Math.max(0, Math.floor((serverNow - overlapStart) / 1000));
-  //       const extra = Math.max(0, Math.floor((serverNow.getTime() - overlapStart.getTime()) / 1000));
-  //       const show = savedSecs + extra;
-  //       setTime(show);
-  //       // เหมือนกด "กำลังวิ่ง"
-  //       setrunning(true);
-  //       // clear interval เก่า ก่อนตั้งใหม่
-  //       if (timerRef.current) clearInterval(timerRef.current);
-  //       timerRef.current = setInterval(() => {
-  //         // แค่เพิ่ม time; effect ด้านบนจะ sync ให้ parent เอง
-  //         setTime((prev) => prev + 1);
-  //       }, 1000);
-  //     } else {
-  //       setTime(savedSecs);
-  //       setrunning(false);
-  //       if (timerRef.current) clearInterval(timerRef.current);
+  //   // กัน bug เผื่อเวลาเครื่องเพี้ยน
+  //   if (ms <= 0 || ms > 24 * 60 * 60 * 1000) return;
+
+  //   const id = setTimeout(async () => {
+  //     try {
+  //       // 1) ปิด session เก่า → backend จะ split เวลาใส่วันเก่าให้
+  //       await pause_time();
+
+  //       // 2) รี clock ของวันนี้เป็น 00:00:00
+  //       setTime(0);
+  //       if (typeof onSyncSeconds === "function") {
+  //         onSyncSeconds(0); // ให้ calendar รู้ว่าของ "วันนี้" เริ่มจาก 0
+  //       }
+
+  //       // 3) เปิด session ใหม่สำหรับวันถัดไป
+  //       await start_t();
+  //     } catch (e) {
+  //       console.error("midnight auto split failed:", e);
   //     }
-  //   })();
-  //   return () => {
-  //     if (timerRef.current) clearInterval(timerRef.current);
-  //   };
-  // }, [userObj?.uid, token]);
+  //   }, ms);
+
+  //   return () => clearTimeout(id);
+  // }, [running, sessionId]); // ไม่ต้องใส่ pause_time / start_t เดี๋ยวมันตั้ง timer ซ้ำทุก render
+
+  // new: ข้ามเที่ยงคืนแล้ว "รีซิงก์" อย่างเดียว (ไม่ stop/start)
+  useEffect(() => {
+    if (!running) return;
+
+    const scheduleNextMidnight = () => {
+      const now = new Date();
+      const nextMidnight = new Date(now);
+      nextMidnight.setHours(24, 0, 0, 0);
+      const ms = nextMidnight.getTime() - now.getTime();
+
+      // กันเคสเวลาเพี้ยน
+      if (ms <= 0 || ms > 24 * 60 * 60 * 1000) return null;
+
+      return setTimeout(async () => {
+        try {
+          // ดึงเวลาของ "วันใหม่" + session ที่ยัง active อยู่
+          await syncFromServer(); 
+        } catch (e) {
+          console.error("midnight resync failed:", e);
+        }
+        // ตั้งรอบเที่ยงคืนถัดไปต่อ
+        scheduleNextMidnight();
+      }, ms);
+    };
+
+    const id = scheduleNextMidnight();
+    return () => id && clearTimeout(id);
+  }, [running, syncFromServer]);
 
   const startSession = async () => {
     if (!userObj?.uid || !token) return;
@@ -186,7 +187,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     // เคลียร์ interval เก่าก่อนกันซ้อน
     if (timerRef.current) clearInterval(timerRef.current);
   
-    // ✅ เพิ่มแค่ time; effect ด้านบนจะ sync ให้ parent เอง
+    // เพิ่มแค่ time; effect ด้านบนจะ sync ให้ parent เอง
     timerRef.current = setInterval(() => {
       setTime(prev => prev + 1);
     }, 1000);
