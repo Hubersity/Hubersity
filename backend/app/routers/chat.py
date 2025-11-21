@@ -14,6 +14,7 @@ from fastapi import HTTPException, Body, WebSocket, APIRouter
 from starlette.status import HTTP_404_NOT_FOUND
 from datetime import datetime, timezone
 from sqlalchemy import or_, and_, func
+from typing import Optional
 # from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/chats", tags=["Chat"])
@@ -94,6 +95,12 @@ def forward(target_chat_id, source_message_id, attachment_id=None, prefix=None, 
                 copy_or_link_attachment(att, to_message=new_msg)
 
     return new_msg
+
+# เพิ่มฟังก์ชันสำหรับแปลงปี
+def get_year_in_local_language(year: int, lang: str) -> str:
+    if lang == 'th':  # ถ้าเป็นภาษาไทยแสดงปี พ.ศ.
+        return str(year + 543)
+    return str(year)  # ถ้าไม่ใช่ภาษาไทยแสดงปี ค.ศ.
 
 # ---------- Endpoints ----------
 
@@ -611,3 +618,23 @@ async def websocket_chat(websocket: WebSocket, user_id: int):
             data = await websocket.receive_text()
     except:
         active_connections.pop(user_id, None)
+
+
+@router.get("/{chat_id}/messages")
+def get_messages(chat_id: int, me_id: int = Query(...), lang: Optional[str] = "en", db: Session = Depends(database.get_db)):
+    msgs = db.query(models.ChatMessage).filter(models.ChatMessage.chat_id == chat_id).all()
+
+    out = []
+    for m in msgs:
+        # แปลงปีในข้อความ
+        message_year = get_year_in_local_language(m.created_at.year, lang)
+
+        out.append({
+            "id": m.id,
+            "sender": "me" if m.sender_id == me_id else "other",
+            "text": m.text,
+            "created_at": m.created_at.isoformat(),
+            "message_year": message_year,  # เพิ่มปีที่แสดงตามภาษา
+        })
+
+    return out

@@ -165,5 +165,47 @@
     "blockConfirm": "你确定要屏蔽",
     "blockDetail": "该用户将无法查看你的帖子或与你互动。你可以随时取消屏蔽。",
     "confirmBlock": "确认屏蔽"
+  },
+  "chat": {
+    "findFriend": "查找朋友...",
+    "typeMessage": "输入信息...",
+    "noChats": "还没有聊天",
+    "selectChat": "选择一个聊天开始发送消息",
+    "deleteMessage": "删除消息",
+    "forwardMessage": "转发消息",
+    "copyMessage": "复制消息",
+    "downloadFile": "下载文件",
+    "cancel": "取消",
+    "send": "发送",
+    "notFoundUserName": "未找到此用户名",
+    "remove": "删除"
+  },
+  "calendar": {
+    "daysOfWeek": {
+      "sun": "日",
+      "mon": "一",
+      "tue": "二",
+      "wed": "三",
+      "thu": "四",
+      "fri": "五",
+      "sat": "六"
+    },
+    "studyHours": {
+      "study0": "学习 0 小时",
+      "study1": "学习 0 秒到 3 小时",
+      "study2": "学习 3 到 6 小时",
+      "study3": "学习 6 到 9 小时",
+      "study4": "学习超过 9 小时"
+    },
+    "monthNames": [
+      "一月", "二月", "三月", "四月", "五月", "六月",
+      "七月", "八月", "九月", "十月", "十一月", "十二月"
+    ]
+  },
+  "time_study": {
+    "start": "开始",
+    "pause": "暂停",
+    "today": "今天",
+    "loadingUser": "正在加载用户..."
   }
 }

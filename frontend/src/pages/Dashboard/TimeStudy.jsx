@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { PlayIcon, PauseIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 // สร้างวันที่ปัจจุบัน
 // const currentDate = new Date();
 
 function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
+  const { t, i18n } = useTranslation();  // ใช้ i18next
   const [time, setTime] = useState(0); 
   const [running, setrunning] = useState(false);
   const [activeButton, setActiveButton] = useState(null);
   const timerRef = useRef(null);
   const [sessionId, setSessionId] = useState(null);
-
-  const baseSecsRef = useRef(0);        // วินาทีที่ commit แล้ว + extra ณ ตอน sync ล่าสุด
-  const baseClientNowRef = useRef(0);   // เวลาเครื่อง ณ ตอน sync ล่าสุด
 
   const syncFromServer = useCallback(async () => {
     if (!userObj?.uid || !token) return;
@@ -102,39 +101,6 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
       document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, [syncFromServer]);
-
-  // auto split ตอนเที่ยงคืน (ตามเวลาเครื่อง user)
-  // useEffect(() => {
-  //   if (!running || !sessionId) return;
-
-  //   const now = new Date();
-  //   const midnight = new Date(now);
-  //   midnight.setHours(24, 0, 0, 0);
-  //   const ms = midnight.getTime() - now.getTime();
-
-  //   // กัน bug เผื่อเวลาเครื่องเพี้ยน
-  //   if (ms <= 0 || ms > 24 * 60 * 60 * 1000) return;
-
-  //   const id = setTimeout(async () => {
-  //     try {
-  //       // 1) ปิด session เก่า → backend จะ split เวลาใส่วันเก่าให้
-  //       await pause_time();
-
-  //       // 2) รี clock ของวันนี้เป็น 00:00:00
-  //       setTime(0);
-  //       if (typeof onSyncSeconds === "function") {
-  //         onSyncSeconds(0); // ให้ calendar รู้ว่าของ "วันนี้" เริ่มจาก 0
-  //       }
-
-  //       // 3) เปิด session ใหม่สำหรับวันถัดไป
-  //       await start_t();
-  //     } catch (e) {
-  //       console.error("midnight auto split failed:", e);
-  //     }
-  //   }, ms);
-
-  //   return () => clearTimeout(id);
-  // }, [running, sessionId]); // ไม่ต้องใส่ pause_time / start_t เดี๋ยวมันตั้ง timer ซ้ำทุก render
 
   // new: ข้ามเที่ยงคืนแล้ว "รีซิงก์" อย่างเดียว (ไม่ stop/start)
   useEffect(() => {
@@ -244,7 +210,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
 
   return (
     <div>
-      <h2 className="text-5xl font-bold self-end mb-8 mt-4">Today</h2>
+      <h2 className="text-5xl font-bold self-end mb-8 mt-4">{t('time_study.today')}</h2>
       <div className="flex flex-col items-center gap-2">
         <div className="flex gap-1">
           <img src={ShowPicture} alt="study-status" className="max-w-[450px] max-h-[450px] w-auto h-auto object-contain" />
@@ -285,12 +251,13 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
 }
 
 function Text_InfoHour() {
+  const { t, i18n } = useTranslation();  // ใช้ i18next
   const items = [
-    { color: "bg-[#a6a6a6]", label: "Study 0 hour" },
-    { color: "bg-[#38b6ff]", label: "Study more than 0 seconds to 3 hours" },
-    { color: "bg-[#fe9031]", label: "study between 3 to 6 hours" },
-    { color: "bg-[#8c52ff]", label: "Study between 6 to 9 hours" },
-    { color: "bg-[#ea4128]", label: "Study more than 9 hours" },
+    { color: "bg-[#a6a6a6]", label: t("calendar.studyHours.study0") },
+    { color: "bg-[#38b6ff]", label: t("calendar.studyHours.study1") },
+    { color: "bg-[#fe9031]", label: t("calendar.studyHours.study2") },
+    { color: "bg-[#8c52ff]", label: t("calendar.studyHours.study3") },
+    { color: "bg-[#ea4128]", label: t("calendar.studyHours.study4") },
   ];
 
   return (
@@ -315,6 +282,7 @@ const getTodayStr = () => {
 };
 
 function Calendar() {
+  const { t, i18n } = useTranslation();  // ใช้ i18next
   const currentDate = new Date();
   // const [month, setMonth] = useState(currentDate.getMonth() + 1);
   // const [year, setYear] = useState(currentDate.getFullYear());
@@ -350,10 +318,7 @@ function Calendar() {
     }
   }, []);
 
-  const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
+  const monthNames = t('calendar.monthNames', { returnObjects: true }); // ดึงเดือนจากไฟล์แปล
 
   const fetchCalendar = async () => {
     if (!userObj?.uid || !token) return;
@@ -467,6 +432,17 @@ function Calendar() {
     });
   };
 
+  const getYearInLocalLanguage = (year, lang) => {
+    if (lang === "th") {
+      return year + 543; // ถ้าเป็นภาษาไทยแสดงปี พ.ศ.
+    }
+    return year; // ถ้าไม่ใช่ภาษาไทยแสดงปี ค.ศ.
+  };
+  // แปลงปีให้เป็น พ.ศ. หรือ ค.ศ.
+  const formattedYear = getYearInLocalLanguage(year, i18n.language);
+  // ใช้คำแปลจาก JSON
+  const daysOfWeek = t('calendar.daysOfWeek', { returnObjects: true });
+
   return (
     <>
       <div className="flex gap-6 items-start">
@@ -474,7 +450,7 @@ function Calendar() {
           <div className="bg-[#fffbf5] rounded-xl shadow-2xl p-8">
             <div className="flex justify-between items-center mb-4">
               <div className="font-bold text-3xl">
-                <span>{`${monthNames[month - 1]} ${year}`}</span>
+                <span>{`${monthNames[month - 1]} ${formattedYear}`}</span>
               </div>
               <div className="text-3xl">
                 <button onClick={prevMonth} className="ml-4">
@@ -488,9 +464,9 @@ function Calendar() {
               </div>
             </div>
             <div className="grid grid-cols-7 gap-4">
-              {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((day, index) => (
+              {["sun", "mon", "tue", "wed", "thu", "fri", "sat"].map((day, index) => (
                 <div key={index} className="font-bold text-center">
-                  {day}
+                  {daysOfWeek[day]} {/* แสดงชื่อวันตามภาษาที่เลือก */}
                 </div>
               ))}
               {renderCalendar()}
@@ -510,7 +486,7 @@ function Calendar() {
               onAfterStop={fetchCalendar}                 // ← ให้รีโหลดสีทั้งเดือนหลัง stop
             />
           ) : (
-            <div className="text-sm text-gray-500">Loading user...</div>
+            <div className="text-sm text-gray-500">{t('time_study.loadingUser')}</div>
           )}
         </div>
       </div>
