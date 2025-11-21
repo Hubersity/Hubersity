@@ -24,7 +24,7 @@ export default function GoogleCallback() {
     const handleGoogleFlow = async () => {
       try {
         if (newUser) {
-          // ✅ Save session immediately before going to create-account
+          // Save session
           localStorage.setItem(
             `authData_${usernameKey}`,
             JSON.stringify({
@@ -39,12 +39,12 @@ export default function GoogleCallback() {
 
           console.log("💾 New Google user session saved:", usernameKey);
 
-          // 🚀 Navigate to create-account with prefilled info
+          // Navigate to create-account with prefilled info
           navigate("/create-account", {
             state: { email, name, picture },
           });
         } else {
-          // ✅ Existing user → same as normal login
+          // Existing user
           const meRes = await fetch("http://localhost:8000/users/me", {
             headers: { Authorization: `Bearer ${token}` },
           });
