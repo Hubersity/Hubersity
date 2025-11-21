@@ -57,7 +57,7 @@ export default function SettingAdminReply() {
       try {
         setLoading(true);
 
-        const res = await fetch(`${API_URL}/notification/user/${uid}`, {
+        const res = await fetch(`${API_URL}/notification/system/${uid}`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 
@@ -72,8 +72,9 @@ export default function SettingAdminReply() {
           (a, b) => new Date(b.created_at) - new Date(a.created_at)
         );
 
-        setItems(sorted);
-        setSelected(sorted[0] || null);
+      const filtered = sorted.filter(n => n.title === "HelpReportReply");
+      setItems(filtered);
+      setSelected(filtered[0] || null);
       } catch (e) {
         console.error(e);
         setItems([]);

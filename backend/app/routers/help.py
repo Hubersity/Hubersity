@@ -128,7 +128,7 @@ def reply_help(
         raise HTTPException(status_code=404, detail="Report not found")
 
     notification = models.Notification(
-        title="Your Help Report Update",
+        title="HelpReportReply",
         message=reply,
         receiver_id=report.user_id,
         target_role="user"

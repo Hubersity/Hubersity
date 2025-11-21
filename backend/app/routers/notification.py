@@ -248,3 +248,32 @@ def get_notification_by_id(id: int, db: Session = Depends(get_db)):
     if not noti:
         raise HTTPException(status_code=404, detail="Notification not found")
     return noti
+
+@router.get("/system/{uid}", response_model=List[schemas.NotificationResponse])
+def get_system_notifications(uid: int, db: Session = Depends(get_db)):
+    # User exists?
+    user = db.query(models.User).filter(models.User.uid == uid).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # 🔥 RULE: เอาเฉพาะ notification จากระบบ
+    # ถ้าอยากเปลี่ยน rule บอกฉันได้
+    system_titles = ["HelpReport", "HelpReportReply", "Help Update", "Report Update"]
+
+    notifications = db.query(models.Notification).filter(
+        models.Notification.receiver_id == uid,
+        models.Notification.title.in_(system_titles)
+    ).order_by(models.Notification.created_at.desc()).all()
+
+    # Annotate
+    result = []
+    for noti in notifications:
+        sender = db.query(models.User).filter(models.User.uid == noti.sender_id).first()
+        result.append(
+            schemas.NotificationResponse.from_orm(noti).copy(update={
+                "is_read": False,  # system Tab ไม่ track read
+                "sender_username": sender.username if sender else None,
+                "sender_avatar": sender.profile_image if sender else None,
+            })
+        )
+    return result
