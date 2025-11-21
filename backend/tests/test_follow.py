@@ -22,7 +22,7 @@ def test_follow_user_success(client):
     token = login.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
     
-    res = client.post(f"/follow/{user2['uid']}", headers=headers)
+    res = client.post(f"/users/{user2['uid']}/follow", headers=headers)
     assert res.status_code == 201
     assert "Followed successfully" in res.json()["message"]
 
@@ -117,7 +117,7 @@ def test_unfollow_user_success(client):
     client.post(f"/follow/{user2['uid']}", headers=headers)
     
     # Unfollow
-    res = client.delete(f"/follow/{user2['uid']}", headers=headers)
+    res = client.delete(f"/users/{user2['uid']}/follow", headers=headers)
     assert res.status_code == 200
     assert "Unfollowed" in res.json()["message"]
 
