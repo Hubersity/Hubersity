@@ -29,26 +29,6 @@ def upsert_daily_progress(db, user_id: int, add_seconds: int, badge: int, target
     # Check if we're using SQLite (for tests) or PostgreSQL (production)
     dialect_name = db.bind.dialect.name
     
-    # if dialect_name == 'sqlite':
-    #     # ใน SQLite ไม่มี timezone จริง ๆ → เราเก็บเป็น "เที่ยงคืนเวลาไทย (naive)" แทน
-    #     target_date_bangkok = target_day_utc.astimezone(TZ).date()
-
-    #     # สร้าง datetime เที่ยงคืนของวันนั้น (local) แบบไม่มี tz
-    #     day_start_local = datetime(
-    #         target_date_bangkok.year,
-    #         target_date_bangkok.month,
-    #         target_date_bangkok.day,
-    #         0, 0, 0,
-    #     )
-
-        # หา record ของวันนั้นจาก field date (ใช้ date() → ได้ 'YYYY-MM-DD')
-        # dp = (
-        #     db.query(models.DailyProgress)
-        #     .filter(models.DailyProgress.user_id == user_id)
-        #     .filter(func.date(models.DailyProgress.date) == target_date_bangkok)
-        #     .first()
-        # )
-    
     if dialect_name == 'sqlite':
         # ใน SQLite ไม่มี timezone จริง ๆ → เราเก็บเป็น "เที่ยงคืนเวลาไทย (naive)" แทน
         target_date_bangkok = target_day_utc.astimezone(TZ).date()
@@ -111,14 +91,6 @@ def get_today_study(user_id: int, db: Session = Depends(get_db)):
     today_date = today.date()
     dialect_name = db.bind.dialect.name
 
-    # if dialect_name == 'sqlite':
-    #     # SQLite: เราเก็บ date เป็น local midnight (naive) แล้ว
-    #     rec = (
-    #         db.query(models.DailyProgress)
-    #         .filter(models.DailyProgress.user_id == user_id)
-    #         .filter(func.date(models.DailyProgress.date) == today_date.isoformat())
-    #         .first()
-    #     )
     if dialect_name == 'sqlite':
         rec = (
             db.query(models.DailyProgress)
@@ -212,16 +184,7 @@ def stop_session(sid: int, db: Session = Depends(get_db)):
         overlap_end = min(end_local, day_end_local)
 
         seconds = int((overlap_end - overlap_start).total_seconds())
-        # if seconds > 0:
-        #     # แปลง “ต้นวันไทย” เป็น UTC แล้วส่งเข้า daily_progress
-        #     target_day_utc = day_start_local.astimezone(timezone.utc)
-        #     totals = upsert_daily_progress(
-        #         db=db,
-        #         user_id=session.user_id,
-        #         add_seconds=seconds,
-        #         badge=0,
-        #         target_day_utc=target_day_utc,
-        #     )
+        
         seconds = max(0, int((overlap_end - overlap_start).total_seconds()))
 
         target_day_utc = day_start_local.astimezone(timezone.utc)
@@ -264,7 +227,12 @@ def get_calendar(user_id: int, year: int, month: int, db: Session = Depends(get_
     out = {}
     for r in records:
         # แปลง timestamp ที่เก็บเป็น UTC ให้เป็น “วันที่ตามไทย” ก่อนทำ key
-        local_key = r.date.astimezone(TZ).strftime("%Y-%m-%d")
+        # local_key = r.date.astimezone(TZ).strftime("%Y-%m-%d")
+        if db.bind.dialect.name == "sqlite":
+            # SQLite ไม่มี timezone → ใช้วันที่ดิบที่ test ใส่เข้ามา
+            local_key = r.date.date().strftime("%Y-%m-%d")
+        else:
+            local_key = r.date.astimezone(TZ).strftime("%Y-%m-%d")
         total_seconds = getattr(r, "total_seconds", (r.total_minutes or 0) * 60)
         out[local_key] = {
             "total_minutes": r.total_minutes or 0,
