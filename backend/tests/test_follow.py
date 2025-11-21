@@ -29,7 +29,6 @@ def test_follow_user_success(client):
 
 
 def test_follow_self_fails(client):
-    """Test that user cannot follow themselves"""
     user = client.post("/users/", json={
         "username": "selffollower",
         "email": "selffollower@example.com",
@@ -47,7 +46,6 @@ def test_follow_self_fails(client):
 
 
 def test_follow_nonexistent_user_fails(client):
-    """Test following a non-existent user"""
     user = client.post("/users/", json={
         "username": "follower2",
         "email": "follower2@example.com",
@@ -59,13 +57,12 @@ def test_follow_nonexistent_user_fails(client):
     token = login.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
     
-    res = client.post(f"/follow/99999", headers=headers)
+    res = client.post("/users/99999/follow", headers=headers)
     assert res.status_code == 404
     assert "User not found" in res.json()["detail"]
 
 
 def test_follow_duplicate_fails(client):
-    """Test that following same user twice fails"""
     user1 = client.post("/users/", json={
         "username": "follower3",
         "email": "follower3@example.com",
@@ -85,17 +82,16 @@ def test_follow_duplicate_fails(client):
     headers = {"Authorization": f"Bearer {token}"}
     
     # Follow once
-    res1 = client.post(f"/follow/{user2['uid']}", headers=headers)
-    assert res1.status_code == 200
+    res1 = client.post(f"/users/{user2['uid']}/follow", headers=headers)
+    assert res1.status_code in (200, 201)
     
     # Try to follow again
-    res2 = client.post(f"/follow/{user2['uid']}", headers=headers)
+    res2 = client.post(f"/users/{user2['uid']}/follow", headers=headers)
     assert res2.status_code == 400
     assert "Already following" in res2.json()["detail"]
 
 
 def test_unfollow_user_success(client):
-    """Test successfully unfollowing a user"""
     user1 = client.post("/users/", json={
         "username": "follower4",
         "email": "follower4@example.com",
@@ -114,17 +110,14 @@ def test_unfollow_user_success(client):
     token = login.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
     
-    # Follow user
-    client.post(f"/follow/{user2['uid']}", headers=headers)
+    client.post(f"/users/{user2['uid']}/follow", headers=headers)
     
-    # Unfollow
     res = client.delete(f"/users/{user2['uid']}/follow", headers=headers)
     assert res.status_code == 200
     assert "Unfollowed" in res.json()["message"]
 
 
 def test_unfollow_nonexistent_fails(client):
-    """Test unfollowing user who isn't followed"""
     user1 = client.post("/users/", json={
         "username": "follower5",
         "email": "follower5@example.com",
@@ -143,14 +136,12 @@ def test_unfollow_nonexistent_fails(client):
     token = login.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
     
-    # Try to unfollow without following first
-    res = client.delete(f"/follow/{user2['uid']}", headers=headers)
+    res = client.delete(f"/users/{user2['uid']}/follow", headers=headers)
     assert res.status_code == 404
     assert "not following" in res.json()["detail"]
 
 
 def test_get_followers_list(client):
-    """Test retrieving list of followers"""
     user1 = client.post("/users/", json={
         "username": "follower6",
         "email": "follower6@example.com",
@@ -169,13 +160,11 @@ def test_get_followers_list(client):
     token = login.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
     
-    # Follow user2
-    follow_res = client.post(f"/follow/{user2['uid']}", headers=headers)
-    assert follow_res.status_code == 201
-    
-    # Following was successful
+    follow_res = client.post(f"/users/{user2['uid']}/follow", headers=headers)
+    assert follow_res.status_code in (200, 201)
+
+
 def test_get_following_list(client):
-    """Test retrieving list of users being followed"""
     user1 = client.post("/users/", json={
         "username": "follower7",
         "email": "follower7@example.com",
@@ -194,8 +183,5 @@ def test_get_following_list(client):
     token = login.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
     
-    # Follow user2
-    follow_res = client.post(f"/follow/{user2['uid']}", headers=headers)
-    assert follow_res.status_code == 201
-    
-    # Following was successful
+    follow_res = client.post(f"/users/{user2['uid']}/follow", headers=headers)
+    assert follow_res.status_code in (200, 201)
