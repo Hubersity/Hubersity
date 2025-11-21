@@ -497,6 +497,7 @@ export default function Board() {
           headers: { Authorization: `Bearer ${token}` },
         });
 
+      
         if (!res.ok) throw new Error("Failed to fetch posts");
         const data = await res.json();
 
@@ -847,7 +848,7 @@ const handlePost = async () => {
     setReportOpen(true);
   };
 
-  // ส่งรีพอร์ต (รองรับทั้งโพสต์และคอมเมนต์)
+  // ส่งรีพอร์ต 
   const submitReport = async ({ postId, reason, details }) => {
     try {
       const currentKey = localStorage.getItem("currentUserKey");
