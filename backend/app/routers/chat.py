@@ -103,6 +103,16 @@ def list_my_chats(
     me_id: int = Query(...),
     db: Session = Depends(database.get_db),
 ):
+   # 1) หา mutuals
+    following = {f.following_id for f in db.query(models.Follow).filter_by(follower_id=me_id).all()}
+    followers = {f.follower_id for f in db.query(models.Follow).filter_by(following_id=me_id).all()}
+    mutuals = following & followers
+
+    # 2) ensure chat for each mutual
+    for uid in mutuals:
+        ensure_chat_if_friends(db, me_id, uid)
+
+    # 3) แล้วค่อย query chats ตามเดิม
     chats = (
         db.query(models.Chat)
         .filter((models.Chat.user1_id == me_id) | (models.Chat.user2_id == me_id))
@@ -112,9 +122,9 @@ def list_my_chats(
     result = []
     for c in chats:
         other_id = c.user2_id if c.user1_id == me_id else c.user1_id
+        # ข้ามคู่ที่ไม่ได้เป็นเพื่อนแล้ว (กรณี unfriend)
         if not is_friends(db, me_id, other_id):
             continue
-
         friend = c.user2 if c.user1_id == me_id else c.user1
 
         # ข้อความล่าสุด
