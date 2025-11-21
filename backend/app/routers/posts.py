@@ -398,6 +398,52 @@ def get_posts_by_forum(
         )
     return response
 
+@router.get("/following", response_model=List[schemas.PostResponse])
+def get_following_posts(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+
+    following_ids = (
+        db.query(models.Follow.following_id)
+        .filter(models.Follow.follower_id == current_user.uid)
+        .subquery()
+    )
+
+    # รวมทั้งโพสต์ของตัวเองด้วย
+    posts = (
+        db.query(models.Post)
+        .filter(
+            (models.Post.user_id.in_(following_ids)) |
+            (models.Post.user_id == current_user.uid)
+        )
+        .order_by(models.Post.created_at.desc())
+        .all()
+    )
+
+    response = []
+    for post in posts:
+        like_count = db.query(models.Like).filter(models.Like.post_id == post.pid).count()
+
+        response.append(
+            schemas.PostResponse(
+                pid=post.pid,
+                post_content=post.post_content,
+                forum_id=post.forum_id,
+                user_id=post.user_id,
+                username=post.user.username,
+                profile_image=post.user.profile_image,
+                like_count=like_count,
+                liked=False,
+                tags=post.tags,
+                images=post.images,
+                comments=post.comments,
+                created_at=post.created_at
+            )
+        )
+
+    return response
+
 @router.get("/{post_id}", response_model=schemas.PostResponse)
 def get_post(
     post_id: int,
@@ -876,3 +922,4 @@ def report_comment(
 
     # ถ้าอยากให้บันทึกจริงไว้ใน DB ก็สามารถเพิ่ม model ใหม่ได้ทีหลัง
     return {"detail": "Report received"}
+

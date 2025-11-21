@@ -21,14 +21,19 @@ async def create_help_report(
 
     # Save file if uploaded
     if file:
-        save_dir = "uploads/help"
+        save_root = "uploads"                    # static mount root
+        save_dir = f"{save_root}/help"           # folder inside uploads/help
         os.makedirs(save_dir, exist_ok=True)
 
         cleaned_name = file.filename.replace(" ", "_")
-        file_path = f"{save_dir}/{cleaned_name}"
+        full_path = os.path.join(save_dir, cleaned_name)
 
-        with open(file_path, "wb") as f:
+        # save file to disk
+        with open(full_path, "wb") as f:
             f.write(await file.read())
+
+        # store only relative path (match StaticFiles)
+        file_path = f"help/{cleaned_name}"
 
     # Save report
     report = models.HelpReport(
@@ -45,7 +50,7 @@ async def create_help_report(
 
 
 # =====================================================================
-# 1. ADMIN — GET ALL REPORTS (FIX AVATAR PATH)
+# 1. ADMIN — GET ALL REPORTS
 # =====================================================================
 @router.get("/", response_model=list[schemas.HelpReportResponse])
 def get_reports(db: Session = Depends(get_db)):
@@ -69,22 +74,15 @@ def get_reports(db: Session = Depends(get_db)):
     response = []
 
     for r in reports:
-
-        # -------------------------------
-        # FIX 1: avatar path cleaning
-        # -------------------------------
-        avatar = None
+        avatar_url = None
         if r.avatar:
-            clean_avatar = r.avatar.lstrip("/")       # remove any leading slash
-            avatar = f"http://localhost:8000/{clean_avatar}"
+            clean_avatar = r.avatar.lstrip("/")
+            avatar_url = f"http://localhost:8000/{clean_avatar}"
 
-        # -------------------------------
-        # FIX 2: help file path cleaning
-        # -------------------------------
         file_url = None
         if r.file_path:
-            file_clean = r.file_path.lstrip("/")      # remove leading slash
-            file_url = f"http://localhost:8000/{file_clean}"
+            file_clean = r.file_path.lstrip("/")      # "help/a.pdf"
+            file_url = f"http://localhost:8000/uploads/{file_clean}"
 
         response.append({
             "id": r.id,
@@ -93,7 +91,7 @@ def get_reports(db: Session = Depends(get_db)):
             "resolved": r.resolved,
             "created_at": r.created_at,
             "username": r.username,
-            "avatar": avatar,
+            "avatar": avatar_url,
         })
 
     return response

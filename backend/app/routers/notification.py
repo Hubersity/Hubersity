@@ -96,47 +96,48 @@ def get_admin_notifications(db: Session = Depends(get_db)):
 
 @router.get("/user/{uid}", response_model=List[schemas.NotificationResponse])
 def get_user_notifications(uid: int, db: Session = Depends(get_db)):
-    # Determine target role based on is_admin
     user = db.query(models.User).filter(models.User.uid == uid).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
     target_role = "admin" if user.is_admin else "user"
 
-    # Get read notification IDs
     read_ids = db.query(models.NotificationRead.notification_id).filter(
         models.NotificationRead.user_id == uid
     ).all()
     read_ids_set = set(r[0] for r in read_ids)
 
-    # Get relevant notifications
-    if target_role == "admin":
+    if user.is_admin:
         notifications = db.query(models.Notification).filter(
-            (models.Notification.target_role == target_role) |
-            (models.Notification.receiver_id == uid)
+            or_(
+                models.Notification.target_role == "admin",
+                models.Notification.receiver_id == uid,
+                models.Notification.title == "all"
+            )
         ).order_by(models.Notification.created_at.desc()).all()
     else:
         notifications = db.query(models.Notification).filter(
-            (models.Notification.target_role == target_role) and
-            (models.Notification.receiver_id == uid) |
-            (models.Notification.title == "all")
+            or_(
+                and_(
+                    models.Notification.target_role == "user",
+                    models.Notification.receiver_id == uid
+                ),
+                models.Notification.title == "all"
+            )
         ).order_by(models.Notification.created_at.desc()).all()
 
-    # Annotate each with is_read
+    # annotate
     result = []
     for noti in notifications:
         sender = db.query(models.User).filter(models.User.uid == noti.sender_id).first()
-
         result.append(
             schemas.NotificationResponse.from_orm(noti).copy(update={
                 "is_read": noti.id in read_ids_set,
                 "sender_username": sender.username if sender else None,
-                "sender_avatar": sender.profile_image if sender else None
+                "sender_avatar": sender.profile_image if sender else None,
             })
         )
     return result
-
-
 
 @router.get("/me", response_model=List[schemas.NotificationResponse])
 def get_my_notifications(
