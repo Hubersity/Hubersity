@@ -23,7 +23,7 @@ def test_follow_user_success(client):
     headers = {"Authorization": f"Bearer {token}"}
     
     res = client.post(f"/follow/{user2['uid']}", headers=headers)
-    assert res.status_code == 200
+    assert res.status_code == 201
     assert "Followed successfully" in res.json()["message"]
 
 
@@ -170,7 +170,7 @@ def test_get_followers_list(client):
     
     # Follow user2
     follow_res = client.post(f"/follow/{user2['uid']}", headers=headers)
-    assert follow_res.status_code == 200
+    assert follow_res.status_code == 201
     
     # Following was successful
 def test_get_following_list(client):
@@ -195,6 +195,6 @@ def test_get_following_list(client):
     
     # Follow user2
     follow_res = client.post(f"/follow/{user2['uid']}", headers=headers)
-    assert follow_res.status_code == 200
+    assert follow_res.status_code == 201
     
     # Following was successful
