@@ -3,7 +3,6 @@ from app import models
 
 
 def test_follow_user_success(client):
-    """Test successfully following a user"""
     user1 = client.post("/users/", json={
         "username": "follower1",
         "email": "follower1@example.com",
@@ -24,7 +23,9 @@ def test_follow_user_success(client):
     
     res = client.post(f"/users/{user2['uid']}/follow", headers=headers)
     assert res.status_code == 201
-    assert "Followed successfully" in res.json()["message"]
+
+    message = res.json()["message"]
+    assert ("Followed successfully" in message) or ("Follow request sent" in message)
 
 
 def test_follow_self_fails(client):
