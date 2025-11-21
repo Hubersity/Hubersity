@@ -115,7 +115,7 @@ def create_post(
         post_content=refreshed_post.post_content,
         forum_id=refreshed_post.forum_id,
         user_id=refreshed_post.user_id,
-        username=current_user.name,
+        username=current_user.username,
         like_count=0,
         liked=False,
         profile_image=current_user.profile_image,
