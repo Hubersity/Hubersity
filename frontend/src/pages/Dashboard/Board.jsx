@@ -478,18 +478,25 @@ export default function Board() {
   const videoInputRef = useRef(null);
   const menuRef = useRef(null);
 
-  // โหลดโพสต์จริง
   useEffect(() => {
     const fetchPosts = async () => {
       const currentKey = localStorage.getItem("currentUserKey");
       const token = currentKey
         ? JSON.parse(localStorage.getItem(currentKey) || "{}")?.token
         : null;
+
       if (!token) return;
+
+      const endpoint =
+        activeTab === "follow"
+          ? `${API_URL}/posts/following`
+          : `${API_URL}/posts/all`;
+
       try {
-        const res = await fetch(`${API_URL}/posts/all`, {
+        const res = await fetch(endpoint, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         if (!res.ok) throw new Error("Failed to fetch posts");
         const data = await res.json();
 
@@ -509,22 +516,25 @@ export default function Board() {
               username: c.username,
               content: c.content,
               profile_image: c.profile_image,
-              minutes: Math.floor((Date.now() - new Date(c.created_at)) / 60000),
+              minutes: Math.floor(
+                (Date.now() - new Date(c.created_at)) / 60000
+              ),
               files: c.files || [],
             })) || [],
           images: p.images || [],
           created_at: p.created_at,
-          category: "university",
+          category: activeTab,
         }));
 
-        setPosts(loaded.length > 0 ? loaded : initialPosts);
+        setPosts(loaded.length > 0 ? loaded : []);
+
       } catch (err) {
         console.error("Error loading posts:", err);
       }
     };
-    fetchPosts();
-  }, []);
 
+    fetchPosts();
+  }, [activeTab]); // 🔥 สำคัญ ต้องใส่ activeTab
   const forumIdMap = {
   university: 1, // University Talk → forum id 1
   follow: 2,     // Follow Talk → forum id 2

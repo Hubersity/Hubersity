@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import { getCurrentUser } from "../../api/user";
 
 // =========================
-// 🔹 Navbar Item Config (ใช้ i18n key แทน label)
+// 🔹 Navbar Item Config
 // =========================
 const navItems = [
   { to: "/app/board", key: "sidebar.board", icon: Home },
@@ -33,6 +33,7 @@ const navItems = [
 // =========================
 function Topbar() {
   const [user, setUser] = useState({});
+  const [openMenu, setOpenMenu] = useState(false);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -48,6 +49,13 @@ function Topbar() {
     window.addEventListener("storage", loadUser);
     return () => window.removeEventListener("storage", loadUser);
   }, []);
+
+  const toggleMenu = () => setOpenMenu(!openMenu);
+
+  const logout = () => {
+    localStorage.clear();
+    window.location.href = "/login";
+  };
 
   const getProfileImage = () => {
     if (!user?.profile_image) return "/images/default-avatar.png";
@@ -70,6 +78,7 @@ function Topbar() {
       />
 
       <div className="flex items-center gap-6">
+        {/* CHAT */}
         <Link to="/app/chat">
           <MessageSquare
             size={22}
@@ -77,26 +86,50 @@ function Topbar() {
           />
         </Link>
 
+        {/* NOTIFICATION */}
         <Link to="/app/notification">
-          <div className="relative">
-            <Bell size={22} className="cursor-pointer hover:text-emerald-600 transition" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-white"></span>
-          </div>
+          <Bell
+            size={22}
+            className="cursor-pointer hover:text-emerald-600 transition"
+          />
         </Link>
 
-        <Link
-          to="/app/account"
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
-        >
-          <img
-            src={getProfileImage()}
-            alt="profile"
-            className="w-9 h-9 rounded-full object-cover border border-gray-200"
-          />
-          <span className="text-sm text-slate-700 font-medium">
-            {user?.name || user?.username || t("loading")}
-          </span>
-        </Link>
+        {/* PROFILE DROPDOWN */}
+        <div className="relative">
+          <div
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
+            onClick={toggleMenu}
+          >
+            <img
+              src={getProfileImage()}
+              alt="profile"
+              className="w-9 h-9 rounded-full object-cover border border-gray-200"
+            />
+            <span className="text-sm text-slate-700 font-medium">
+              {user?.name || user?.username || t("loading")}
+            </span>
+          </div>
+
+          {/* DROPDOWN MENU */}
+          {openMenu && (
+            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 shadow-lg rounded-xl overflow-hidden">
+              <Link
+                to="/app/account"
+                className="block px-4 py-2 text-sm hover:bg-gray-100"
+                onClick={() => setOpenMenu(false)}
+              >
+                My Account
+              </Link>
+
+              <button
+                onClick={logout}
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
