@@ -104,37 +104,66 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
   }, [syncFromServer]);
 
   // auto split ตอนเที่ยงคืน (ตามเวลาเครื่อง user)
+  // useEffect(() => {
+  //   if (!running || !sessionId) return;
+
+  //   const now = new Date();
+  //   const midnight = new Date(now);
+  //   midnight.setHours(24, 0, 0, 0);
+  //   const ms = midnight.getTime() - now.getTime();
+
+  //   // กัน bug เผื่อเวลาเครื่องเพี้ยน
+  //   if (ms <= 0 || ms > 24 * 60 * 60 * 1000) return;
+
+  //   const id = setTimeout(async () => {
+  //     try {
+  //       // 1) ปิด session เก่า → backend จะ split เวลาใส่วันเก่าให้
+  //       await pause_time();
+
+  //       // 2) รี clock ของวันนี้เป็น 00:00:00
+  //       setTime(0);
+  //       if (typeof onSyncSeconds === "function") {
+  //         onSyncSeconds(0); // ให้ calendar รู้ว่าของ "วันนี้" เริ่มจาก 0
+  //       }
+
+  //       // 3) เปิด session ใหม่สำหรับวันถัดไป
+  //       await start_t();
+  //     } catch (e) {
+  //       console.error("midnight auto split failed:", e);
+  //     }
+  //   }, ms);
+
+  //   return () => clearTimeout(id);
+  // }, [running, sessionId]); // ไม่ต้องใส่ pause_time / start_t เดี๋ยวมันตั้ง timer ซ้ำทุก render
+
+  // new: ข้ามเที่ยงคืนแล้ว "รีซิงก์" อย่างเดียว (ไม่ stop/start)
   useEffect(() => {
-    if (!running || !sessionId) return;
+    if (!running) return;
 
-    const now = new Date();
-    const midnight = new Date(now);
-    midnight.setHours(24, 0, 0, 0);
-    const ms = midnight.getTime() - now.getTime();
+    const scheduleNextMidnight = () => {
+      const now = new Date();
+      const nextMidnight = new Date(now);
+      nextMidnight.setHours(24, 0, 0, 0);
+      const ms = nextMidnight.getTime() - now.getTime();
 
-    // กัน bug เผื่อเวลาเครื่องเพี้ยน
-    if (ms <= 0 || ms > 24 * 60 * 60 * 1000) return;
+      // กันเคสเวลาเพี้ยน
+      if (ms <= 0 || ms > 24 * 60 * 60 * 1000) return null;
 
-    const id = setTimeout(async () => {
-      try {
-        // 1) ปิด session เก่า → backend จะ split เวลาใส่วันเก่าให้
-        await pause_time();
-
-        // 2) รี clock ของวันนี้เป็น 00:00:00
-        setTime(0);
-        if (typeof onSyncSeconds === "function") {
-          onSyncSeconds(0); // ให้ calendar รู้ว่าของ "วันนี้" เริ่มจาก 0
+      return setTimeout(async () => {
+        try {
+          // ดึงเวลาของ "วันใหม่" + session ที่ยัง active อยู่
+          await syncFromServer(); 
+        } catch (e) {
+          console.error("midnight resync failed:", e);
         }
+        // ตั้งรอบเที่ยงคืนถัดไปต่อ
+        scheduleNextMidnight();
+      }, ms);
+    };
 
-        // 3) เปิด session ใหม่สำหรับวันถัดไป
-        await start_t();
-      } catch (e) {
-        console.error("midnight auto split failed:", e);
-      }
-    }, ms);
-
-    return () => clearTimeout(id);
-  }, [running, sessionId]); // ไม่ต้องใส่ pause_time / start_t เดี๋ยวมันตั้ง timer ซ้ำทุก render
+    const id = scheduleNextMidnight();
+    return () => id && clearTimeout(id);
+  }, [running, syncFromServer]);
 
   const startSession = async () => {
     if (!userObj?.uid || !token) return;
