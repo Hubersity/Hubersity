@@ -302,23 +302,3 @@ def reject_follow_request(
 
     return {"message": "Follow request rejected"}
 
-
-@router.post("/{id}/follow", status_code=201)
-def test_follow_user_compat(
-    id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
-):
-    # ใช้ logic เดิมใน follow router
-    from .follow import follow_user
-    return follow_user(id, db, current_user)
-
-
-@router.delete("/{id}/follow", status_code=200)
-def test_unfollow_user_compat(
-    id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
-):
-    from .follow import unfollow_user
-    return unfollow_user(id, db, current_user)
