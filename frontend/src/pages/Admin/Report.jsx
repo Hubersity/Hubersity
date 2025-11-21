@@ -102,65 +102,85 @@ export default function Report() {
     const [numReportsComment, setNumReportComment] = useState(0);
 
     useEffect(() => {
-        // ถ้าเป็น comment ใช้ mock เลย ไม่ต้องเรียก backend
-        if (lookNow === "comment") {
-            setIsLoading(false);
-            setError(null);
-            setNumReportComment(MOCK_COMMENT.length);
-            setResults(MOCK_COMMENT);
-            return; // ออกจาก effect ตรงนี้เลย
-        }
+        // // ถ้าเป็น comment ใช้ mock เลย ไม่ต้องเรียก backend
+        // if (lookNow === "comment") {
+        //     setIsLoading(false);
+        //     setError(null);
+        //     setNumReportComment(MOCK_COMMENT.length);
+        //     setResults(MOCK_COMMENT);
+        //     return; // ออกจาก effect ตรงนี้เลย
+        // }
 
         const fetchReports = async () => {
             setIsLoading(true);
             setError(null);
 
             try {
-            const response = await fetch("http://127.0.0.1:8000/admin/reports");
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
+                const response = await fetch("http://127.0.0.1:8000/admin/reports");
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
 
-            const data = await response.json();
+                const data = await response.json();
 
-            const formatStatus = (status) =>
-                typeof status === "string"
-                ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
-                : "Pending";
+                const formatStatus = (status) =>
+                    typeof status === "string"
+                        ? status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
+                        : "Pending";
 
-            const formattedPosts = (data.reported_posts || []).map((post) => ({
-                Post_ID: `#${post.Post_ID ?? "-"}`,
-                Post_Content: post.Post_Content ?? "-",
-                NumberOfReports: post.NumberOfReports ?? 0,
-                PopularReasons: post.PopularReasons ?? "-",
-                LastDate: post.LastDate ?? "-",
-                Action: post.Action ?? "",
-                status: formatStatus(post.status)
-            }));
+                const formattedPosts = (data.reported_posts || []).map((post) => ({
+                    Post_ID: `#${post.Post_ID ?? "-"}`,
+                    Post_Content: post.Post_Content ?? "-",
+                    NumberOfReports: post.NumberOfReports ?? 0,
+                    PopularReasons: post.PopularReasons ?? "-",
+                    LastDate: post.LastDate ?? "-",
+                    Action: post.Action ?? "",
+                    status: formatStatus(post.status),
+                }));
 
-            const formattedUsers = (data.reported_users || []).map((user) => ({
-                UserName: user.UserName ?? "-",
-                NumberOfReports: user.NumberOfReports ?? 0,
-                PopularReasons: user.PopularReasons ?? "-",
-                LastDate: user.LastDate ?? "-",
-                Action: user.Action ?? "",
-                status: formatStatus(user.status)
-            }));
+                const formattedUsers = (data.reported_users || []).map((user) => ({
+                    UserName: user.UserName ?? "-",
+                    NumberOfReports: user.NumberOfReports ?? 0,
+                    PopularReasons: user.PopularReasons ?? "-",
+                    LastDate: user.LastDate ?? "-",
+                    Action: user.Action ?? "",
+                    status: formatStatus(user.status),
+                }));
 
-            setNumReports(formattedPosts.length);
-            setNumReportUser(formattedUsers.length);
-            setNumReportComment(MOCK_COMMENT.length);
-            setResults(lookNow === "post" ? formattedPosts : lookNow === "user" ? formattedUsers : MOCK_COMMENT);
+                const formattedComments = (data.reported_comments || []).map((comment) => ({
+                    Comment_ID: `#${comment.Comment_ID ?? "-"}`,
+                    Comment_Content: comment.Comment_Content ?? "-",
+                    NumberOfReports: comment.NumberOfReports ?? 0,
+                    PopularReasons: comment.PopularReasons ?? "-",
+                    LastDate: comment.LastDate ?? "-",
+                    Action: comment.Action ?? "",
+                    status: formatStatus(comment.status),
+                }));
+
+                setNumReports(formattedPosts.length);
+                setNumReportUser(formattedUsers.length);
+                setNumReportComment(formattedComments.length);
+                console.log("lookNow:", lookNow, "posts:", formattedPosts, "users:", formattedUsers, "comments:", formattedComments);
+                setResults(
+                        lookNow === "post"
+                            ? formattedPosts
+                            : lookNow === "user"
+                            ? formattedUsers
+                            : lookNow === "comment"
+                            ? formattedComments
+                            : []
+                );
+
             } catch (err) {
-            console.error("Error fetching reports:", err);
-            setError("Failed to load report data.");
-            setResults([]);
+                console.error("Error fetching reports:", err);
+                setError("Failed to load report data.");
+                setResults([]);
             } finally {
-            setIsLoading(false);
+                setIsLoading(false);
             }
-    };
+        };
 
-    fetchReports();
+        fetchReports();
     }, [lookNow]);
 
 
@@ -305,8 +325,7 @@ export default function Report() {
                     {lookNow === "comment" &&
                         results.map((c) => (
                             <InfoComment
-                            key={c.Comment_ID ?? c.id ?? JSON.stringify(c)}
-                            comment={c}
+                            key={c.Comment_ID ?? c.id ?? JSON.stringify(c)} comment={c}
                           />
                         ))}
                     </div>
