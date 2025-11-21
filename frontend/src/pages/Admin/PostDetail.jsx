@@ -190,7 +190,6 @@ export default function PostDetail() {
                 status: "Resolved"
             }));
 
-            alert("Action sent");
         } catch (e) {
             console.error(e);
             alert("Failed to send action");

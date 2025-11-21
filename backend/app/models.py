@@ -193,6 +193,7 @@ class Comment(Base):
     user = relationship("User", back_populates="comments")
     post = relationship("Post", back_populates="comments")
     files = relationship("CommentFile", back_populates="comment", cascade="all, delete-orphan")
+    reports = relationship("Report", back_populates="comment", cascade="all, delete-orphan")
 
 class Report(Base):
     __tablename__ = "reports"
@@ -201,6 +202,7 @@ class Report(Base):
 
     post_id = Column(Integer, ForeignKey("post.pid"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=True)
+    comment_id = Column(Integer, ForeignKey("comments.cid"), nullable=True)
 
     reporter_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
     report_type = Column(String, nullable=False)
@@ -214,6 +216,7 @@ class Report(Base):
     )
 
     post = relationship("Post", back_populates="reports", foreign_keys=[post_id])
+    comment = relationship("Comment", back_populates="reports", foreign_keys=[comment_id])
     reported_user = relationship("User", foreign_keys=[user_id])
     reporter = relationship("User", back_populates="reports", foreign_keys=[reporter_id])
 

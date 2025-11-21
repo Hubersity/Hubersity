@@ -97,7 +97,13 @@ def follow_user(
     )
     db.add(new_follow)
 
-    # แจ้งเตือน follow
+    noti_payload = {
+        "title": "Follow",
+        "receiver_id": user_id,
+        "target_role": "user",
+        "message": f"{current_user.name} started following you"
+    }
+
     try:
         create_notification_template(
             db=db,

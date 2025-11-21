@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
-
+const API_URL = `http://localhost:8000`; 
 // MOCK ข้อมูลคอมเมนต์ที่ถูกรีพอร์ต (ใช้แทนการเรียก API)
 const MOCK_POSTS = [
   {
@@ -49,32 +49,61 @@ export default function CommentDetail() {
   const { commentId } = useParams();
   const navigate = useNavigate();
 
-  const [post, setPost] = useState(null);
+  const [comment, setComment] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [action, setAction] = useState(""); // chosen action
+  const [action, setAction] = useState("");
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  // ใช้ MOCK_POSTS หา comment ตาม id ใน URL
+
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    async function fetchCommentDetail() {
+      setLoading(true);
+      setError(null);
 
-    const found = MOCK_POSTS.find((p) => p.id === commentId);
+      try {
+        const response = await fetch(`${API_URL}/admin/reports/comment/${commentId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
 
-    if (!found) {
-      setError("Comment not found");
-      setLoading(false);
-      return;
+        const found = await response.json();
+
+        const formatted = {
+          id: String(found.id),
+          user_id: found.user_id || found.uid || null,
+          author: found.username || "-",
+          avatar: found.avatar || "/images/default-avatar.png",
+          content: found.content || "-",
+          createdAt: found.createdAt || new Date().toISOString(),
+          lastReportDate: found.lastReportDate || "-",
+          numberOfReports: found.numberOfReports || 0,
+          reportCategories: found.reportCategories || {},
+          status: found.status
+            ? found.status.charAt(0).toUpperCase() + found.status.slice(1).toLowerCase()
+            : "Pending",
+          action: found.action || ""
+        };
+
+        setComment(formatted);
+      } catch (err) {
+        console.error("Error fetching comment detail:", err);
+        setError("Failed to load comment data.");
+      } finally {
+        setLoading(false);
+      }
     }
 
-    setPost(found);
-    setLoading(false);
+    fetchCommentDetail();
   }, [commentId]);
+
+
+
 
   // mock handleUpdate ไม่เรียก API จริง
   async function handleUpdate() {
+    if (!comment) return;
     if (!action) {
       alert("Please choose an action first");
       return;
@@ -82,20 +111,50 @@ export default function CommentDetail() {
 
     setSaving(true);
 
-    setTimeout(() => {
-      setPost((prev) =>
-        prev
-          ? {
-              ...prev,
-              action: action,
-              status: "Resolved",
-            }
-          : prev
+    try {
+      await new Promise((r) => setTimeout(r, 500));
+
+      if (action === "Delete") {
+        const res = await fetch(`${API_URL}/admin/comments/${comment.id}`, {
+          method: "DELETE"
+        });
+        if (!res.ok) throw new Error("Failed to delete comment");
+
+        alert("Comment deleted successfully");
+        setComment(null);
+        window.location.href = "/app_admin/report";
+        return;
+      }
+
+      if (action === "Ban") {
+        const res = await fetch(`${API_URL}/admin/users/${comment.user_id}/ban`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: message, duration: "1w" })
+        });
+        if (!res.ok) throw new Error("Failed to ban user");
+
+        alert("User banned successfully");
+        setComment((prev) =>
+          prev ? { ...prev, action: "Ban", status: "Banned" } : prev
+        );
+        return;
+      }
+
+      // default case (e.g. Warn or other actions)
+      setComment((prev) =>
+        prev ? { ...prev, action, status: "Resolved" } : prev
       );
+      alert("Action sent");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to send action");
+    } finally {
       setSaving(false);
-      alert("Mock action saved");
-    }, 500);
+    }
   }
+
+
 
   if (loading) {
     return <div className="p-6">Loading comment...</div>;
@@ -126,18 +185,18 @@ export default function CommentDetail() {
           ←
         </button>
         <h2 className="text-2xl font-semibold">
-          Comment ID: #{post.id}
+          Comment ID: #{comment.id}
         </h2>
       </div>
 
       <div className="flex flex-row">
         {/* picture */}
         <div className="flex flex-col items-center justify-start w-20">
-          <span className="text-xs font-medium mb-2">{post.author}</span>
+          <span className="text-xs font-medium mb-2">{comment.author}</span>
           <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
             <img
-              src="/images/Skibidi_.png"
-              alt={post.author}
+              src={comment?.avatar ? `${API_URL}${comment.avatar}` : "/images/default-avatar.png"}
+              alt={comment.author}
               className="w-full h-full object-cover"
             />
           </div>
@@ -146,9 +205,9 @@ export default function CommentDetail() {
         {/* content */}
         <div className="flex-1 rounded-lg shadow p-4 bg-[#fdfaf6]">
           <div className="flex flex-row justify-between items-center">
-            <div className="text-slate-800">{post.content}</div>
+            <div className="text-slate-800">{comment.content}</div>
             <div className="text-sm text-gray-500">
-              {timeAgo(post.createdAt)}
+              {timeAgo(comment.createdAt)}
             </div>
           </div>
         </div>
@@ -161,7 +220,7 @@ export default function CommentDetail() {
           <div className="w-full h-[14vh] bg-[#fdfaf6] rounded-xl shadow-2xl p-4">
             <h1 className="mt-1 text-xl">Last date of report comment</h1>
             <div className="flex justify-center items-center h-full -mt-4">
-              <div className="text-xl font-bold">{post.lastReportDate}</div>
+              <div className="text-xl font-bold">{comment.lastReportDate}</div>
             </div>
           </div>
 
@@ -178,7 +237,6 @@ export default function CommentDetail() {
               <option value="">Choose action</option>
               <option value="Delete">Delete comment</option>
               <option value="Ban">Ban User</option>
-              <option value="Ban">Warn User</option>
             </select>
 
             <label className="block mb-2 text-sm">
@@ -196,7 +254,7 @@ export default function CommentDetail() {
         {/* กลาง: status */}
         <div className="w-[25vw] h-[14vh] bg-[#fdfaf6] rounded-xl shadow-2xl p-4 flex flex-col justify-center items-center">
           <h1 className="text-xl">Status</h1>
-          <div className="text-xl font-bold mt-2">{post.status}</div>
+          <div className="text-xl font-bold mt-2">{comment.status}</div>
         </div>
 
         {/* ขวา: number of reports + Update button */}
@@ -205,13 +263,13 @@ export default function CommentDetail() {
             <h1 className="mt-4 text-xl">Number of reports</h1>
             <div className="flex justify-center items-center h-full -mt-6">
               <div className="text-6xl font-bold">
-                {post.numberOfReports}
+                {comment.numberOfReports}
               </div>
             </div>
             <h1 className="text-xl">Category of reports</h1>
             <div
               dangerouslySetInnerHTML={{
-                __html: formatCategories(post.reportCategories),
+                __html: formatCategories(comment.reportCategories),
               }}
               className="mb-4"
             />

@@ -115,15 +115,17 @@ def create_post(
         post_content=refreshed_post.post_content,
         forum_id=refreshed_post.forum_id,
         user_id=refreshed_post.user_id,
-        username=current_user.username,
+        username=refreshed_post.user.username,   # always safe
+        name=refreshed_post.user.name or refreshed_post.user.username,  # FE can use this
         like_count=0,
         liked=False,
-        profile_image=current_user.profile_image,
+        profile_image=refreshed_post.user.profile_image,
         tags=refreshed_post.tags,
-        images=refreshed_post.images, 
+        images=refreshed_post.images,
         comments=refreshed_post.comments,
         created_at=refreshed_post.created_at
     )
+
 
 
 @router.post("/{post_id}/upload-files")
@@ -210,6 +212,7 @@ def get_my_posts(
                 forum_id=post.forum_id,
                 user_id=post.user_id,
                 username=post.user.username,
+                name=post.user.name,
                 profile_image=post.user.profile_image,
                 like_count=like_count,
                 tags=post.tags,
@@ -271,6 +274,7 @@ def get_all_posts(
                 forum_id=post.forum_id,
                 user_id=post.user_id,
                 username=post.user.username,
+                name=post.user.name or post.user.username,
                 profile_image=post.user.profile_image,
                 liked=is_liked_by_me,
                 like_count=like_count,
@@ -355,6 +359,7 @@ def get_posts(
                 forum_id=post.forum_id,
                 user_id=post.user_id,
                 username=post.user.username if post.user else "Unknown",
+                name=(post.user.name or post.user.username) if post.user else "Unknown",
                 profile_image=post.user.profile_image if post.user else None,
                 like_count=like_count,
                 tags=post.tags,
@@ -388,6 +393,7 @@ def get_posts_by_forum(
                 forum_id=post.forum_id,
                 user_id=post.user_id,
                 username=post.user.username,
+                name=post.user.name or post.user.username,
                 profile_image=post.user.profile_image,
                 like_count=like_count,
                 tags=post.tags,
@@ -432,6 +438,7 @@ def get_following_posts(
                 forum_id=post.forum_id,
                 user_id=post.user_id,
                 username=post.user.username,
+                name=post.user.name or post.user.username,
                 profile_image=post.user.profile_image,
                 like_count=like_count,
                 liked=False,
@@ -463,6 +470,7 @@ def get_post(
         cid=comment.cid,
         user_id=comment.user_id,
         username=comment.user.username if comment.user else "Unknown",
+        name=(comment.user.name or comment.user.username) if comment.user else "Unknown",
         profile_image=comment.user.profile_image if comment.user else None,
         content=comment.content,
         created_at=comment.created_at
@@ -476,11 +484,13 @@ def get_post(
         forum_id=post.forum_id,
         user_id=post.user_id,
         username=post.user.username,
+        name=post.user.name or post.user.username,
         profile_image=post.user.profile_image,
         like_count=like_count,
         tags=post.tags,
         images=post.images,
-        comments=serialized_comments
+        comments=serialized_comments,
+        created_at=post.created_at
     )
 
 
@@ -533,6 +543,7 @@ def update_post(
                 user_id=c.user_id,
                 post_id=c.post_id,
                 username=user.username if user else None,
+                name=(user.name or user.username) if user else "Unknown",
                 profile_image=user.profile_image if user else None,
                 created_at=c.created_at,
                 files=files_response
@@ -545,6 +556,7 @@ def update_post(
         forum_id=post.forum_id,
         user_id=post.user_id,
         username=post.user.username,
+        name=post.user.name or post.user.username,
         profile_image=post.user.profile_image,
         like_count=like_count,
         tags=post.tags,
@@ -647,7 +659,7 @@ async def create_comment(
             "title": "Comment",
             "receiver_id": post.user_id,
             "target_role": "user",
-            "message": f"{current_user.username} commented on your post ID {post_id}"
+            "message": f"{current_user.name} commented on your post ID {post_id}"
         }
         print(noti_payload)
         try:
@@ -667,6 +679,7 @@ async def create_comment(
         user_id=new_comment.user_id,
         post_id=new_comment.post_id,
         username=current_user.username,
+        name=current_user.name or current_user.username,
         profile_image=current_user.profile_image,
         created_at=new_comment.created_at,
         files=files_response
@@ -710,6 +723,7 @@ def get_comments_for_post(
                 user_id=c.user_id,
                 post_id=c.post_id,
                 username=user.username if user else None,
+                name=(user.name or user.username) if user else "Unknown",
                 profile_image=user.profile_image if user else None,
                 created_at=c.created_at,
                 files=files_response  # ตรงนี้คือของที่หายไป
@@ -751,7 +765,7 @@ def toggle_like_post(
             "title": "Like",
             "receiver_id": post.user_id,
             "target_role": "user",
-            "message": f"{current_user.username} liked your post ID {post_id}"
+            "message": f"{current_user.name} liked your post ID {post_id}"
         }
 
         try:
@@ -805,6 +819,42 @@ def report_post(
     return {"message": "Post report submitted"}
 
 
+@router.post("/comments/{comment_id}/report", status_code=status.HTTP_201_CREATED)
+def report_comment(
+    comment_id: int,
+    report_data: schemas.ReportRequest,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    comment = db.query(models.Comment).filter(models.Comment.cid == comment_id).first()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    report = models.Report(
+        comment_id=comment_id,
+        reporter_id=current_user.uid,
+        report_type="comment",
+        reason=report_data.reason
+    )
+    db.add(report)
+
+    noti_payload = {
+        "title": "ReportComment",
+        "receiver_id": comment.user_id,
+        "target_role": "admin"
+    }
+
+    try:
+        create_notification_template(
+            db=db,
+            current_user=current_user,
+            payload_data=noti_payload
+        )
+    except Exception as e:
+        print(f"Error creating internal notification: {e}")
+
+    db.commit()
+    return {"message": "Comment report submitted"}
 
     
 @router.get("/{id}/posts", response_model=List[schemas.PostResponse])
@@ -905,21 +955,4 @@ def delete_comment(
     db.commit()
     return {"detail": "Comment deleted"}
 
-
-@router.post("/comments/{comment_id}/report")
-def report_comment(
-    comment_id: int,
-    reason: str = Form(...),
-    details: str = Form(""),
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(oauth2.get_current_user)
-):
-    comment = db.query(models.Comment).filter(models.Comment.cid == comment_id).first()
-    if not comment:
-        raise HTTPException(status_code=404, detail="Comment not found")
-
-    print(f"🧾 Comment {comment_id} reported by user {current_user.uid}: {reason} | {details}")
-
-    # ถ้าอยากให้บันทึกจริงไว้ใน DB ก็สามารถเพิ่ม model ใหม่ได้ทีหลัง
-    return {"detail": "Report received"}
 

@@ -94,6 +94,8 @@ def get_admin_stats(
         .scalar()
     )
 
+    reported_comment_count = db.query(func.count(distinct(models.Report.comment_id))).scalar()
+
     uni_counts = (db.query(models.User.university, func.count(models.User.uid)).group_by(models.User.university).all())
 
     return {
@@ -101,6 +103,7 @@ def get_admin_stats(
         "post_count": post_count,
         "reported_post_count": reported_post_count,
         "reported_user_count": reported_user_count,
+        "reported_comment_count": reported_comment_count,
         "users_by_university": [
             {"university": uni, "count": count} for uni, count in uni_counts
         ]
@@ -131,6 +134,12 @@ def ban_user(user_id: int, request: schemas.BanRequest, db: Session = Depends(ge
     reports = db.query(models.Report).filter(models.Report.post_id.in_(user_post_ids)).all()
     for report in reports:
         report.status = "Resolved"
+    
+    user_comment_ids = db.query(models.Comment.cid).filter(models.Comment.user_id == user_id).subquery()
+    comment_reports = db.query(models.Report).filter(models.Report.comment_id.in_(user_comment_ids)).all()
+    for report in comment_reports:
+        report.status = "Resolved"
+
     db.commit()
     return {"message": f"{user.username} banned until {user.ban_until.strftime('%Y-%m-%d %H:%M:%S')}"}
 
@@ -171,6 +180,26 @@ def delete_post(
     db.commit()
     return
 
+@router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_comment(
+    comment_id: int,
+    db: Session = Depends(get_db)
+):
+    comment = db.query(models.Comment).filter(models.Comment.cid == comment_id).first()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    noti = db.query(models.Notification).filter_by(
+        title="Comment",
+        sender_id=comment.user_id,
+    ).first()
+    if noti:
+        db.delete(noti)
+
+    db.delete(comment)
+    db.commit()
+    return
+
 @router.get("/reports")
 def get_reported_data(db: Session = Depends(get_db)):
     # --- Reported Posts ---
@@ -208,8 +237,42 @@ def get_reported_data(db: Session = Depends(get_db)):
             "status": post.status or "Pending"
         })
 
+    # --- Reported Comments ---
+    reported_comments = (
+        db.query(
+            models.Report.comment_id.label("comment_id"),
+            models.Comment.content.label("content"),
+            func.count(models.Report.rid).label("report_count"),
+            func.max(models.Report.created_at).label("last_date"),
+            func.max(models.Report.status).label("status"),
+        )
+        .join(models.Comment, models.Comment.cid == models.Report.comment_id)
+        .group_by(models.Report.comment_id, models.Comment.content)
+        .all()
+    )
+
+    comment_details = []
+    for comment in reported_comments:
+        top_reason = (
+            db.query(models.Report.reason)
+            .filter(models.Report.comment_id == comment.comment_id)
+            .group_by(models.Report.reason)
+            .order_by(desc(func.count(models.Report.reason)))
+            .limit(1)
+            .scalar()
+        )
+
+        comment_details.append({
+            "Comment_ID": comment.comment_id,
+            "Comment_Content": comment.content,
+            "NumberOfReports": comment.report_count,
+            "PopularReasons": top_reason or "-",
+            "LastDate": comment.last_date.strftime("%Y-%m-%d"),
+            "Action": "",
+            "status": comment.status or "Pending"
+        })
+
     # --- Unified Reported Users ---
-    # Collect all reports that target users either directly or via their posts
     all_user_reports = (
         db.query(
             models.User.uid.label("uid"),
@@ -220,10 +283,16 @@ def get_reported_data(db: Session = Depends(get_db)):
             models.Report.status.label("status")
         )
         .outerjoin(models.Post, models.Post.user_id == models.User.uid)
-        .outerjoin(models.Report, or_(
-            models.Report.user_id == models.User.uid,
-            models.Report.post_id == models.Post.pid
-        ))
+        .outerjoin(models.Comment, models.Comment.user_id == models.User.uid)
+        .outerjoin(
+            models.Report,
+            or_(
+                models.Report.user_id == models.User.uid,
+                models.Report.post_id == models.Post.pid,
+                models.Report.comment_id == models.Comment.cid
+            )
+        )
+
         .filter(models.Report.rid.isnot(None))
         .all()
     )
@@ -262,22 +331,23 @@ def get_reported_data(db: Session = Depends(get_db)):
 
     return {
         "reported_posts": post_details,
+        "reported_comments": comment_details,
         "reported_users": user_details
     }
 
 
-@router.get("/reports/{rid}")
+@router.get("/reports/{pid}")
 def get_report_detail(
-    rid: int,
+    pid: int,
     db: Session = Depends(get_db),
 ):
-    post = db.query(models.Post).filter(models.Post.pid == rid).first()
+    post = db.query(models.Post).filter(models.Post.pid == pid).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
     reason_counts = (
         db.query(models.Report.reason, func.count(models.Report.rid))
-        .filter(models.Report.post_id == rid)
+        .filter(models.Report.post_id == pid)
         .group_by(models.Report.reason)
         .all()
     )
@@ -285,19 +355,19 @@ def get_report_detail(
 
     last_report = (
         db.query(func.max(models.Report.created_at))
-        .filter(models.Report.post_id == rid)
+        .filter(models.Report.post_id == pid)
         .scalar()
     )
 
     total_reports = (
         db.query(func.count(models.Report.rid))
-        .filter(models.Report.post_id == rid)
+        .filter(models.Report.post_id == pid)
         .scalar()
     )
 
     status = (
         db.query(models.Report.status)
-        .filter(models.Report.post_id == rid)
+        .filter(models.Report.post_id == pid)
         .order_by(models.Report.created_at.desc())
         .limit(1)
         .scalar()
@@ -319,6 +389,69 @@ def get_report_detail(
         "numberOfReports": total_reports,
         "reportCategories": report_categories,
         "status": status.capitalize()
+    }
+
+@router.get("/reports/comment/{cid}")
+def get_comment_report_detail(
+    cid: int,
+    db: Session = Depends(get_db),
+):
+    comment = db.query(models.Comment).filter(models.Comment.cid == cid).first()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    # Count reasons
+    reason_counts = (
+        db.query(models.Report.reason, func.count(models.Report.rid))
+        .filter(models.Report.comment_id == cid)
+        .group_by(models.Report.reason)
+        .all()
+    )
+    report_categories = {reason: count for reason, count in reason_counts}
+
+    # Last report date
+    last_report = (
+        db.query(func.max(models.Report.created_at))
+        .filter(models.Report.comment_id == cid)
+        .scalar()
+    )
+
+    # Total reports
+    total_reports = (
+        db.query(func.count(models.Report.rid))
+        .filter(models.Report.comment_id == cid)
+        .scalar()
+    )
+
+    # Latest status
+    status = (
+        db.query(models.Report.status)
+        .filter(models.Report.comment_id == cid)
+        .order_by(models.Report.created_at.desc())
+        .limit(1)
+        .scalar()
+    ) or "Pending"
+
+    # Comment owner info
+    user = (
+        db.query(models.User.username, models.User.profile_image)
+        .filter(models.User.uid == comment.user_id)
+        .first()
+    )
+    username = user.username if user else "-"
+    avatar = user.profile_image if user and user.profile_image else "/images/default-avatar.png"
+
+    return {
+        "id": str(comment.cid),
+        "uid": comment.user_id,
+        "username": username or "-",
+        "avatar": avatar,
+        "content": comment.content,
+        "createdAt": comment.created_at.isoformat(),
+        "lastReportDate": last_report.strftime("%Y-%m-%d") if last_report else "-",
+        "numberOfReports": total_reports,
+        "reportCategories": report_categories,
+        "status": status.capitalize(),
     }
 
 
