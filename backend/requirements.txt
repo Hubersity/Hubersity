@@ -15,7 +15,8 @@ fastapi-cli
 # Security & Auth
 bcrypt==3.2.2
 passlib==1.7.4
-PyJWT==2.10.1         
+PyJWT==2.10.1     
+requests    
 
 # Other
 email-validator==2.3.0

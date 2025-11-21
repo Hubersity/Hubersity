@@ -84,7 +84,6 @@ def test_start_and_stop_session_with_monkeypatched_upsert(client, db_session, mo
     body = stop.json()
     assert "total_seconds" in body and "total_minutes" in body
 
-
 def test_calendar_returns_entries(client, db_session):
     # create user and a daily progress entry directly
     u = {"username": "cal_user", "email": "cal@example.com", "password": "Aa1!aaaa", "confirm_password": "Aa1!aaaa"}
@@ -95,7 +94,7 @@ def test_calendar_returns_entries(client, db_session):
     # create a DailyProgress row for today
     tz = ZoneInfo("Asia/Bangkok")
     today_bangkok = datetime.datetime.now(tz).date()
-    dp = models.DailyProgress(user_id=user["uid"], date=datetime.datetime.now(tz), total_minutes=30, total_seconds=1800, badge_level=1)
+    dp = models.DailyProgress(user_id=user["uid"], date=today_bangkok, total_minutes=30, total_seconds=1800, badge_level=1)
     db_session.add(dp)
     db_session.commit()
 

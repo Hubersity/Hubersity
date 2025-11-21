@@ -78,6 +78,9 @@ export default function Login() {
       setError("Cannot connect to server");
     }
   };
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:8000/login/google";
+  };
 
   return (
     <div className="min-h-screen bg-[#f1f6ec] flex relative overflow-hidden">
@@ -234,6 +237,7 @@ export default function Login() {
               type="button"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              onClick={handleGoogleLogin}
               className="flex items-center gap-3 px-5 py-2 rounded-lg hover:text-[#4caf50] transition block mx-auto w-fit text-black"
             >
               <FcGoogle className="text-2xl md:text-3xl" />
