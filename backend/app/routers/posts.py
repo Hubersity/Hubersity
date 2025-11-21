@@ -115,7 +115,7 @@ def create_post(
         post_content=refreshed_post.post_content,
         forum_id=refreshed_post.forum_id,
         user_id=refreshed_post.user_id,
-        username=current_user.username,
+        username=current_user.name,
         like_count=0,
         liked=False,
         profile_image=current_user.profile_image,
@@ -209,7 +209,8 @@ def get_my_posts(
                 post_content=post.post_content,
                 forum_id=post.forum_id,
                 user_id=post.user_id,
-                username=post.user.username,
+                username=post.user.name,
+                name=post.user.name,
                 profile_image=post.user.profile_image,
                 like_count=like_count,
                 tags=post.tags,
@@ -257,7 +258,7 @@ def get_all_posts(
                     content=c.content,
                     user_id=c.user_id,
                     post_id=c.post_id,
-                    username=user.username if user else None,
+                    username=user.name if user else None,
                     profile_image=user.profile_image if user else None,
                     created_at=c.created_at,
                     files=files_response   
@@ -270,7 +271,7 @@ def get_all_posts(
                 post_content=post.post_content,
                 forum_id=post.forum_id,
                 user_id=post.user_id,
-                username=post.user.username,
+                username=post.user.name,
                 profile_image=post.user.profile_image,
                 liked=is_liked_by_me,
                 like_count=like_count,
@@ -340,7 +341,7 @@ def get_posts(
                     content=c.content,
                     user_id=c.user_id,
                     post_id=c.post_id,
-                    username=user.username if user else None,
+                    username=user.name if user else None,
                     profile_image=user.profile_image if user else None,
                     created_at=c.created_at,
                     files=files_response  
@@ -354,7 +355,7 @@ def get_posts(
                 post_content=post.post_content,
                 forum_id=post.forum_id,
                 user_id=post.user_id,
-                username=post.user.username if post.user else "Unknown",
+                username=post.user.name if post.user else "Unknown",
                 profile_image=post.user.profile_image if post.user else None,
                 like_count=like_count,
                 tags=post.tags,
@@ -387,7 +388,7 @@ def get_posts_by_forum(
                 post_content=post.post_content,
                 forum_id=post.forum_id,
                 user_id=post.user_id,
-                username=post.user.username,
+                username=post.user.name,
                 profile_image=post.user.profile_image,
                 like_count=like_count,
                 tags=post.tags,
@@ -431,7 +432,7 @@ def get_following_posts(
                 post_content=post.post_content,
                 forum_id=post.forum_id,
                 user_id=post.user_id,
-                username=post.user.username,
+                username=post.user.name,
                 profile_image=post.user.profile_image,
                 like_count=like_count,
                 liked=False,
@@ -462,7 +463,7 @@ def get_post(
     schemas.CommentResponse(
         cid=comment.cid,
         user_id=comment.user_id,
-        username=comment.user.username if comment.user else "Unknown",
+        username=comment.user.name if comment.user else "Unknown",
         profile_image=comment.user.profile_image if comment.user else None,
         content=comment.content,
         created_at=comment.created_at
@@ -475,7 +476,7 @@ def get_post(
         post_content=post.post_content,
         forum_id=post.forum_id,
         user_id=post.user_id,
-        username=post.user.username,
+        username=post.user.name,
         profile_image=post.user.profile_image,
         like_count=like_count,
         tags=post.tags,
@@ -532,7 +533,7 @@ def update_post(
                 content=c.content,
                 user_id=c.user_id,
                 post_id=c.post_id,
-                username=user.username if user else None,
+                username=user.name if user else None,
                 profile_image=user.profile_image if user else None,
                 created_at=c.created_at,
                 files=files_response
@@ -544,7 +545,7 @@ def update_post(
         post_content=post.post_content,
         forum_id=post.forum_id,
         user_id=post.user_id,
-        username=post.user.username,
+        username=post.user.name,
         profile_image=post.user.profile_image,
         like_count=like_count,
         tags=post.tags,
@@ -592,7 +593,7 @@ async def create_comment(
         content=content,
         user_id=current_user.uid,
         post_id=post_id,
-        username=current_user.username
+        username=current_user.name
     )
     db.add(new_comment)
     db.commit()
@@ -647,7 +648,7 @@ async def create_comment(
             "title": "Comment",
             "receiver_id": post.user_id,
             "target_role": "user",
-            "message": f"{current_user.username} commented on your post ID {post_id}"
+            "message": f"{current_user.name} commented on your post ID {post_id}"
         }
         print(noti_payload)
         try:
@@ -666,7 +667,7 @@ async def create_comment(
         content=new_comment.content,
         user_id=new_comment.user_id,
         post_id=new_comment.post_id,
-        username=current_user.username,
+        username=current_user.name,
         profile_image=current_user.profile_image,
         created_at=new_comment.created_at,
         files=files_response
@@ -709,7 +710,7 @@ def get_comments_for_post(
                 content=c.content,
                 user_id=c.user_id,
                 post_id=c.post_id,
-                username=user.username if user else None,
+                username=user.name if user else None,
                 profile_image=user.profile_image if user else None,
                 created_at=c.created_at,
                 files=files_response  # ตรงนี้คือของที่หายไป
@@ -751,7 +752,7 @@ def toggle_like_post(
             "title": "Like",
             "receiver_id": post.user_id,
             "target_role": "user",
-            "message": f"{current_user.username} liked your post ID {post_id}"
+            "message": f"{current_user.name} liked your post ID {post_id}"
         }
 
         try:
@@ -857,7 +858,7 @@ def get_user_posts(
                     content=c.content,
                     user_id=c.user_id,
                     post_id=c.post_id,
-                    username=user.username if user else None,
+                    username=user.name if user else None,
                     profile_image=user.profile_image if user else None,
                     created_at=c.created_at,
                     files=files_response  
@@ -870,7 +871,7 @@ def get_user_posts(
                 post_content=post.post_content,
                 forum_id=post.forum_id,
                 user_id=post.user_id,
-                username=user.username,
+                username=user.name,
                 profile_image=user.profile_image,
                 like_count=like_count,
                 tags=post.tags,

@@ -590,7 +590,7 @@ const handlePost = async () => {
       {
         id: created.pid || Date.now(),
         username: currentUser.username || created.username || "You",
-        displayName: currentUser.username || "You",
+        displayName: currentUser.name || "You",
         text: created.post_content || newPost,
         profile_image: created.profile_image || "/images/default.jpg",
         minutes: 0,
