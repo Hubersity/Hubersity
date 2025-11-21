@@ -28,7 +28,7 @@ def create_notification_template(
         if not receiver:
             raise HTTPException(status_code=404, detail="Receiver not found")
 
-        data["message"] = f"{current_user.username} has reported user {receiver.username}"
+        data["message"] = f"{current_user.name} has reported user {receiver.name}"
 
     elif data["title"] == "ReportPost" and data.get("receiver_id"):
         post_id = data["receiver_id"]
@@ -37,9 +37,21 @@ def create_notification_template(
             raise HTTPException(status_code=404, detail="Post not found for notification")
         
         post_owner = db.query(models.User).filter(models.User.uid == post.user_id).first()
-        post_owner_username = post_owner.username if post_owner else "an unknown user"
+        post_owner_username = post_owner.name if post_owner else "an unknown user"
         
-        data["message"] = f"{current_user.username} has reported post id {post_id} by {post_owner_username}"
+        data["message"] = f"{current_user.name} has reported post id {post_id} by {post_owner_username}"
+    
+    elif data["title"] == "ReportComment" and data.get("receiver_id"):
+        comment_id = data["receiver_id"]
+        comment = db.query(models.Comment).filter(models.Comment.cid == comment_id).first()
+        if not comment:
+            raise HTTPException(status_code=404, detail="Comment not found for notification")
+        
+        comment_owner = db.query(models.User).filter(models.User.uid == comment.user_id).first()
+        comment_owner_username = comment_owner.name if comment_owner else "an unknown user"
+
+        data["message"] = f"{current_user.name} has reported comment id {comment_id} by {comment_owner_username}"
+
 
     if "target_role" not in data or data["target_role"] is None:
         data["target_role"] = "user"

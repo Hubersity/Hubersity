@@ -806,6 +806,42 @@ def report_post(
     return {"message": "Post report submitted"}
 
 
+@router.post("/comments/{comment_id}/report", status_code=status.HTTP_201_CREATED)
+def report_comment(
+    comment_id: int,
+    report_data: schemas.ReportRequest,
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    comment = db.query(models.Comment).filter(models.Comment.cid == comment_id).first()
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    report = models.Report(
+        comment_id=comment_id,
+        reporter_id=current_user.uid,
+        report_type="comment",
+        reason=report_data.reason
+    )
+    db.add(report)
+
+    noti_payload = {
+        "title": "ReportComment",
+        "receiver_id": comment.user_id,
+        "target_role": "admin"
+    }
+
+    try:
+        create_notification_template(
+            db=db,
+            current_user=current_user,
+            payload_data=noti_payload
+        )
+    except Exception as e:
+        print(f"Error creating internal notification: {e}")
+
+    db.commit()
+    return {"message": "Comment report submitted"}
 
     
 @router.get("/{id}/posts", response_model=List[schemas.PostResponse])

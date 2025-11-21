@@ -31,7 +31,7 @@ def follow_user(
         "title": "Follow",
         "receiver_id": user_id,
         "target_role": "user",
-        "message": f"{current_user.username} started following you"
+        "message": f"{current_user.name} started following you"
     }
 
     try:
