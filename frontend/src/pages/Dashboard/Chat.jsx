@@ -1,18 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 import { Search, Send, Image, Paperclip, Video } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 const toAbs = (u) => (u?.startsWith?.("http") ? u : `${API_URL}${u || ""}`);
-
-const formatDate = (iso) => {
-  if (!iso) return "";
-  const d = new Date(iso);
-  return d.toLocaleDateString("th-TH", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }); // 18/11/2025
-};
 
 const formatTime = (iso) => {
   if (!iso) return "";
@@ -23,7 +14,16 @@ const formatTime = (iso) => {
   }); // 20:29
 };
 
+// ฟังก์ชันสำหรับแปลงปี
+const getYearInLocalLanguage = (year, lang) => {
+  if (lang === "th") {
+    return year + 543; // ถ้าเป็นภาษาไทยแสดงปี พ.ศ.
+  }
+  return year; // ถ้าไม่ใช่ภาษาไทยแสดงปี ค.ศ.
+};
+
 export default function Chat() {
+  const { t, i18n } = useTranslation();  // ใช้ i18next
   // auth
   const { meId, token } = useMemo(() => {
     const currentKey = localStorage.getItem("currentUserKey");
@@ -492,17 +492,35 @@ export default function Chat() {
     }
   };
 
+  // ฟังก์ชันในการแสดงปีให้เป็น พ.ศ. หรือ ค.ศ.
+  const formatYear = (isoDate) => {
+    const d = new Date(isoDate);
+    const year = d.getFullYear();
+    return getYearInLocalLanguage(year, i18n.language);  // แปลงปีตามภาษาที่เลือก
+  };
+
+  // ปรับการใช้งาน formatDate ให้แสดงแค่วันที่ (ไม่รวมปี)
+  const formatDateWithoutYear = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    return d.toLocaleDateString("th-TH", {
+      day: "2-digit",
+      month: "2-digit",
+      // ไม่รวมปี
+    });
+  };
+
   return (
     <div className="flex h-full w-full bg-white overflow-hidden">
       {/* Sidebar */}
       <div className="w-[28%] border-r flex flex-col">
         <div className="p-5 border-b bg-white">
-          <h2 className="text-xl font-semibold mb-3">Chat</h2>
+          <h2 className="text-xl font-semibold mb-3">{t('sidebar.chat')}</h2>
           <div className="relative">
             <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
             <input
               type="text"
-              placeholder="Find friend..."
+              placeholder={t('chat.findFriend')}  // แปลข้อความจาก JSON
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full border rounded-full py-2 pl-10 pr-4 focus:ring-2 focus:ring-[#e0ebe2] bg-white text-gray-700"
@@ -554,7 +572,7 @@ export default function Chat() {
           {uniqueFriendsAll.filter((f) =>
             f.name.toLowerCase().includes(search.toLowerCase())
           ).length === 0 && (
-            <div className="text-sm text-gray-500 px-2">No chats yet.</div>
+            <div className="text-sm text-gray-500 px-2">{t('chat.noChats')}</div>
           )}
         </div>
       </div>
@@ -580,10 +598,13 @@ export default function Chat() {
                   const isMe = msg.sender === "me";
                   const url = toAbs(msg.url);
 
+                  // ฟังก์ชันที่ใช้แสดงข้อมูลใน chat
+                  const formattedYear = getYearInLocalLanguage(new Date(msg.createdAt).getFullYear(), i18n.language); // แปลงปี
+
                   // ใช้ createdAt จาก frontend (ต้องมีในแต่ละ message)
-                  const dateLabel = msg.createdAt ? formatDate(msg.createdAt) : "";
+                  const dateLabel = msg.createdAt ? formatDateWithoutYear(msg.createdAt) : ""; // แสดงแค่วันที่ ไม่มีปี
                   const timeLabel = msg.createdAt ? formatTime(msg.createdAt) : "";
-                  const dateKey = dateLabel;
+                  const dateKey = dateLabel;  // แสดงแค่วันที่
 
                   const showDateHeader = dateKey && dateKey !== lastDate;
                   if (showDateHeader) {
@@ -595,7 +616,7 @@ export default function Chat() {
                       {/* header แสดงวันที่ 1 ครั้งต่อวัน */}
                       {showDateHeader && (
                         <div className="text-center text-xs text-gray-400 my-2">
-                          {dateLabel}
+                          {dateLabel}/{formattedYear}{/* แสดงวัน/เดือน/ปี */}
                         </div>
                       )}
 
@@ -634,7 +655,7 @@ export default function Chat() {
                           >
                             {msg.kind === "deleted" ? (
                               <i className="text-gray-500 italic">
-                                This message was deleted.
+                                {t('chat.deleteMessage')}
                               </i>
                             ) : msg.kind === "image" && url ? (
                               <img
@@ -691,7 +712,7 @@ export default function Chat() {
                                 }}
                                 role="menuitem"
                               >
-                                Delete message
+                                {t('chat.deleteMessage')}
                               </button>
                             )}
 
@@ -704,7 +725,7 @@ export default function Chat() {
                               }}
                               role="menuitem"
                             >
-                              Forward message
+                              {t('chat.forwardMessage')}
                             </button>
 
                             {/* copy (text only) */}
@@ -716,7 +737,7 @@ export default function Chat() {
                                   setMenuMsgId(null);
                                 }}
                               >
-                                Copy message
+                                {t('chat.copyMessage')}
                               </button>
                             )}
 
@@ -728,7 +749,7 @@ export default function Chat() {
                                 download
                                 onClick={() => setMenuMsgId(null)}
                               >
-                                Download file
+                                {t('chat.downloadFile')}
                               </a>
                             )}
                           </div>
@@ -820,7 +841,7 @@ export default function Chat() {
                             );
                           }}
                         >
-                          remove
+                          {t('chat.remove')}
                         </button>
                       </div>
                     ))}
@@ -841,7 +862,7 @@ export default function Chat() {
 
               <input
                 type="text"
-                placeholder="Type a message..."
+                placeholder={t('chat.typeMessage')}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 className="flex-1 border rounded-full px-4 py-2.5 focus:ring-2 focus:ring-[#e0ebe2] outline-none"
@@ -859,7 +880,7 @@ export default function Chat() {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-500">
-            Select a chat to start messaging.
+            {t('chat.selectChat')}
           </div>
         )}
 
@@ -893,7 +914,7 @@ export default function Chat() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="px-5 py-4 border-b flex items-center justify-between">
-                <div className="font-semibold">Forward</div>
+                <div className="font-semibold">{t('chat.selectChat')}</div>
                 <button
                   onClick={() => {
                     setForward({ open: false, msg: null });
@@ -952,7 +973,7 @@ export default function Chat() {
                   f.name.toLowerCase().includes(forwardSearch.toLowerCase())
                 ).length === 0 && (
                   <div className="text-sm text-gray-500 px-1 py-2">
-                    Not found this user name
+                    {t('chat.notFoundUserName')}
                   </div>
                 )}
               </div>
@@ -965,14 +986,14 @@ export default function Chat() {
                     setForwardTargets(new Set());
                   }}
                 >
-                  Cancel
+                  {t('chat.cancel')}
                 </button>
                 <button
                   className="px-4 py-2 rounded-lg bg-[#6dbf74] text-white disabled:opacity-50"
                   disabled={forwardTargets.size === 0}
                   onClick={forwardToTargets}
                 >
-                  Send
+                  {t('chat.send')}
                 </button>
               </div>
             </div>

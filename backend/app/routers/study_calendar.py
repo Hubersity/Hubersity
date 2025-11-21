@@ -9,6 +9,7 @@ from calendar import monthrange
 from .. import models
 from sqlalchemy import func, text
 from zoneinfo import ZoneInfo
+from typing import Optional
 
 LOCAL_TZ = "Asia/Bangkok"
 TZ = ZoneInfo("Asia/Bangkok")
@@ -18,6 +19,11 @@ router = APIRouter(
     tags=["Study Timer"]
 )
 
+# เพิ่มฟังก์ชันสำหรับแปลงปี
+def get_year_in_local_language(year: int, lang: str) -> str:
+    if lang == 'th':  # ถ้าเป็นภาษาไทยแสดงปี พ.ศ.
+        return str(year + 543)
+    return str(year)  # ถ้าไม่ใช่ภาษาไทยแสดงปี ค.ศ.
 
 def upsert_daily_progress(db, user_id: int, add_seconds: int, badge: int, target_day_utc: datetime):
         # กันค่าผิด ๆ หลุดมา
@@ -283,3 +289,36 @@ def get_active_session(user_id: int, db: Session = Depends(get_db)):
         "start_time": s.start_time.isoformat(),
         "server_now": server_now.isoformat(),
     }
+
+# ใส่ภาษาที่เลือกเข้ามา
+@router.get("/calendar/{user_id}/{year}/{month}")
+def get_calendar(
+    user_id: int, year: int, month: int, lang: Optional[str] = "en", db: Session = Depends(get_db)
+):
+    last_day = monthrange(year, month)[1]
+    records = (
+        db.query(models.DailyProgress)
+        .filter(models.DailyProgress.user_id == user_id)
+        .filter(text("date(timezone('Asia/Bangkok', daily_progress.date)) BETWEEN :d1 AND :d2"))
+        .params(d1=dt_date(year, month, 1), d2=dt_date(year, month, last_day))
+        .all()
+    )
+
+    out = {}
+    for r in records:
+        if db.bind.dialect.name == "sqlite":
+            local_key = r.date.date().strftime("%Y-%m-%d")
+        else:
+            local_key = r.date.astimezone(TZ).strftime("%Y-%m-%d")
+
+        # แปลงปีเป็น พ.ศ. หรือ ค.ศ. ตามภาษาที่เลือก
+        display_year = get_year_in_local_language(year, lang)
+        
+        total_seconds = getattr(r, "total_seconds", (r.total_minutes or 0) * 60)
+        out[local_key] = {
+            "total_minutes": r.total_minutes or 0,
+            "total_seconds": total_seconds,
+            "badge": r.badge_level or 0,
+            "year": display_year  # เพิ่มปีที่แสดงตามภาษา
+        }
+    return out

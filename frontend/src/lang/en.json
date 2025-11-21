@@ -240,5 +240,47 @@
     "noPostsForTag": "No posts for this tag yet",
     "trending": "Trending",
     "postsCount": "posts"
+    },
+    "calendar": {
+      "daysOfWeek": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      },
+      "studyHours": {
+        "study0": "Study 0 hour",
+        "study1": "Study more than 0 seconds to 3 hours",
+        "study2": "Study between 3 to 6 hours",
+        "study3": "Study between 6 to 9 hours",
+        "study4": "Study more than 9 hours"
+      },
+      "monthNames": [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+      ]
+    },
+    "time_study": {
+      "start": "Start",
+      "pause": "Pause",
+      "today": "Today",
+      "loadingUser": "Loading user..."
+    },
+    "chat": {
+      "findFriend": "Find friend...",
+      "typeMessage": "Type a message...",
+      "noChats": "No chats yet.",
+      "selectChat": "Select a chat to start messaging.",
+      "deleteMessage": "Delete message",
+      "forwardMessage": "Forward message",
+      "copyMessage": "Copy message",
+      "downloadFile": "Download file",
+      "cancel": "Cancel",
+      "send": "Send",
+      "notFoundUserName": "Not found this user name",
+      "remove": "Remove"
     }
 }

@@ -239,5 +239,47 @@
     "noPostsForTag": "Aucune publication pour ce tag",
     "trending": "Tendance",
     "postsCount": "publications"
+  },
+  "chat": {
+    "findFriend": "Trouver un ami...",
+    "typeMessage": "Tapez un message...",
+    "noChats": "Pas encore de chat",
+    "selectChat": "Sélectionnez un chat pour commencer à envoyer des messages",
+    "deleteMessage": "Supprimer le message",
+    "forwardMessage": "Transférer le message",
+    "copyMessage": "Copier le message",
+    "downloadFile": "Télécharger le fichier",
+    "cancel": "Annuler",
+    "send": "Envoyer",
+    "notFoundUserName": "Nom d'utilisateur introuvable",
+    "remove": "Supprimer"
+  },
+  "calendar": {
+    "daysOfWeek": {
+      "sun": "Dim",
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mer",
+      "thu": "Jeu",
+      "fri": "Ven",
+      "sat": "Sam"
+    },
+    "studyHours": {
+      "study0": "Étudier 0 heure",
+      "study1": "Étudier entre 0 seconde et 3 heures",
+      "study2": "Étudier entre 3 et 6 heures",
+      "study3": "Étudier entre 6 et 9 heures",
+      "study4": "Étudier plus de 9 heures"
+    },
+    "monthNames": [
+      "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+      "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+    ]
+  },
+  "time_study": {
+    "start": "Commencer",
+    "pause": "Pause",
+    "today": "Aujourd'hui",
+    "loadingUser": "Chargement de l'utilisateur..."
   }
 }
