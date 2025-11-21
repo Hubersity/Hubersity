@@ -7,7 +7,7 @@ import datetime, shutil, os
 from .notification import create_notification_template
 from pydantic import BaseModel, validator
 import re
-
+from sqlalchemy import or_
 
 router = APIRouter(
     prefix="/users",

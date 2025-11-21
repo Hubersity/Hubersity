@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 from . import models, database
 from .database import engine
-from .routers import users, auth, study_calendar, posts, chat, admin, notification, follow, news, news_upload, block, help
+from .routers import users, auth, study_calendar, posts, chat, admin, notification, follow, news, news_upload, block, help, user_public
 from fastapi.staticfiles import StaticFiles
 import os
 from fastapi.middleware.cors import CORSMiddleware
@@ -95,6 +95,7 @@ async def lifespan(app):
     yield
 
 # รวมทุก router
+app.include_router(user_public.router) 
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(study_calendar.router)
