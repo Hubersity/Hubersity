@@ -443,26 +443,21 @@ def delete_current_user(
 
     return {"message": "Account deleted successfully"}
 
-@router.get("/{id}")
-def get_user(
+@router.get("/{id}", response_model=schemas.UserResponse)
+def get_user_detail(
     id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
     user = db.query(models.User).filter(models.User.uid == id).first()
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User id:{id} was not found"
-        )
+        raise HTTPException(status_code=404, detail=f"User id:{id} was not found")
 
-    # ❗︎ เช็คว่า current_user follow อยู่ไหม
     is_following = db.query(models.Follow).filter(
         models.Follow.follower_id == current_user.uid,
         models.Follow.following_id == id
     ).first()
 
-    # ❗︎ logic ให้ frontend รู้ว่าเห็นโพสต์ได้ไหม
     can_view = (not user.is_private) or bool(is_following)
 
     return {
