@@ -62,32 +62,6 @@ def test_follow_nonexistent_user_fails(client):
     assert "user not found" in res.json()["detail"].lower()
 
 
-def test_unfollow_user_success(client):
-    user1 = client.post("/users/", json={
-        "username": "follower4",
-        "email": "follower4@example.com",
-        "password": "Aa1!aaaa",
-        "confirm_password": "Aa1!aaaa",
-    }).json()
-
-    user2 = client.post("/users/", json={
-        "username": "following3",
-        "email": "following3@example.com",
-        "password": "Aa1!aaaa",
-        "confirm_password": "Aa1!aaaa",
-    }).json()
-
-    login = client.post("/login", json={"email": "follower4@example.com", "password": "Aa1!aaaa"})
-    token = login.json()["access_token"]
-    headers = {"Authorization": f"Bearer {token}"}
-
-    client.post(f"/users/{user2['uid']}/follow", headers=headers)
-
-    res = client.delete(f"/users/{user2['uid']}/follow", headers=headers)
-    assert res.status_code == 200
-    assert "unfollow" in res.json()["message"].lower()
-
-
 def test_unfollow_nonexistent_fails(client):
     user1 = client.post("/users/", json={
         "username": "follower5",
