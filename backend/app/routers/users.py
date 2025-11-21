@@ -63,6 +63,22 @@ def get_current_user_data(
         )
     return user
 
+@router.patch("/me/privacy")
+def update_privacy(
+    data: dict,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    is_private = data.get("is_private")
+
+    if is_private is None:
+        raise HTTPException(status_code=400, detail="Missing is_private")
+
+    current_user.is_private = bool(is_private)
+    db.commit()
+    db.refresh(current_user)
+
+    return {"message": "Privacy updated", "is_private": current_user.is_private}
 
 # แก้ไขข้อมูลโปรไฟล์
 @router.put("/{id}", response_model=schemas.UserResponse)
@@ -79,10 +95,14 @@ def update_user(
             detail=f"User id:{id} was not found"
         )
     
-    # ป้องกันไม่ให้แก้ email / username / password
     protected_fields = {"username", "email", "password"}
+
+    # รองรับ is_private
+    if updated_data.is_private is not None:
+        user.is_private = updated_data.is_private
+
     for key, value in updated_data.model_dump(exclude_unset=True).items():
-        if key not in protected_fields:
+        if key not in protected_fields and key != "is_private":
             setattr(user, key, value)
 
     db.commit()
@@ -119,22 +139,89 @@ def follow_user(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
+    # ห้าม follow ตัวเอง
     if id == current_user.uid:
         raise HTTPException(status_code=400, detail="You cannot follow yourself")
 
+    # target user
     target_user = db.query(models.User).filter(models.User.uid == id).first()
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    existing_follow = db.query(models.Follow).filter_by(follower_id=current_user.uid, following_id=id).first()
+    # เช็คว่า follow อยู่แล้วหรือยัง
+    existing_follow = db.query(models.Follow).filter_by(
+        follower_id=current_user.uid,
+        following_id=id
+    ).first()
 
     if existing_follow:
         raise HTTPException(status_code=400, detail="Already following this user")
 
-    follow = models.Follow(follower_id=current_user.uid, following_id=id)
+    # ---------------------------------------
+    # PRIVATE ACCOUNT → ส่ง follow request
+    # ---------------------------------------
+    if target_user.is_private:
+
+        # เช็คว่า request ค้างอยู่ไหม
+        existing_req = db.query(models.FollowRequest).filter(
+            models.FollowRequest.requester_id == current_user.uid,
+            models.FollowRequest.receiver_id == id,
+            models.FollowRequest.status == "pending",
+        ).first()
+
+        if existing_req:
+            return {
+                "mode": "request",
+                "message": "Follow request already sent"
+            }
+
+        follow_req = models.FollowRequest(
+            requester_id=current_user.uid,
+            receiver_id=id,
+            status="pending",
+        )
+
+        db.add(follow_req)
+
+        # แจ้งเตือน
+        try:
+            create_notification_template(
+                db=db,
+                current_user=current_user,
+                payload_data={
+                    "title": "Follow Request",
+                    "receiver_id": id,
+                    "target_role": "user",
+                    "message": f"{current_user.username} requested to follow you",
+                },
+            )
+        except Exception as e:
+            print("Error creating follow-request notification:", e)
+
+        db.commit()
+        db.refresh(follow_req)
+
+        return {
+            "mode": "request",
+            "message": "Follow request sent",
+            "request_id": follow_req.id,
+        }
+
+    # ---------------------------------------
+    # PUBLIC ACCOUNT → follow ได้ทันที
+    # ---------------------------------------
+    follow = models.Follow(
+        follower_id=current_user.uid,
+        following_id=id
+    )
     db.add(follow)
     db.commit()
-    return {"message": f"You are now following user {id}"}
+
+    return {
+        "mode": "follow",
+        "message": f"You are now following user {id}"
+    }
+
 
 @router.delete("/{id}/follow", status_code=status.HTTP_200_OK)
 def unfollow_user(
@@ -142,13 +229,17 @@ def unfollow_user(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    follow = db.query(models.Follow).filter_by(follower_id=current_user.uid, following_id=id).first()
+    follow = db.query(models.Follow).filter_by(
+        follower_id=current_user.uid,
+        following_id=id
+    ).first()
 
     if not follow:
         raise HTTPException(status_code=404, detail="You are not following this user")
 
     db.delete(follow)
     db.commit()
+
     return {"message": f"You have unfollowed user {id}"}
 
 @router.get("/me/followers", response_model=List[schemas.UserBriefResponse])
@@ -192,6 +283,8 @@ def get_my_following(
                 )
             )
     return response
+
+
 
 @router.get("/{id}/followers", response_model=List[schemas.UserBriefResponse])
 def get_user_followers(
@@ -284,20 +377,6 @@ def report_user(
     db.commit()
     return {"message": "User report submitted"}
 
-# ดึงข้อมูลผู้ใช้ตาม id
-@router.get("/{id}", response_model=schemas.UserResponse)
-def get_user(
-    id: int,
-    db: Session = Depends(get_db),
-    current_user: int = Depends(oauth2.get_current_user)
-):
-    user = db.query(models.User).filter(models.User.uid == id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User id:{id} was not found"
-        )
-    return user
 
 class ChangePasswordRequest(BaseModel):
     current_password: str
@@ -363,3 +442,38 @@ def delete_current_user(
     db.commit()
 
     return {"message": "Account deleted successfully"}
+
+@router.get("/{id}")
+def get_user(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+):
+    user = db.query(models.User).filter(models.User.uid == id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User id:{id} was not found"
+        )
+
+    # ❗︎ เช็คว่า current_user follow อยู่ไหม
+    is_following = db.query(models.Follow).filter(
+        models.Follow.follower_id == current_user.uid,
+        models.Follow.following_id == id
+    ).first()
+
+    # ❗︎ logic ให้ frontend รู้ว่าเห็นโพสต์ได้ไหม
+    can_view = (not user.is_private) or bool(is_following)
+
+    return {
+        "uid": user.uid,
+        "username": user.username,
+        "name": user.name,
+        "email": user.email,
+        "birthdate": user.birthdate,
+        "university": user.university,
+        "profile_image": user.profile_image,
+        "description": user.description,
+        "is_private": user.is_private,
+        "can_view": can_view
+    }

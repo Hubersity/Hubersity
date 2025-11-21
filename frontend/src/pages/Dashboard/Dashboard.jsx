@@ -10,6 +10,7 @@ import {
   Hash,
   Settings,
   Megaphone,
+  UserPlus,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getCurrentUser } from "../../api/user";
@@ -21,6 +22,7 @@ const navItems = [
   { to: "/app/board", key: "sidebar.board", icon: Home },
   { to: "/app/time-study", key: "sidebar.time", icon: Clock },
   { to: "/app/follow", key: "sidebar.follow", icon: Users },
+   { to: "/app/followers", key: "sidebar.followers", icon: UserPlus }, 
   { to: "/app/chat", key: "sidebar.chat", icon: MessageSquare },
   { to: "/app/notification", key: "sidebar.notification", icon: Bell },
   { to: "/app/tags", key: "sidebar.tags", icon: Hash },

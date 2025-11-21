@@ -69,6 +69,7 @@ export default function UserProfile() {
   const [reportAccountOpen, setReportAccountOpen] = useState(false);
   const [blockOpen, setBlockOpen] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [isRequested, setIsRequested] = useState(false);
 
   const openReport = (pid) => {
     setReportPostId(pid);
@@ -175,7 +176,7 @@ export default function UserProfile() {
         const data = await res.json();
         setUser(data);
 
-        if (data.privacy === "public") {
+        if (!data.is_private) {
           const postsRes = await fetch(`${API_URL}/posts/${userId}/posts`, {
             headers: { Authorization: `Bearer ${authData.token}` },
           });
@@ -190,6 +191,55 @@ export default function UserProfile() {
     };
 
     fetchUserData();
+  }, [authData, userId, isFollowing, isRequested]);
+
+  useEffect(() => {
+    if (!authData?.token || !userId) return;
+
+    const updateFollowStatus = async () => {
+      // 1) ดึงรายการคนที่เราตามอยู่
+      const followingRes = await fetch(`${API_URL}/users/me/following`, {
+        headers: { Authorization: `Bearer ${authData.token}` },
+      });
+
+      if (followingRes.ok) {
+        const following = await followingRes.json();
+        const isNowFollowing = following.some(
+          (item) => String(item.uid) === String(userId)
+        );
+        if (isNowFollowing) {
+          setIsFollowing(true);
+          setIsRequested(false);
+
+          // โหลด user ใหม่หลังจาก follow สำเร็จ → เพื่อเอา is_private ใหม่จาก backend
+          const res = await fetch(`${API_URL}/users/${encodeURIComponent(userId)}`, {
+            headers: { Authorization: `Bearer ${authData.token}` },
+          });
+          if (res.ok) {
+            const updatedUser = await res.json();
+            setUser(updatedUser);  // ⭐ สำคัญมาก
+          }
+
+          return;
+        }
+      }
+
+      // 2) ถ้ายังไม่ได้ตาม → เช็คว่าส่ง request ค้างอยู่ไหม
+      const requestRes = await fetch(`${API_URL}/follow/requests/sent`, {
+        headers: { Authorization: `Bearer ${authData.token}` },
+      });
+
+      if (requestRes.ok) {
+        const requestList = await requestRes.json();
+        const requested = requestList.some(
+          (req) => String(req.target_id) === String(userId)
+        );
+        setIsRequested(requested);
+        setIsFollowing(false);
+      }
+    };
+
+    updateFollowStatus();
   }, [authData, userId]);
 
   useEffect(() => {
@@ -233,6 +283,24 @@ export default function UserProfile() {
     };
 
     checkFollowing();
+  }, [authData, user]);
+
+  useEffect(() => {
+    if (!authData?.token || !user) return;
+
+    const checkRequestStatus = async () => {
+      const res = await fetch(`${API_URL}/follow/requests/sent`, {
+        headers: { Authorization: `Bearer ${authData.token}` },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const requested = data.some((req) => String(req.target_id) === String(userId));
+        setIsRequested(requested);
+      }
+    };
+
+    checkRequestStatus();
   }, [authData, user]);
 
   // ดึง study time + active session แล้วให้มันติ๊กทุก 1 วิ
@@ -324,19 +392,32 @@ export default function UserProfile() {
 
     try {
       if (isFollowing) {
-        // ยกเลิกติดตาม
+        // ❌ unfollow
         const res = await fetch(`${API_URL}/follow/${userId}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${authData.token}` },
         });
-        if (res.ok) setIsFollowing(false);
+
+        if (res.ok) {
+          setIsFollowing(false);
+          setIsRequested(false); // กรณียกเลิก follow
+        }
       } else {
-        // ติดตาม
-        const res = await fetch(`${API_URL}/follow/${userId}`, {
+        // ✅ send follow request OR follow immediately
+        const res = await fetch(`${API_URL}/users/${userId}/follow`, {
           method: "POST",
           headers: { Authorization: `Bearer ${authData.token}` },
         });
-        if (res.ok) setIsFollowing(true);
+
+        const data = await res.json();
+
+        if (data.mode === "request") {
+          setIsRequested(true);     // ส่งคำขอแล้ว
+          setIsFollowing(false);
+        } else if (data.mode === "follow") {
+          setIsFollowing(true);      // follow ทันที (public)
+          setIsRequested(false);
+        }
       }
     } catch (err) {
       console.error("Follow action failed:", err);
@@ -401,11 +482,22 @@ export default function UserProfile() {
           whileHover={{ scale: 1.08 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleFollowToggle}
-          className={`px-6 py-2 rounded-[10px] font-medium shadow-sm text-sm hover:shadow-md transition-all text-white ${
-            isFollowing ? "bg-[#6dbf74]" : "bg-[#32a349]"
-          }`}
+          className={`
+            px-6 py-2 rounded-[10px] font-medium shadow-sm text-sm transition-all text-white
+            ${
+              isFollowing
+                ? "bg-[#6dbf74]"        // following
+                : isRequested
+                ? "bg-[#eab308]"        // request sent (yellow)
+                : "bg-[#32a349]"        // follow
+            }
+          `}
         >
-          {isFollowing ? t("userProfile.following") : t("userProfile.follow")}
+          {isFollowing
+            ? t("userProfile.following")
+            : isRequested
+            ? t("userProfile.requestSent")
+            : t("userProfile.follow")}
         </motion.button>
 
         <motion.button
@@ -456,7 +548,7 @@ export default function UserProfile() {
       </div>
 
       {/* ส่วนล่าง */}
-      {user.privacy === "private" ? (
+      {!user.can_view ? (
         <div className="mt-10 flex flex-col items-center justify-center bg-[#efecec] p-14 rounded-[22px] text-gray-700 shadow-inner w-[92%] max-w-6xl min-h-[200px]">
           <Lock size={56} className="text-gray-500 mb-3" />
           <p className="text-lg font-medium tracking-wide">{t("userProfile.private")}</p>

@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from datetime import datetime
+from sqlalchemy import Enum
 
 from .database import Base
 
@@ -16,13 +17,13 @@ class User(Base):
     username = Column(String, nullable=False, unique=True)  # ใช้ตอนสมัคร (login)
     name = Column(String, nullable=True)                    # ชื่อโปรไฟล์ (แก้ได้)
     email = Column(String, nullable=False, unique=True)
-    password = Column(String, nullable=True)
-    oauth_provider = Column(String, nullable=True)
-    oauth_id = Column(String, nullable=True, unique=True)
+    password = Column(String, nullable=False)
+    # is_admin = Column(Boolean, default=False)
 
     birthdate = Column(TIMESTAMP(timezone=False), nullable=True)  # วันเกิด
     university = Column(String, nullable=True)                    # มหาวิทยาลัย
     privacy = Column(String, default="private")                   # private/public
+    is_private = Column(Boolean, default=False)
 
     created_at = Column(
         TIMESTAMP(timezone=True),
@@ -354,3 +355,23 @@ class News(Base):
 
     created_by = Column(Integer, ForeignKey("users.uid"), nullable=True)
     creator = relationship("User", backref="news_items")
+
+class FollowRequest(Base):
+    __tablename__ = "follow_requests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    requester_id = Column(Integer, ForeignKey("users.uid"))
+    receiver_id = Column(Integer, ForeignKey("users.uid"))
+    status = Column(String, default="pending") 
+
+    status = Column(
+        Enum(
+            "pending",
+            "approved",
+            "rejected",
+            name="follow_request_status"
+        ),
+        default="pending"
+    )
+
+    created_at = Column(DateTime, default=datetime.utcnow)

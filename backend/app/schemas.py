@@ -15,7 +15,7 @@ class UserCreate(BaseModel):
     name: Optional[str] = None
     birthdate: Optional[date] = None
     university: Optional[str] = None
-    privacy: Optional[str] = "private"
+    is_private: Optional[bool] = True
     description: Optional[str] = None
     profile_image: Optional[str] = None
 
@@ -69,7 +69,7 @@ class UserResponse(BaseModel):
     name: Optional[str] = None
     birthdate: Optional[date] = None
     university: Optional[str] = None
-    privacy: Optional[str] = None
+    is_private: Optional[bool] = None
     description: Optional[str] = None
     profile_image: Optional[str] = None
     created_at: datetime
@@ -83,7 +83,7 @@ class UserUpdate(BaseModel):
     name: Optional[str] = None
     birthdate: Optional[date] = None
     university: Optional[str] = None
-    privacy: Optional[str] = None
+    is_private: Optional[bool] = None 
     description: Optional[str] = None
     profile_image: Optional[str] = None
 
