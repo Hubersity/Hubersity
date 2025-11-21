@@ -442,7 +442,6 @@ def delete_current_user(
     db.commit()
 
     return {"message": "Account deleted successfully"}
-
 @router.get("/{id}", response_model=schemas.UserResponse)
 def get_user_detail(
     id: int,
@@ -459,6 +458,13 @@ def get_user_detail(
     ).first()
 
     can_view = (not user.is_private) or bool(is_following)
+    follower_count = db.query(models.Follow).filter(
+        models.Follow.following_id == id
+    ).count()
+
+    following_count = db.query(models.Follow).filter(
+        models.Follow.follower_id == id
+    ).count()
 
     return {
         "uid": user.uid,
@@ -470,5 +476,9 @@ def get_user_detail(
         "profile_image": user.profile_image,
         "description": user.description,
         "is_private": user.is_private,
-        "can_view": can_view
+        "can_view": can_view,
+
+        "created_at": user.created_at if hasattr(user, "created_at") else None,
+        "follower_count": follower_count,
+        "following_count": following_count
     }
