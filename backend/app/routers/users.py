@@ -216,10 +216,12 @@ def follow_user(
     )
     db.add(follow)
     db.commit()
+    db.refresh(follow)
+
 
     return {
         "mode": "follow",
-        "message": f"You are now following user {id}"
+        "message": "Followed successfully"
     }
 
 
