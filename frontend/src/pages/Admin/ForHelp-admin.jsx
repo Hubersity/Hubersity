@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { AlertTriangle, Mail, Paperclip } from "lucide-react";
 
-const API_URL = "http://localhost:8000";  // เปลี่ยนตาม backend ของคุณ
+const API_URL = "http://localhost:8000";
 
 export default function ForHelpAdmin() {
   const [reports, setReports] = useState([]);
@@ -19,7 +19,6 @@ export default function ForHelpAdmin() {
       });
   }, []);
 
-  // ปุ่ม style
   const buttonClass = `
     px-7 py-2 rounded-full
     bg-gradient-to-r from-[#d9f2dd] to-[#e0ebe2]
@@ -35,7 +34,7 @@ export default function ForHelpAdmin() {
     shadow-sm transition hover:bg-gray-100
   `;
 
-  // ส่งข้อความตอบกลับ Admin → User
+  // Admin reply ส่งกลับ user
   const sendReply = async () => {
     if (!adminReply.trim()) return;
 
@@ -53,7 +52,7 @@ export default function ForHelpAdmin() {
     }
   };
 
-  // Mark as resolved
+  // mark as resolved
   const markResolved = async () => {
     const res = await fetch(`${API_URL}/help_reports/${selected.id}/resolve`, {
       method: "PUT",
@@ -70,7 +69,6 @@ export default function ForHelpAdmin() {
 
   return (
     <div className="w-full">
-      {/* Title */}
       <div className="mb-4 flex items-center gap-2">
         <AlertTriangle className="text-red-500" />
         <h1 className="text-xl font-semibold text-gray-800">For Help — Admin</h1>
@@ -99,7 +97,7 @@ export default function ForHelpAdmin() {
                   selected?.id === r.id ? "bg-[#e0ebe2]/40" : "hover:bg-gray-100"
                 }`}
               >
-                {/* Green tick */}
+                {/* resolved check */}
                 {r.resolved && (
                   <span className="absolute left-2 top-2 w-4 h-4 bg-white border-2 border-green-500 rounded-full flex items-center justify-center">
                     <svg
@@ -146,7 +144,7 @@ export default function ForHelpAdmin() {
           {selected && (
             <div className="p-8 pb-24 space-y-6 overflow-y-auto h-[calc(80vh-40px)]">
 
-              {/* User info */}
+              {/* user info */}
               <div className="flex items-center gap-4">
                 <img
                   src={selected.avatar || "/images/default.png"}
@@ -161,26 +159,28 @@ export default function ForHelpAdmin() {
                 </div>
               </div>
 
-              {/* Message */}
+              {/* message */}
               <div className="bg-white border rounded-xl p-5 text-gray-700 shadow-sm">
                 {selected.message}
               </div>
 
-              {/* Attachment */}
+              {/* attachment (แก้เรียบร้อย) */}
               {selected.file_path && (
                 <a
-                  href={`${API_URL}/${selected.file_path}`}
+                  href={selected.file_path}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="cursor-pointer bg-white p-4 rounded-xl border shadow-sm flex items-center gap-3 hover:bg-[#e0ebe2]/30 transition"
                 >
                   <Paperclip className="text-gray-600" />
-                  <p className="text-sm text-gray-700 truncate">{selected.file_path}</p>
+                  <p className="text-sm text-gray-700 truncate">
+                    {selected.file_path.replace("http://localhost:8000/uploads/help/", "")}
+                  </p>
                   <span className="ml-auto text-emerald-600 font-medium text-sm">View</span>
                 </a>
               )}
 
-              {/* Admin Response */}
+              {/* admin response */}
               <div>
                 <p className="text-gray-700 font-medium mb-2">Admin Response</p>
                 <textarea
@@ -191,7 +191,6 @@ export default function ForHelpAdmin() {
                   rows={4}
                 />
 
-                {/* Buttons */}
                 <div className="mt-4 flex gap-4">
                   <button className={buttonClass} onClick={sendReply}>
                     Send Response

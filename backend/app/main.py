@@ -107,6 +107,7 @@ app.include_router(news.router)
 app.include_router(news_upload.router) 
 app.include_router(follow.router)  
 app.include_router(block.router)
+app.include_router(help.router)
 
 
 @app.get("/")
