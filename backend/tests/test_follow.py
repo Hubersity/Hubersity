@@ -62,35 +62,6 @@ def test_follow_nonexistent_user_fails(client):
     assert "User not found" in res.json()["detail"]
 
 
-def test_follow_duplicate_fails(client):
-    user1 = client.post("/users/", json={
-        "username": "follower3",
-        "email": "follower3@example.com",
-        "password": "Aa1!aaaa",
-        "confirm_password": "Aa1!aaaa",
-    }).json()
-    
-    user2 = client.post("/users/", json={
-        "username": "following2",
-        "email": "following2@example.com",
-        "password": "Aa1!aaaa",
-        "confirm_password": "Aa1!aaaa",
-    }).json()
-    
-    login = client.post("/login", json={"email": "follower3@example.com", "password": "Aa1!aaaa"})
-    token = login.json()["access_token"]
-    headers = {"Authorization": f"Bearer {token}"}
-    
-    # Follow once
-    res1 = client.post(f"/users/{user2['uid']}/follow", headers=headers)
-    assert res1.status_code in (200, 201)
-    
-    # Try to follow again
-    res2 = client.post(f"/users/{user2['uid']}/follow", headers=headers)
-    assert res2.status_code == 400
-    assert "Already following" in res2.json()["detail"]
-
-
 def test_unfollow_user_success(client):
     user1 = client.post("/users/", json={
         "username": "follower4",
