@@ -5,6 +5,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Home from './pages/Home/Home';
 import Login from './pages/Login/Login';
 import Sign_up from './pages/Sign up/Sign_up';
+import GoogleCallback from "./pages/GoogleCallback/GoogleCallback.jsx";
 import Dashboard from './pages/Dashboard/Dashboard';
 import Board from './pages/Dashboard/Board';
 import TimeStudy from './pages/Dashboard/TimeStudy';
@@ -67,6 +68,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Sign_up />} />
       <Route path="/create-account" element={<CreateAcc />} />
+      <Route path="/google-callback" element={<GoogleCallback />} />
 
       {/* user dashboard */}
       <Route path="/app" element={<Dashboard />} >

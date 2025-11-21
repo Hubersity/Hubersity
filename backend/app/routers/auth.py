@@ -38,9 +38,9 @@ def login(user_cred: schemas.UserLogin, db: Session = Depends(database.get_db)):
 def google_login():
     return RedirectResponse(GOOGLE_AUTH_URL)
 
+
 @router.get("/auth/google/callback")
 def google_callback(code: str, db: Session = Depends(database.get_db)):
-    
     # 1. Exchange code for access token
     token_data = {
         "code": code,
@@ -62,12 +62,10 @@ def google_callback(code: str, db: Session = Depends(database.get_db)):
         GOOGLE_USERINFO_URL,
         headers={"Authorization": f"Bearer {access_token}"}
     )
-
     if userinfo_res.status_code != 200:
         raise HTTPException(status_code=400, detail="Failed to retrieve Google user info")
 
     g_user = userinfo_res.json()
-
     google_id = g_user["sub"]
     email = g_user["email"]
     name = g_user.get("name", "")
@@ -79,16 +77,12 @@ def google_callback(code: str, db: Session = Depends(database.get_db)):
         models.User.oauth_id == google_id
     ).first()
 
-    # 4. User exists? Use it. Otherwise create one.
     if not user:
-        # Check if email already exists in local database
         user = db.query(models.User).filter(models.User.email == email).first()
-
         if not user:
             user = models.User(
-                username=email,          # Or generate unique username
+                username=name,
                 email=email,
-                name=name,
                 profile_image=picture,
                 oauth_provider="google",
                 oauth_id=google_id,
@@ -97,13 +91,19 @@ def google_callback(code: str, db: Session = Depends(database.get_db)):
             db.add(user)
             db.commit()
             db.refresh(user)
+            new_user = True
+        else:
+            new_user = False
+    else:
+        new_user = False
 
-    # 5. Generate JWT using your existing oauth2.py
+    # 4. Generate JWT
     jwt_token = oauth2.create_access_token(data={"user_id": user.uid})
 
-    return {
-        "access_token": jwt_token,
-        "token_type": "bearer",
-        "email": user.email,
-        "name": user.name
-    }
+    # 5. Redirect to frontend with query params
+    return RedirectResponse(
+        url=f"http://localhost:5173/google-callback?"
+            f"token={jwt_token}&new_user={str(new_user).lower()}&"
+            f"uid={user.uid}&email={user.email}&name={user.username}&picture={picture or ''}"
+)
+
