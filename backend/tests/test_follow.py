@@ -41,7 +41,7 @@ def test_follow_self_fails(client):
     token = login.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
     
-    res = client.post(f"/follow/{user['uid']}", headers=headers)
+    res = client.post(f"/users/{user['uid']}/follow", headers=headers)
     assert res.status_code == 400
     assert "cannot follow yourself" in res.json()["detail"]
 
