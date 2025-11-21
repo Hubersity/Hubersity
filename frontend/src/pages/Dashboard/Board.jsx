@@ -821,7 +821,6 @@ const handlePost = async () => {
   };
 
 
-
   const openReport = (id) => {
     // ถ้ามี modal เปิดอยู่และเป็นโพสต์เดียวกัน → ไม่ต้องเปิดใหม่
     if (reportOpen && reportPostId === id) {
