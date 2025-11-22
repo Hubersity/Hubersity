@@ -1,8 +1,9 @@
 {
   "sidebar": {
-    "board": "Fil",
+    "board": "Forum",
     "time": "Temps d’étude",
     "follow": "Abonnements",
+    "followers": "Abonnés",
     "chat": "Chat",
     "notification": "Notifications",
     "tags": "Tags",
@@ -12,149 +13,135 @@
   },
   "board": {
     "search": "Rechercher un texte",
-    "universityTalk": "Discussions Universitaires",
-    "followTalk": "Discussions Suivies",
-    "newPostPlaceholder": "Écris ce que tu penses...",
+    "universityTalk": "Discussions universitaires",
+    "followTalk": "Discussions suivies",
+    "newPostPlaceholder": "Écrivez ce que vous pensez...",
     "postButton": "Publier",
     "comment": "Commentaire",
     "writeComment": "Écrire un commentaire...",
     "send": "Envoyer",
-    "noPosts": "Aucune publication trouvée."
+    "noPosts": "Aucun post trouvé."
   },
   "editPost": {
-    "title": "Modifier la publication",
+    "title": "Modifier le post",
     "cancel": "Annuler",
-    "save": "Enregistrer"
+    "save": "Enregistrer les modifications"
   },
   "common": {
     "cancel": "Annuler",
     "saveChanges": "Enregistrer",
     "delete": "Supprimer",
-    "submit": "Envoyer"
+    "submit": "Valider"
   },
   "post": {
-    "edit": "Modifier la publication",
+    "edit": "Modifier",
     "delete": "Supprimer",
     "report": "Signaler"
   },
   "report": {
-    "titlePost": "Signaler une publication",
-    "titleComment": "Signaler un commentaire",
-    "description": "Veuillez sélectionner une raison pour signaler cette publication",
-    "harassment": "Harcèlement (intimidation, discrimination ou ciblage d’un groupe, religion ou genre).",
-    "sexual": "Contenu sexuel (contenu inapproprié ou pornographique).",
-    "illegal": "Activité illégale (promotion d’actions ou services illégaux).",
-    "spam": "Spam (répétition du même contenu).",
-    "privacy": "Atteinte à la vie privée (partage de données ou photos sans consentement).",
-    "other": "Autre (veuillez préciser)",
+    "titlePost": "Signaler le post",
+    "titleComment": "Signaler le commentaire",
+    "description": "Veuillez choisir une raison",
+    "harassment": "Harcèlement (intimidation, discrimination, attaques ciblées)",
+    "sexual": "Contenu sexuel (inapproprié ou explicite)",
+    "illegal": "Activité illégale (incitation à des actes illégaux)",
+    "spam": "Spam (publication répétée)",
+    "privacy": "Violation de la vie privée (photos ou infos sans consentement)",
+    "other": "Autre (précisez)",
     "otherPlaceholder": "Précisez la raison",
-    "additional": "Détails supplémentaires",
+    "additional": "Informations additionnelles",
     "optional": "optionnel",
-    "postId": "ID de la publication",
-    "detailsPlaceholder": "Décrivez ce qui s’est passé ou tout contexte utile pour examiner votre signalement.",
+    "postId": "ID du post",
+    "detailsPlaceholder": "Décrivez ce qui s'est passé.",
     "submit": "Envoyer le signalement"
   },
   "delete": {
-    "title": "Supprimer la publication",
-    "confirm": "Êtes-vous sûr de vouloir supprimer cette publication ?",
+    "title": "Supprimer le post",
+    "confirm": "Voulez-vous vraiment supprimer ce post ?",
     "warning": "Cette action est irréversible.",
     "cancel": "Annuler",
     "delete": "Supprimer"
   },
   "deleteComment": {
     "title": "Supprimer le commentaire",
-    "confirm": "Êtes-vous sûr de vouloir supprimer ce commentaire ?",
-    "warning": "Cette action est irréversible.",
+    "confirm": "Supprimer ce commentaire ?",
+    "warning": "Action irréversible.",
     "cancel": "Annuler",
     "delete": "Supprimer"
   },
   "account": {
     "title": "Informations du compte",
-    "username": "Nom d’utilisateur",
+    "username": "Nom d'utilisateur",
     "following": "Abonnements",
     "followers": "Abonnés",
-
     "name": "Nom",
     "birthdate": "Date de naissance",
     "age": "Âge",
     "bio": "Bio",
     "university": "Université",
-    "selectUniversity": "Sélectionner une université",
+    "selectUniversity": "Choisir une université",
     "visibility": "Visibilité",
     "private": "Privé",
     "public": "Public",
     "saveChanges": "Enregistrer",
-
-    "myPosts": "Mes publications",
-    "noPosts": "Vous n’avez encore rien publié.",
-
+    "myPosts": "Mes posts",
+    "noPosts": "Aucun post publié.",
     "edit": "Modifier",
     "delete": "Supprimer",
-
-    "editPostTitle": "Modifier la publication",
-    "deletePostTitle": "Supprimer la publication",
-    "deletePostConfirm": "Voulez-vous vraiment supprimer cette publication ?",
-    "deleteWarning": "Cette action est irréversible.",
+    "editPostTitle": "Modifier le post",
+    "deletePostTitle": "Supprimer le post",
+    "deletePostConfirm": "Confirmer la suppression ?",
+    "deleteWarning": "Action irréversible.",
     "cancel": "Annuler",
     "confirmDelete": "Supprimer"
   },
   "follow": {
     "title": "Abonnements",
     "searchPlaceholder": "Rechercher un compte...",
-    "noFollow": "Vous ne suivez encore personne.",
-    "following": "Suivi",
-
+    "noFollow": "Aucun abonnement.",
+    "following": "Abonné",
     "modalTitle": "Se désabonner",
     "modalMessage": "Voulez-vous vous désabonner de",
-    "modalSubMessage": "Vous ne verrez plus les publications de cet utilisateur.",
-
+    "modalSubMessage": "Vous ne verrez plus ses posts.",
     "cancel": "Annuler",
     "unfollow": "Se désabonner"
   },
   "notification": {
     "title": "Notifications",
-
     "today": "Aujourd’hui",
     "yesterday": "Hier",
     "thisWeek": "Cette semaine",
-
-    "followBack": "Suivre en retour",
-    "following": "Suivi",
-
-    "noNotification": "Vous n’avez aucune notification."
+    "followBack": "S’abonner en retour",
+    "following": "Abonné",
+    "noNotification": "Aucune notification."
   },
   "userProfile": {
     "follow": "Suivre",
-    "following": "Suivi",
+    "following": "Abonné",
     "block": "Bloquer",
     "blocked": "Bloqué",
     "report": "Signaler",
-
+    "requestSent": "Demande envoyée",
     "age": "Âge",
     "bioEmpty": "Aucune bio.",
     "private": "Ce compte est privé",
-
     "history": "Historique",
     "comments": "Commentaires",
-    "noPosts": "Aucune publication.",
-    "studyToday": "Étude du jour",
-
-    "postDetail": "Détails de la publication",
+    "noPosts": "Aucun post.",
+    "studyToday": "Étude aujourd’hui",
+    "postDetail": "Détail du post",
     "close": "Fermer",
-
-    "reportPostTitle": "Signaler la publication",
+    "reportPostTitle": "Signaler le post",
     "reportAccountTitle": "Signaler le compte",
-    "selectReasonPost": "Sélectionnez une raison pour signaler cette publication :",
-    "selectReasonAccount": "Sélectionnez une raison pour signaler ce compte :",
-    "additionalDetails": "Détails supplémentaires (optionnel)",
-
+    "selectReasonPost": "Choisissez une raison :",
+    "selectReasonAccount": "Choisissez une raison :",
+    "additionalDetails": "Détails additionnels (optionnel)",
     "submitReport": "Envoyer",
     "cancel": "Annuler",
-
     "blockUser": "Bloquer l’utilisateur",
-    "blockConfirm": "Voulez-vous vraiment bloquer",
-    "blockDetail": "Cet utilisateur ne pourra plus voir vos publications ni interagir avec vous. Vous pouvez le débloquer à tout moment.",
-    "confirmBlock": "Confirmer le blocage"
+    "blockConfirm": "Voulez-vous bloquer",
+    "blockDetail": "Cet utilisateur ne verra plus vos posts.",
+    "confirmBlock": "Bloquer"
   },
   "settings": {
     "changePassword": "Changer le mot de passe",
@@ -172,23 +159,20 @@
     "current": "Mot de passe actuel",
     "new": "Nouveau mot de passe",
     "confirmNew": "Confirmer le nouveau mot de passe",
-    "confirmBtn": "Confirmer",
-
-    "errorCurrent": "Veuillez entrer votre mot de passe actuel",
+    "confirmBtn": "Valider",
+    "errorCurrent": "Entrez votre mot de passe actuel",
     "errorMatch": "Les mots de passe ne correspondent pas",
-
     "rule1": "Au moins 8 caractères",
-    "rule2": "Contient au moins une majuscule",
-    "rule3": "Contient au moins un chiffre",
-    "rule4": "Contient au moins un caractère spécial (!@#$...)"
+    "rule2": "Une majuscule minimum",
+    "rule3": "Un chiffre minimum",
+    "rule4": "Un caractère spécial minimum (!@#$...)"
   },
   "blockedUsers": {
     "title": "Utilisateurs bloqués",
-    "loading": "Chargement des utilisateurs bloqués...",
+    "loading": "Chargement...",
     "unblock": "Débloquer",
-    "noBlocked": "Vous n’avez bloqué personne.",
-
-    "popupTitle": "Débloquer l’utilisateur ?",
+    "noBlocked": "Aucun utilisateur bloqué",
+    "popupTitle": "Débloquer ?",
     "popupMessage": "Voulez-vous débloquer",
     "cancel": "Annuler",
     "confirm": "Débloquer"
@@ -196,63 +180,47 @@
   "deleteAccount": {
     "title": "Gestion du compte",
     "logout": "Déconnexion",
-    "dangerTitle": "Zone de danger",
-    "dangerText": "La suppression du compte est permanente et irréversible.",
+    "dangerTitle": "Zone dangereuse",
+    "dangerText": "La suppression de compte est définitive.",
     "deleteButton": "Supprimer le compte",
-
-    "modalTitle": "Confirmer la suppression",
-    "modalText1": "Êtes-vous sûr de vouloir supprimer votre compte ?",
-    "modalText2": "Cette action est définitive et irréversible.",
+    "modalTitle": "Confirmation",
+    "modalText1": "Voulez-vous vraiment supprimer ce compte ?",
+    "modalText2": "Action irréversible.",
     "cancel": "Annuler",
     "confirmDelete": "Supprimer",
-
-    "deletedSuccess": "Votre compte a été supprimé.",
-    "deleteFailed": "Échec de la suppression.",
-    "networkError": "Erreur réseau."
+    "deletedSuccess": "Compte supprimé",
+    "deleteFailed": "Échec de la suppression",
+    "networkError": "Erreur réseau"
   },
   "language": {
     "title": "Langue",
-    "appLanguage": "Langue de l’application",
-    "description": "Choisissez la langue des menus et de la navigation Hubersity.",
+    "appLanguage": "Langue de l'application",
+    "description": "Choisissez la langue de Hubersity.",
     "save": "Enregistrer"
   },
   "settingHelp": {
     "title": "Aide",
     "reportProblem": "Signaler un problème",
-    "description": "Veuillez fournir des détails afin que nous puissions résoudre votre problème rapidement.",
-    "placeholder": "Décrivez votre problème ici...",
+    "description": "Donnez des détails pour une résolution rapide.",
+    "placeholder": "Décrivez votre problème...",
     "addFile": "Ajouter un fichier",
-    "confirm": "Confirmer",
-    "attached": "Fichier joint :",
-    "success": "Signalement envoyé avec succès. Merci !"
+    "confirm": "Valider",
+    "attached": "Attaché :",
+    "success": "Signalement envoyé !"
   },
   "tagsPage": {
     "popular6": "6 tags populaires",
     "otherTags": "Autres tags",
-    "noTags": "Aucun tag trouvé",
+    "noTags": "Aucun tag",
     "loadMore": "Voir plus",
     "loading": "Chargement…",
     "noMore": "Plus de tags",
     "noOtherTags": "Aucun autre tag",
-    "searchPlaceholder": "Rechercher des tags...",
-    "postWithTag": "Publier avec #{{tag}}...",
-    "noPostsForTag": "Aucune publication pour ce tag",
+    "searchPlaceholder": "Rechercher...",
+    "postWithTag": "Posts avec #{{tag}}",
+    "noPostsForTag": "Aucun post pour ce tag",
     "trending": "Tendance",
-    "postsCount": "publications"
-  },
-  "chat": {
-    "findFriend": "Trouver un ami...",
-    "typeMessage": "Tapez un message...",
-    "noChats": "Pas encore de chat",
-    "selectChat": "Sélectionnez un chat pour commencer à envoyer des messages",
-    "deleteMessage": "Supprimer le message",
-    "forwardMessage": "Transférer le message",
-    "copyMessage": "Copier le message",
-    "downloadFile": "Télécharger le fichier",
-    "cancel": "Annuler",
-    "send": "Envoyer",
-    "notFoundUserName": "Nom d'utilisateur introuvable",
-    "remove": "Supprimer"
+    "postsCount": "posts"
   },
   "calendar": {
     "daysOfWeek": {
@@ -265,21 +233,49 @@
       "sat": "Sam"
     },
     "studyHours": {
-      "study0": "Étudier 0 heure",
-      "study1": "Étudier entre 0 seconde et 3 heures",
-      "study2": "Étudier entre 3 et 6 heures",
-      "study3": "Étudier entre 6 et 9 heures",
-      "study4": "Étudier plus de 9 heures"
+      "study0": "0 heure d’étude",
+      "study1": "0 sec à 3 heures",
+      "study2": "3 à 6 heures",
+      "study3": "6 à 9 heures",
+      "study4": "Plus de 9 heures"
     },
     "monthNames": [
-      "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
-      "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+      "Janvier","Février","Mars","Avril","Mai","Juin",
+      "Juillet","Août","Septembre","Octobre","Novembre","Décembre"
     ]
   },
   "time_study": {
-    "start": "Commencer",
+    "start": "Démarrer",
     "pause": "Pause",
-    "today": "Aujourd'hui",
-    "loadingUser": "Chargement de l'utilisateur..."
+    "today": "Aujourd’hui",
+    "loadingUser": "Chargement..."
+  },
+  "chat": {
+    "findFriend": "Rechercher un ami...",
+    "typeMessage": "Message...",
+    "noChats": "Aucun chat.",
+    "selectChat": "Sélectionnez un chat",
+    "deleteMessage": "Supprimer",
+    "forwardMessage": "Transférer",
+    "copyMessage": "Copier",
+    "downloadFile": "Télécharger",
+    "cancel": "Annuler",
+    "send": "Envoyer",
+    "notFoundUserName": "Utilisateur introuvable",
+    "remove": "Supprimer"
+  },
+  "settingAdminReply": {
+    "loading": "Chargement…",
+    "noMessage": "Aucun message",
+    "adminReply": "Réponse admin",
+    "selectMessage": "Sélectionnez un message",
+    "noTitle": "Sans titre",
+    "fromApp": "Depuis l'application"
+  },
+  "time": {
+    "justNow": "À l’instant",
+    "minutesAgo": "Il y a {{count}} min",
+    "hoursAgo": "Il y a {{count}} h",
+    "yesterday": "Hier"
   }
 }

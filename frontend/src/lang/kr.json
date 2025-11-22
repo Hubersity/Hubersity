@@ -2,7 +2,8 @@
   "sidebar": {
     "board": "게시판",
     "time": "공부 시간",
-    "follow": "팔로우",
+    "follow": "팔로잉",
+    "followers": "팔로워",
     "chat": "채팅",
     "notification": "알림",
     "tags": "태그",
@@ -12,51 +13,51 @@
   },
   "board": {
     "search": "텍스트 검색",
-    "universityTalk": "대학 토론",
-    "followTalk": "팔로우 토론",
+    "universityTalk": "대학교 토크",
+    "followTalk": "팔로우 토크",
     "newPostPlaceholder": "생각을 입력하세요...",
     "postButton": "게시",
     "comment": "댓글",
     "writeComment": "댓글 작성...",
     "send": "보내기",
-    "noPosts": "게시물이 없습니다."
+    "noPosts": "게시글이 없습니다."
   },
   "editPost": {
-    "title": "게시물 수정",
+    "title": "게시글 수정",
     "cancel": "취소",
-    "save": "변경사항 저장"
+    "save": "변경 저장"
   },
   "common": {
     "cancel": "취소",
-    "saveChanges": "변경사항 저장",
+    "saveChanges": "변경 저장",
     "delete": "삭제",
     "submit": "제출"
   },
   "post": {
-    "edit": "게시물 수정",
+    "edit": "게시글 수정",
     "delete": "삭제",
     "report": "신고"
   },
   "report": {
-    "titlePost": "게시물 신고",
+    "titlePost": "게시글 신고",
     "titleComment": "댓글 신고",
-    "description": "이 게시물을 신고하는 이유를 선택하세요",
-    "harassment": "괴롭힘 (따돌림, 차별, 특정 종교/성별/집단을 겨냥한 내용)",
-    "sexual": "성적 콘텐츠 (부적절한 또는 음란한 내용)",
-    "illegal": "불법 활동 (불법 행위 또는 서비스를 홍보)",
-    "spam": "스팸 (동일한 내용 반복 게시)",
-    "privacy": "개인정보 침해 (동의 없이 타인의 정보나 사진 공유)",
+    "description": "신고 사유를 선택하세요",
+    "harassment": "괴롭힘 (따돌림, 차별, 종교/성별/집단 공격 등)",
+    "sexual": "성적 콘텐츠 (부적절/노골적/포르노)",
+    "illegal": "불법 활동 (불법 행위 또는 서비스 홍보)",
+    "spam": "스팸 (같은 내용 반복 게시)",
+    "privacy": "개인정보 침해 (동의 없이 타인 정보/사진 공유)",
     "other": "기타 (직접 입력)",
-    "otherPlaceholder": "이유를 입력하세요",
+    "otherPlaceholder": "신고 사유를 입력하세요",
     "additional": "추가 설명",
     "optional": "선택 사항",
-    "postId": "게시물 ID",
+    "postId": "게시글 ID",
     "detailsPlaceholder": "상황 설명 또는 검토에 도움이 되는 정보를 입력하세요.",
     "submit": "신고 제출"
   },
   "delete": {
-    "title": "게시물 삭제",
-    "confirm": "이 게시물을 삭제하시겠습니까?",
+    "title": "게시글 삭제",
+    "confirm": "이 게시글을 삭제하시겠습니까?",
     "warning": "이 작업은 되돌릴 수 없습니다.",
     "cancel": "취소",
     "delete": "삭제"
@@ -64,16 +65,15 @@
   "deleteComment": {
     "title": "댓글 삭제",
     "confirm": "이 댓글을 삭제하시겠습니까?",
-    "warning": "이 작업은 되돌릴 수 없습니다.",
+    "warning": "되돌릴 수 없습니다.",
     "cancel": "취소",
     "delete": "삭제"
   },
   "account": {
     "title": "계정 정보",
-    "username": "사용자 이름",
+    "username": "사용자명",
     "following": "팔로잉",
     "followers": "팔로워",
-
     "name": "이름",
     "birthdate": "생년월일",
     "age": "나이",
@@ -83,44 +83,36 @@
     "visibility": "공개 범위",
     "private": "비공개",
     "public": "공개",
-    "saveChanges": "변경사항 저장",
-
-    "myPosts": "내 게시물",
-    "noPosts": "아직 게시물이 없습니다.",
-
+    "saveChanges": "변경 저장",
+    "myPosts": "내 게시글",
+    "noPosts": "작성한 게시글이 없습니다.",
     "edit": "수정",
     "delete": "삭제",
-
-    "editPostTitle": "게시물 수정",
-    "deletePostTitle": "게시물 삭제",
-    "deletePostConfirm": "이 게시물을 삭제하시겠습니까?",
-    "deleteWarning": "이 작업은 되돌릴 수 없습니다.",
+    "editPostTitle": "게시글 수정",
+    "deletePostTitle": "게시글 삭제",
+    "deletePostConfirm": "정말 삭제하시겠습니까?",
+    "deleteWarning": "되돌릴 수 없습니다.",
     "cancel": "취소",
     "confirmDelete": "삭제"
   },
   "follow": {
     "title": "팔로우",
     "searchPlaceholder": "계정 검색...",
-    "noFollow": "아직 팔로우한 사용자가 없습니다.",
+    "noFollow": "팔로우한 계정이 없습니다.",
     "following": "팔로잉",
-
-    "modalTitle": "언팔로우",
-    "modalMessage": "언팔로우하시겠습니까?",
-    "modalSubMessage": "이 사용자의 게시물이 더 이상 팔로우 목록에 표시되지 않습니다.",
-
+    "modalTitle": "팔로우 취소",
+    "modalMessage": "팔로우를 취소하시겠습니까?",
+    "modalSubMessage": "팔로우 목록에서 더 이상 게시글이 표시되지 않습니다.",
     "cancel": "취소",
-    "unfollow": "언팔로우"
+    "unfollow": "팔로우 취소"
   },
   "notification": {
     "title": "알림",
-
     "today": "오늘",
     "yesterday": "어제",
     "thisWeek": "이번 주",
-
-    "followBack": "맞팔하기",
+    "followBack": "맞팔",
     "following": "팔로잉",
-
     "noNotification": "아직 알림이 없습니다."
   },
   "userProfile": {
@@ -129,32 +121,27 @@
     "block": "차단",
     "blocked": "차단됨",
     "report": "신고",
-
+    "requestSent": "요청 보냄",
     "age": "나이",
     "bioEmpty": "소개가 없습니다.",
-    "private": "이 계정은 비공개입니다",
-
+    "private": "비공개 계정입니다",
     "history": "기록",
     "comments": "댓글",
-    "noPosts": "게시물이 없습니다.",
+    "noPosts": "게시글 없음",
     "studyToday": "오늘 공부 시간",
-
-    "postDetail": "게시물 상세보기",
+    "postDetail": "게시글 상세",
     "close": "닫기",
-
-    "reportPostTitle": "게시물 신고",
+    "reportPostTitle": "게시글 신고",
     "reportAccountTitle": "계정 신고",
     "selectReasonPost": "신고 사유를 선택하세요:",
-    "selectReasonAccount": "계정을 신고하는 이유를 선택하세요:",
-    "additionalDetails": "추가 설명 (선택 사항)",
-
+    "selectReasonAccount": "신고 사유를 선택하세요:",
+    "additionalDetails": "추가 정보 (선택)",
     "submitReport": "신고 제출",
     "cancel": "취소",
-
     "blockUser": "사용자 차단",
-    "blockConfirm": "정말로 차단하시겠습니까?",
-    "blockDetail": "이 사용자는 더 이상 당신의 게시물을 보거나 상호작용할 수 없습니다. 언제든지 차단 해제할 수 있습니다.",
-    "confirmBlock": "차단하기"
+    "blockConfirm": "정말 차단하시겠습니까?",
+    "blockDetail": "상대방은 더 이상 게시글을 보거나 상호작용할 수 없습니다. 언제든지 차단 해제 가능.",
+    "confirmBlock": "차단"
   },
   "settings": {
     "changePassword": "비밀번호 변경",
@@ -164,8 +151,8 @@
   "setting": {
     "accountSettings": "계정 설정",
     "language": "언어",
-    "forHelp": "도움말",
-    "fromHubersity": "Hubersity 제공"
+    "forHelp": "도움 요청",
+    "fromHubersity": "Hubersity에서"
   },
   "changePassword": {
     "title": "비밀번호 변경",
@@ -173,25 +160,22 @@
     "new": "새 비밀번호",
     "confirmNew": "새 비밀번호 확인",
     "confirmBtn": "확인",
-
     "errorCurrent": "현재 비밀번호를 입력하세요",
     "errorMatch": "비밀번호가 일치하지 않습니다",
-
-    "rule1": "8자 이상이어야 합니다",
-    "rule2": "대문자 1개 이상 포함",
-    "rule3": "숫자 1개 이상 포함",
-    "rule4": "특수문자 1개 이상 포함 (!@#$...)"
+    "rule1": "8자 이상",
+    "rule2": "대문자 1자 이상 포함",
+    "rule3": "숫자 1자 이상 포함",
+    "rule4": "특수문자 1자 이상 포함 (!@#$...)"
   },
   "blockedUsers": {
     "title": "차단한 사용자",
-    "loading": "차단 목록 불러오는 중...",
+    "loading": "차단 사용자 불러오는 중...",
     "unblock": "차단 해제",
     "noBlocked": "차단한 사용자가 없습니다.",
-
-    "popupTitle": "차단 해제",
-    "popupMessage": "이 사용자의 차단을 해제하시겠습니까?",
+    "popupTitle": "차단 해제?",
+    "popupMessage": "차단을 해제하시겠습니까?",
     "cancel": "취소",
-    "confirm": "차단 해제"
+    "confirm": "해제"
   },
   "deleteAccount": {
     "title": "계정 관리",
@@ -199,27 +183,25 @@
     "dangerTitle": "위험 구역",
     "dangerText": "계정 삭제는 영구적이며 되돌릴 수 없습니다.",
     "deleteButton": "계정 삭제",
-
     "modalTitle": "계정 삭제 확인",
     "modalText1": "정말 계정을 삭제하시겠습니까?",
-    "modalText2": "이 작업은 영구적이며 되돌릴 수 없습니다.",
+    "modalText2": "이 작업은 되돌릴 수 없습니다.",
     "cancel": "취소",
-    "confirmDelete": "계정 삭제",
-
+    "confirmDelete": "삭제",
     "deletedSuccess": "계정이 삭제되었습니다.",
-    "deleteFailed": "계정을 삭제하지 못했습니다.",
-    "networkError": "네트워크 오류가 발생했습니다."
+    "deleteFailed": "삭제 실패",
+    "networkError": "네트워크 오류"
   },
   "language": {
     "title": "언어",
     "appLanguage": "앱 언어",
-    "description": "Hubersity 메뉴와 내비게이션에 사용할 언어를 선택하세요.",
+    "description": "Hubersity 메뉴 및 탐색 언어 선택",
     "save": "언어 저장"
   },
   "settingHelp": {
-    "title": "도움말",
+    "title": "도움 요청",
     "reportProblem": "문제 신고",
-    "description": "신속한 해결을 위해 자세한 내용을 입력해주세요.",
+    "description": "문제를 빠르게 해결할 수 있도록 자세히 입력해주세요.",
     "placeholder": "문제를 입력하세요...",
     "addFile": "파일 추가",
     "confirm": "확인",
@@ -229,30 +211,16 @@
   "tagsPage": {
     "popular6": "인기 태그 6개",
     "otherTags": "기타 태그",
-    "noTags": "태그가 없습니다",
+    "noTags": "태그 없음",
     "loadMore": "더 보기",
-    "loading": "불러오는 중…",
-    "noMore": "더 이상 태그가 없습니다",
-    "noOtherTags": "다른 태그가 없습니다",
+    "loading": "로딩 중…",
+    "noMore": "더 이상 태그 없음",
+    "noOtherTags": "기타 태그 없음",
     "searchPlaceholder": "태그 검색...",
-    "postWithTag": "#{{tag}} 태그로 게시...",
-    "noPostsForTag": "이 태그의 게시물이 없습니다",
-    "trending": "트렌딩",
-    "postsCount": "게시물"
-  },
-  "chat": {
-    "findFriend": "친구 찾기...",
-    "typeMessage": "메시지 입력...",
-    "noChats": "채팅이 없습니다",
-    "selectChat": "메시지를 보내려면 채팅을 선택하세요",
-    "deleteMessage": "메시지 삭제",
-    "forwardMessage": "메시지 전달",
-    "copyMessage": "메시지 복사",
-    "downloadFile": "파일 다운로드",
-    "cancel": "취소",
-    "send": "보내기",
-    "notFoundUserName": "이 사용자 이름을 찾을 수 없습니다",
-    "remove": "제거"
+    "postWithTag": "#{{tag}} 게시글...",
+    "noPostsForTag": "이 태그의 게시글이 없습니다.",
+    "trending": "트렌드",
+    "postsCount": "게시글"
   },
   "calendar": {
     "daysOfWeek": {
@@ -265,21 +233,49 @@
       "sat": "토"
     },
     "studyHours": {
-      "study0": "0시간 공부",
-      "study1": "0초에서 3시간 사이 공부",
-      "study2": "3시간에서 6시간 사이 공부",
-      "study3": "6시간에서 9시간 사이 공부",
-      "study4": "9시간 이상 공부"
+      "study0": "공부 0시간",
+      "study1": "0초 이상 ~ 3시간",
+      "study2": "3 ~ 6시간",
+      "study3": "6 ~ 9시간",
+      "study4": "9시간 이상"
     },
     "monthNames": [
-      "1월", "2월", "3월", "4월", "5월", "6월",
-      "7월", "8월", "9월", "10월", "11월", "12월"
+      "1월","2월","3월","4월","5월","6월",
+      "7월","8월","9월","10월","11월","12월"
     ]
   },
   "time_study": {
     "start": "시작",
-    "pause": "일시 정지",
+    "pause": "일시정지",
     "today": "오늘",
-    "loadingUser": "사용자 로딩 중..."
+    "loadingUser": "사용자 불러오는 중..."
+  },
+  "chat": {
+    "findFriend": "친구 검색...",
+    "typeMessage": "메시지 입력...",
+    "noChats": "채팅 없음",
+    "selectChat": "채팅을 선택하세요",
+    "deleteMessage": "메시지 삭제",
+    "forwardMessage": "메시지 전달",
+    "copyMessage": "메시지 복사",
+    "downloadFile": "파일 다운로드",
+    "cancel": "취소",
+    "send": "보내기",
+    "notFoundUserName": "해당 사용자명을 찾을 수 없습니다",
+    "remove": "삭제"
+  },
+  "settingAdminReply": {
+    "loading": "로딩 중…",
+    "noMessage": "메시지가 없습니다.",
+    "adminReply": "관리자 답변",
+    "selectMessage": "메시지를 선택하세요",
+    "noTitle": "제목 없음",
+    "fromApp": "앱에서"
+  },
+  "time": {
+    "justNow": "방금 전",
+    "minutesAgo": "{{count}}분 전",
+    "hoursAgo": "{{count}}시간 전",
+    "yesterday": "어제"
   }
 }

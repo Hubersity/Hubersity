@@ -1,11 +1,11 @@
 {
   "sidebar": {
     "board": "Board",
-    "time": "Time study",
-    "follow": "Follow",
+    "time": "Time Study",
+    "follow": "Following",
     "followers": "Followers",
     "chat": "Chat",
-    "notification": "Notification",
+    "notification": "Notifications",
     "tags": "Tags",
     "news": "News",
     "account": "Account",
@@ -15,7 +15,7 @@
     "search": "Search text",
     "universityTalk": "University Talk",
     "followTalk": "Follow Talk",
-    "newPostPlaceholder": "Type here what do you think...",
+    "newPostPlaceholder": "Type here what you think...",
     "postButton": "Post",
     "comment": "Comment",
     "writeComment": "Write a comment...",
@@ -27,18 +27,18 @@
     "cancel": "Cancel",
     "save": "Save Changes"
   },
-    "common": {
+  "common": {
     "cancel": "Cancel",
     "saveChanges": "Save Changes",
     "delete": "Delete",
     "submit": "Submit"
-    },
-    "post": {
+  },
+  "post": {
     "edit": "Edit Post",
     "delete": "Delete",
     "report": "Report"
-    },
-    "report": {
+  },
+  "report": {
     "titlePost": "Report Post",
     "titleComment": "Report Comment",
     "description": "Please select a reason for reporting this post",
@@ -54,27 +54,26 @@
     "postId": "Post ID",
     "detailsPlaceholder": "Describe what happened or any context that helps us review this report.",
     "submit": "Submit Report"
-    },
-    "delete": {
+  },
+  "delete": {
     "title": "Delete Post",
     "confirm": "Are you sure you want to delete this post?",
     "warning": "This action cannot be undone.",
     "cancel": "Cancel",
     "delete": "Delete"
-    },
-    "deleteComment": {
+  },
+  "deleteComment": {
     "title": "Delete Comment",
     "confirm": "Are you sure you want to delete this comment?",
     "warning": "This action cannot be undone.",
     "cancel": "Cancel",
     "delete": "Delete"
-    },
-    "account": {
+  },
+  "account": {
     "title": "Account Information",
     "username": "User Name",
     "following": "Following",
-    "followers": "Follower",
-
+    "followers": "Followers",
     "name": "Name",
     "birthdate": "Birthdate",
     "age": "Age",
@@ -85,141 +84,121 @@
     "private": "Private",
     "public": "Public",
     "saveChanges": "Save Changes",
-
     "myPosts": "My Posts",
     "noPosts": "You haven’t posted anything yet.",
-
     "edit": "Edit",
     "delete": "Delete",
-
     "editPostTitle": "Edit Post",
     "deletePostTitle": "Delete Post",
     "deletePostConfirm": "Are you sure you want to delete this post?",
     "deleteWarning": "This action cannot be undone.",
     "cancel": "Cancel",
     "confirmDelete": "Delete"
-    },
-    "follow": {
+  },
+  "follow": {
     "title": "Follow",
     "searchPlaceholder": "Find account...",
     "noFollow": "You haven't followed anyone yet.",
     "following": "Following",
-
     "modalTitle": "Unfollow",
     "modalMessage": "Are you sure you want to unfollow",
     "modalSubMessage": "You will stop seeing their posts in your follow list.",
-
     "cancel": "Cancel",
     "unfollow": "Unfollow"
-    },
-    "notification": {
+  },
+  "notification": {
     "title": "Notification",
-
     "today": "Today",
     "yesterday": "Yesterday",
     "thisWeek": "This week",
-
     "followBack": "Follow back",
     "following": "Following",
-
     "noNotification": "You don't have any notifications yet."
-    },
-    "userProfile": {
+  },
+  "userProfile": {
     "follow": "Follow",
     "following": "Following",
     "block": "Block",
     "blocked": "Blocked",
     "report": "Report",
     "requestSent": "Request Sent",
-
     "age": "Age",
     "bioEmpty": "No bio provided.",
     "private": "This account is private",
-
     "history": "History",
     "comments": "Comments",
     "noPosts": "No posts yet.",
     "studyToday": "Study Today",
-
     "postDetail": "Post Detail",
     "close": "Close",
-
     "reportPostTitle": "Report Post",
     "reportAccountTitle": "Report Account",
     "selectReasonPost": "Please select a reason for reporting this post:",
     "selectReasonAccount": "Please select a reason for reporting this account:",
     "additionalDetails": "Additional details (optional)",
-
     "submitReport": "Submit Report",
     "cancel": "Cancel",
-
     "blockUser": "Block User",
     "blockConfirm": "Are you sure you want to block",
     "blockDetail": "They will not be able to see your posts or interact with your account anymore. You can unblock them anytime.",
     "confirmBlock": "Confirm Block"
-
   },
-    "settings": {
+  "settings": {
     "changePassword": "Change Password",
     "blockedUsers": "Blocked Users",
     "deleteAccount": "Delete Account"
-    },
-    "setting": {
+  },
+  "setting": {
     "accountSettings": "Account Settings",
     "language": "Language",
     "forHelp": "For Help",
     "fromHubersity": "From Hubersity"
-    },
-    "changePassword": {
+  },
+  "changePassword": {
     "title": "Change Password",
     "current": "Current Password",
     "new": "New Password",
-    "confirmNew": "New Password again",
+    "confirmNew": "Confirm New Password",
     "confirmBtn": "Confirm",
-
     "errorCurrent": "Please enter your current password",
     "errorMatch": "Passwords do not match",
-
     "rule1": "At least 8 characters long",
     "rule2": "Contains at least one uppercase letter",
     "rule3": "Contains at least one number",
     "rule4": "Contains at least one special character (!@#$...)"
-    },
-    "blockedUsers": {
+  },
+  "blockedUsers": {
     "title": "Blocked Users",
     "loading": "Loading blocked users...",
     "unblock": "Unblock",
     "noBlocked": "You have not blocked anyone.",
-
     "popupTitle": "Unblock User?",
     "popupMessage": "Do you want to unblock",
     "cancel": "Cancel",
     "confirm": "Unblock"
-    },
-    "deleteAccount": {
+  },
+  "deleteAccount": {
     "title": "Account Management",
     "logout": "Log Out",
     "dangerTitle": "Danger Zone",
     "dangerText": "Deleting your account is permanent and cannot be undone.",
     "deleteButton": "Delete Account",
-
     "modalTitle": "Confirm Account Deletion",
     "modalText1": "Are you absolutely sure you want to delete your account?",
     "modalText2": "This action is permanent and cannot be undone.",
     "cancel": "Cancel",
     "confirmDelete": "Delete Account",
-
     "deletedSuccess": "Your account has been deleted.",
     "deleteFailed": "Failed to delete account.",
     "networkError": "Network error."
-    },
-    "language": {
+  },
+  "language": {
     "title": "Language",
     "appLanguage": "App Language",
     "description": "Select your preferred language for Hubersity menus and navigation.",
     "save": "Save Language"
-    },
-    "settingHelp": {
+  },
+  "settingHelp": {
     "title": "For Help",
     "reportProblem": "Report a Problem",
     "description": "Please provide details so we can resolve your issue quickly.",
@@ -228,8 +207,8 @@
     "confirm": "Confirm",
     "attached": "Attached:",
     "success": "Report submitted successfully. Thank you!"
-    },
-    "tagsPage": {
+  },
+  "tagsPage": {
     "popular6": "6 Popular Tags",
     "otherTags": "Other Tags",
     "noTags": "No tags found yet",
@@ -242,47 +221,61 @@
     "noPostsForTag": "No posts for this tag yet",
     "trending": "Trending",
     "postsCount": "posts"
+  },
+  "calendar": {
+    "daysOfWeek": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
     },
-    "calendar": {
-      "daysOfWeek": {
-        "sun": "Sun",
-        "mon": "Mon",
-        "tue": "Tue",
-        "wed": "Wed",
-        "thu": "Thu",
-        "fri": "Fri",
-        "sat": "Sat"
-      },
-      "studyHours": {
-        "study0": "Study 0 hour",
-        "study1": "Study more than 0 seconds to 3 hours",
-        "study2": "Study between 3 to 6 hours",
-        "study3": "Study between 6 to 9 hours",
-        "study4": "Study more than 9 hours"
-      },
-      "monthNames": [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-      ]
+    "studyHours": {
+      "study0": "Study 0 hour",
+      "study1": "Study more than 0 seconds to 3 hours",
+      "study2": "Study between 3 to 6 hours",
+      "study3": "Study between 6 to 9 hours",
+      "study4": "Study more than 9 hours"
     },
-    "time_study": {
-      "start": "Start",
-      "pause": "Pause",
-      "today": "Today",
-      "loadingUser": "Loading user..."
-    },
-    "chat": {
-      "findFriend": "Find friend...",
-      "typeMessage": "Type a message...",
-      "noChats": "No chats yet.",
-      "selectChat": "Select a chat to start messaging.",
-      "deleteMessage": "Delete message",
-      "forwardMessage": "Forward message",
-      "copyMessage": "Copy message",
-      "downloadFile": "Download file",
-      "cancel": "Cancel",
-      "send": "Send",
-      "notFoundUserName": "Not found this user name",
-      "remove": "Remove"
-    }
+    "monthNames": [
+      "January","February","March","April","May","June",
+      "July","August","September","October","November","December"
+    ]
+  },
+  "time_study": {
+    "start": "Start",
+    "pause": "Pause",
+    "today": "Today",
+    "loadingUser": "Loading user..."
+  },
+  "chat": {
+    "findFriend": "Find friend...",
+    "typeMessage": "Type a message...",
+    "noChats": "No chats yet.",
+    "selectChat": "Select a chat to start messaging.",
+    "deleteMessage": "Delete message",
+    "forwardMessage": "Forward message",
+    "copyMessage": "Copy message",
+    "downloadFile": "Download file",
+    "cancel": "Cancel",
+    "send": "Send",
+    "notFoundUserName": "Not found this user name",
+    "remove": "Remove"
+  },
+  "settingAdminReply": {
+    "loading": "Loading…",
+    "noMessage": "No messages yet.",
+    "adminReply": "Admin Reply",
+    "selectMessage": "Select a message.",
+    "noTitle": "No title",
+    "fromApp": "From App"
+  },
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{{count}} mins ago",
+    "hoursAgo": "{{count}} hours ago",
+    "yesterday": "Yesterday"
+  }
 }
