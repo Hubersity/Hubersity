@@ -113,7 +113,11 @@
     "thisWeek": "This week",
     "followBack": "Follow back",
     "following": "Following",
-    "noNotification": "You don't have any notifications yet."
+    "noNotification": "You don't have any notifications yet.",
+    "startedFollowingYou": "{{username}} started following you",
+    "requestedToFollowYou": "{{username}} requested to follow you",
+    "likedYourPost": "{{username}} liked your post",
+    "commentedOnYourPost": "{{username}} commented on your post"
   },
   "userProfile": {
     "follow": "Follow",
@@ -274,6 +278,7 @@
   },
   "time": {
     "justNow": "Just now",
+    "secondsAgo": "{{count}} sec ago",
     "minutesAgo": "{{count}} mins ago",
     "hoursAgo": "{{count}} hours ago",
     "yesterday": "Yesterday"

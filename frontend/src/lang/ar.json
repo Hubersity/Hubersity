@@ -113,7 +113,11 @@
     "thisWeek": "هذا الأسبوع",
     "followBack": "متابعة مقابلة",
     "following": "متابَعون",
-    "noNotification": "لا توجد إشعارات."
+    "noNotification": "لا توجد إشعارات.",
+    "startedFollowingYou": "{{username}} بدأ بمتابعتك",
+    "requestedToFollowYou": "{{username}} طلب متابعتك",
+    "likedYourPost": "{{username}} أعجب بمنشورك",
+    "commentedOnYourPost": "{{username}} علق على منشورك"
   },
   "userProfile": {
     "follow": "متابعة",
@@ -274,6 +278,7 @@
   },
   "time": {
     "justNow": "الآن",
+    "secondsAgo": "منذ {{count}} ثانية",
     "minutesAgo": "قبل {{count}} دقيقة",
     "hoursAgo": "قبل {{count}} ساعة",
     "yesterday": "أمس"

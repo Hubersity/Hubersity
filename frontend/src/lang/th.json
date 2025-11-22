@@ -113,7 +113,11 @@
     "thisWeek": "สัปดาห์นี้",
     "followBack": "ติดตามกลับ",
     "following": "กำลังติดตาม",
-    "noNotification": "ยังไม่มีการแจ้งเตือน"
+    "noNotification": "ยังไม่มีการแจ้งเตือน",
+    "startedFollowingYou": "{{username}} ได้เริ่มติดตามคุณ",
+    "requestedToFollowYou": "{{username}} ขออนุญาตติดตามคุณ",
+    "likedYourPost": "{{username}} ถูกใจโพสต์ของคุณ",
+    "commentedOnYourPost": "{{username}} แสดงความคิดเห็นในโพสต์ของคุณ"
   },
   "userProfile": {
     "follow": "ติดตาม",
@@ -274,6 +278,7 @@
   },
   "time": {
     "justNow": "เมื่อสักครู่",
+    "secondsAgo": "{{count}} วินาทีที่แล้ว",
     "minutesAgo": "{{count}} นาทีที่แล้ว",
     "hoursAgo": "{{count}} ชั่วโมงที่แล้ว",
     "yesterday": "เมื่อวาน"

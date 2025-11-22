@@ -113,7 +113,11 @@
     "thisWeek": "今週",
     "followBack": "フォロー返し",
     "following": "フォロー中",
-    "noNotification": "通知はまだありません"
+    "noNotification": "通知はまだありません",
+    "startedFollowingYou": "{{username}} さんがあなたをフォローし始めました",
+    "requestedToFollowYou": "{{username}} さんがあなたのフォローをリクエストしました",
+    "likedYourPost": "{{username}} さんがあなたの投稿にいいねしました",
+    "commentedOnYourPost": "{{username}} さんがあなたの投稿にコメントしました"
   },
   "userProfile": {
     "follow": "フォロー",
@@ -274,6 +278,7 @@
   },
   "time": {
     "justNow": "たった今",
+    "secondsAgo": "{{count}} 秒前",
     "minutesAgo": "{{count}} 分前",
     "hoursAgo": "{{count}} 時間前",
     "yesterday": "昨日"

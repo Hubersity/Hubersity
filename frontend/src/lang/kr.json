@@ -113,7 +113,11 @@
     "thisWeek": "이번 주",
     "followBack": "맞팔",
     "following": "팔로잉",
-    "noNotification": "아직 알림이 없습니다."
+    "noNotification": "아직 알림이 없습니다.",
+    "startedFollowingYou": "{{username}} 님이 당신을 팔로우하기 시작했습니다",
+    "requestedToFollowYou": "{{username}} 님이 팔로우 요청을 보냈습니다",
+    "likedYourPost": "{{username}} 님이 당신의 게시물을 좋아했습니다",
+    "commentedOnYourPost": "{{username}} 님이 당신의 게시물에 댓글을 남겼습니다"
   },
   "userProfile": {
     "follow": "팔로우",
@@ -274,6 +278,7 @@
   },
   "time": {
     "justNow": "방금 전",
+    "secondsAgo": "{{count}}초 전",
     "minutesAgo": "{{count}}분 전",
     "hoursAgo": "{{count}}시간 전",
     "yesterday": "어제"
