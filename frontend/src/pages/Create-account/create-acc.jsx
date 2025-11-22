@@ -14,7 +14,7 @@ export default function CreateAcc() {
     : {};
 
   const [image, setImage] = useState(null);
-  const [privacy, setPrivacy] = useState("private");
+  const [isPrivate, setIsPrivate] = useState(true);
   const [birthdate, setBirthdate] = useState(new Date());
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -44,6 +44,7 @@ export default function CreateAcc() {
     }
 
     let uploadedImagePath = null;
+    console.log("🔘 Button state:", isPrivate ? "Private" : "Public");
 
     // ✅ อัปโหลดรูปก่อน ถ้ามี
     if (selectedFile) {
@@ -73,10 +74,12 @@ export default function CreateAcc() {
       name,
       birthdate: formattedDate,
       university,
-      privacy,
+      is_private: isPrivate,
       description: bio,
       profile_image: uploadedImagePath,
     };
+
+    console.log("📤 Sending profile update:", body);
 
     const res = await fetch(`http://localhost:8000/users/${authData.uid}`, {
       method: "PUT",
@@ -98,6 +101,7 @@ export default function CreateAcc() {
           description: bio,
           university,
           profile_image: uploadedImagePath,
+          is_private: isPrivate,
         })
       );
 
@@ -273,22 +277,27 @@ export default function CreateAcc() {
           <div className="flex items-center gap-5 mt-2">
             <span className="font-medium mr-2">Visibility :</span>
             <div className="flex gap-3 bg-gray-100 rounded-full px-2 py-1">
-              {["private", "public"].map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setPrivacy(type)}
-                  className={`px-4 py-1 rounded-full transition ${
-                    privacy === type
-                      ? "bg-[#8cab93] text-white"
-                      : "text-gray-700"
-                  }`}
-                >
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </button>
-              ))}
+              <button
+                type="button"
+                onClick={() => setIsPrivate(true)}
+                className={`px-4 py-1 rounded-full transition ${
+                  isPrivate ? "bg-[#8cab93] text-white" : "text-gray-700"
+                }`}
+              >
+                Private
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPrivate(false)}
+                className={`px-4 py-1 rounded-full transition ${
+                  !isPrivate ? "bg-[#8cab93] text-white" : "text-gray-700"
+                }`}
+              >
+                Public
+              </button>
             </div>
           </div>
+
 
           {/* University */}
           <div className="flex flex-col gap-2">

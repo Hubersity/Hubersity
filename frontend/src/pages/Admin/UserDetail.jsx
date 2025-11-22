@@ -166,13 +166,57 @@ export default function UserDetail() {
         try {
             await new Promise((r) => setTimeout(r, 500));
 
-            if (action === "Ban") {
+            if (action === "Ban1w") {
             const res = await fetch(`${API_URL}/admin/users/${user.uid}/ban`, {
                 method: "POST",
                 headers: {
                 "Content-Type": "application/json"
                 },
                 body: JSON.stringify({ reason: message, duration: "1w" })
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to ban user");
+            }
+
+            alert("User banned successfully");
+            setUser((prev) => ({
+                ...prev,
+                action: "Ban",
+                status: "Banned"
+            }));
+            return;
+            }
+
+            if (action === "Ban1m") {
+            const res = await fetch(`${API_URL}/admin/users/${user.uid}/ban`, {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ reason: message, duration: "1m" })
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to ban user");
+            }
+
+            alert("User banned successfully");
+            setUser((prev) => ({
+                ...prev,
+                action: "Ban",
+                status: "Banned"
+            }));
+            return;
+            }
+
+            if (action === "Ban1y") {
+            const res = await fetch(`${API_URL}/admin/users/${user.uid}/ban`, {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ reason: message, duration: "1y" })
             });
 
             if (!res.ok) {
@@ -265,9 +309,9 @@ export default function UserDetail() {
                     className="w-[20vw] h-[4vh] border rounded-full pl-5 ml-4 focus:ring-2 focus:ring-[#e0ebe2] appearance-none hover:bg-[#f6faf7]"
                 >
                     <option value="">Choose action</option>
-                    <option value="Ban">Ban account for 1 week</option>
-                    <option value="Ban">Ban account for 1 month</option>
-                    <option value="Ban">Ban account for 1 year</option>
+                    <option value="Ban1w">Ban account for 1 week</option>
+                    <option value="Ban1m">Ban account for 1 month</option>
+                    <option value="Ban1y">Ban account for 1 year</option>
                     <option value="Hide">Delete this account</option>
                     <option value="Unban">Unban</option>
                 </select>

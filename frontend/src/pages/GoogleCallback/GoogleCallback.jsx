@@ -66,7 +66,7 @@ export default function GoogleCallback() {
             profile_image: userData.profile_image,
             birthdate: userData.birthdate,
             university: userData.university,
-            privacy: userData.privacy,
+            is_private: userData.is_private,
             description: userData.description,
           };
 

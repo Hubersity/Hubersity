@@ -176,14 +176,13 @@ export default function UserProfile() {
         const data = await res.json();
         setUser(data);
 
-        if (!data.is_private) {
+        if (data.can_view) {
           const postsRes = await fetch(`${API_URL}/posts/${userId}/posts`, {
             headers: { Authorization: `Bearer ${authData.token}` },
           });
           if (postsRes.ok) setPosts(await postsRes.json());
-          // const localStudy = JSON.parse(localStorage.getItem("study_today") || "{}");
-          // setStudyTime(localStudy);
         }
+
       } catch (err) {
         console.error("Error fetching user data:", err);
         setError("Failed to load user data.");

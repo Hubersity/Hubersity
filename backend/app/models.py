@@ -1,5 +1,6 @@
 from sqlalchemy.sql import func
-from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, func, UniqueConstraint, CheckConstraint, Index, Date , DateTime
+from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, func, UniqueConstraint, CheckConstraint, Index, Date , DateTime, BigInteger
+
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -17,13 +18,12 @@ class User(Base):
     username = Column(String, nullable=False, unique=True)  # ใช้ตอนสมัคร (login)
     name = Column(String, nullable=True)                    # ชื่อโปรไฟล์ (แก้ได้)
     email = Column(String, nullable=False, unique=True)
-    password = Column(String, nullable=False)
-    # is_admin = Column(Boolean, default=False)
-
+    password = Column(String, nullable=True)
+    oauth_provider = Column(String, nullable=True)
+    oauth_id = Column(String, nullable=True)
     birthdate = Column(TIMESTAMP(timezone=False), nullable=True)  # วันเกิด
     university = Column(String, nullable=True)                    # มหาวิทยาลัย
-    privacy = Column(String, default="private")                   # private/public
-    is_private = Column(Boolean, default=False)
+    is_private = Column(Boolean, default=False, nullable=False)
 
     created_at = Column(
         TIMESTAMP(timezone=True),

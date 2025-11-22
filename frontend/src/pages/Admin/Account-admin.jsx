@@ -31,9 +31,7 @@ export default function SearchAccount() {
         email: user.email,
         university: user.university || "-",
         joinDate: user.created_at.split("T")[0],
-        status: user.privacy
-        ? user.privacy.charAt(0).toUpperCase() + user.privacy.slice(1).toLowerCase()
-        : "Public"
+        status: user.is_private ? "Private" : "Public"
     });
 
 

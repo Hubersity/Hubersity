@@ -97,12 +97,8 @@ def update_user(
     
     protected_fields = {"username", "email", "password"}
 
-    # รองรับ is_private
-    if updated_data.is_private is not None:
-        user.is_private = updated_data.is_private
-
     for key, value in updated_data.model_dump(exclude_unset=True).items():
-        if key not in protected_fields and key != "is_private":
+        if key not in protected_fields:
             setattr(user, key, value)
 
     db.commit()
@@ -446,7 +442,8 @@ def delete_current_user(
     db.commit()
 
     return {"message": "Account deleted successfully"}
-@router.get("/{id}", response_model=schemas.UserResponse)
+
+@router.get("/{id}")
 def get_user_detail(
     id: int,
     db: Session = Depends(get_db),
