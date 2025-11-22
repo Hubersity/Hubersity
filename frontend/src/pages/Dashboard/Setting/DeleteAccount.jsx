@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const API_URL = "http://localhost:8000";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 function DeleteConfirmModal({ onCancel, onConfirm }) {
   const { t } = useTranslation();
@@ -77,11 +77,11 @@ export default function DeleteAccount() {
     const img = user.profile_image;
 
     if (img.startsWith("http")) return img;
-    if (img.startsWith("/uploads/")) return `http://localhost:8000${img}`;
-    if (img.startsWith("uploads/")) return `http://localhost:8000/${img}`;
-    if (img.startsWith("user/")) return `http://localhost:8000/uploads/${img}`;
+    if (img.startsWith("/uploads/")) return `${API_URL}${img}`;
+    if (img.startsWith("uploads/")) return `${API_URL}/${img}`;
+    if (img.startsWith("user/")) return `${API_URL}/uploads/${img}`;
 
-    return `http://localhost:8000/uploads/user/${img}`;
+    return `${API_URL}/uploads/user/${img}`;
   };
 
   const handleLogout = () => {

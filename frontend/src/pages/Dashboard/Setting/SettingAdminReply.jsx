@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Mail } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const API_URL = "http://localhost:8000";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 function timeAgo(iso, t) {
   if (!iso) return "";

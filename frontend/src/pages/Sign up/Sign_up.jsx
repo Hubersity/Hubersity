@@ -3,6 +3,7 @@ import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { FcGoogle } from "react-icons/fc";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 export default function Sign_up() {
   const [showPwd, setShowPwd] = useState(false);
@@ -11,7 +12,7 @@ export default function Sign_up() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState([]);
   const navigate = useNavigate();
 
   // signup function (พร้อมระบบ session แยก user)
@@ -29,8 +30,8 @@ export default function Sign_up() {
       return;
     }
 
-    const apiUrl = `${import.meta.env.VITE_API_URL}/users/`;
-    const loginUrl = `${import.meta.env.VITE_API_URL}/login`;
+    const apiUrl = `${API_URL}/users/`;
+    const loginUrl = `${API_URL}/login`;
 
     console.log("Sending signup request to:", apiUrl);
 
@@ -56,8 +57,12 @@ export default function Sign_up() {
         if (res.status === 400 || errData?.detail?.includes("already")) {
           setError("This username or email is already in use.");
         } else if (res.status === 422) {
-          setError("Invalid form data.");
-        } else {
+          const messages = Array.isArray(errData?.detail)
+            ? errData.detail.map(err => err.msg)
+            : ["Invalid form data."];
+          setError(messages);
+        }
+         else {
           setError("Server error, please try again.");
         }
         return;
@@ -105,7 +110,7 @@ export default function Sign_up() {
     }
   };
     const handleGoogleLogin = () => {
-    window.location.href = "${import.meta.env.VITE_API_URL}/login/google";
+    window.location.href = `${API_URL}/login/google`;
   };
 
 
@@ -261,8 +266,12 @@ export default function Sign_up() {
             </div>
 
             {/* Error */}
-            {error && (
-              <p className="text-red-500 text-center text-sm">{error}</p>
+            {error.length > 0 && (
+              <ul className="text-red-500 text-center text-sm">
+                {error.map((msg, i) => (
+                  <li key={i}>{msg}</li>
+                ))}
+              </ul>
             )}
 
             {/* ปุ่ม Sign up */}

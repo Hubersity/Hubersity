@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker-fix.css";
 
+const API_URL = `${import.meta.env.VITE_API_URL}`;
+
 export default function CreateAcc() {
   // ✅ ดึงข้อมูลผู้ใช้จาก localStorage
   const currentKey = localStorage.getItem("currentUserKey");
@@ -51,7 +53,7 @@ export default function CreateAcc() {
       const fd = new FormData();
       fd.append("file", selectedFile);
 
-      const uploadRes = await fetch("http://localhost:8000/users/upload-avatar", {
+      const uploadRes = await fetch(`${API_URL}/users/upload-avatar`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${authData.token}`,
@@ -81,7 +83,7 @@ export default function CreateAcc() {
 
     console.log("📤 Sending profile update:", body);
 
-    const res = await fetch(`http://localhost:8000/users/${authData.uid}`, {
+    const res = await fetch(`${API_URL}/users/${authData.uid}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
