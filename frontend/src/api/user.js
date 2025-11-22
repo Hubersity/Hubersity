@@ -7,7 +7,7 @@ export async function getCurrentUser() {
     const token = authData.token;
     if (!token) throw new Error("No token found");
 
-    const res = await fetch(`http://localhost:8000/users/me`, {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

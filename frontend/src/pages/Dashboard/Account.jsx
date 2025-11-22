@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker-fix.css";
 import { useTranslation } from "react-i18next";
 
-const API_URL = "http://localhost:8000";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 export default function Account() {
   const [profilePic, setProfilePic] = useState("/images/default-avatar.png");

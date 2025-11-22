@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState, useLayoutEffect } from "re
 import { Search, Send, Image, Paperclip, Video } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const API_URL = "http://localhost:8000";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 const toAbs = (u) => (u?.startsWith?.("http") ? u : `${API_URL}${u || ""}`);
 
 const formatTime = (iso) => {

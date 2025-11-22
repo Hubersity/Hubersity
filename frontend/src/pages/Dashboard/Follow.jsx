@@ -3,7 +3,7 @@ import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-const API_URL = "http://localhost:8000";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 /* ---------------------- Modal ---------------------- */
 function UnfollowConfirmModal({ open, onClose, onConfirm, user }) {

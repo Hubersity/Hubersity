@@ -29,8 +29,8 @@ export default function Sign_up() {
       return;
     }
 
-    const apiUrl = "http://localhost:8000/users/";
-    const loginUrl = "http://localhost:8000/login";
+    const apiUrl = `${import.meta.env.VITE_API_URL}/users/`;
+    const loginUrl = `${import.meta.env.VITE_API_URL}/login`;
 
     console.log("Sending signup request to:", apiUrl);
 
@@ -105,7 +105,7 @@ export default function Sign_up() {
     }
   };
     const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:8000/login/google";
+    window.location.href = "${import.meta.env.VITE_API_URL}/login/google";
   };
 
 

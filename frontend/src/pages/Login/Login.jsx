@@ -16,7 +16,7 @@ export default function Login() {
     e.preventDefault();
     setError("");
 
-    const apiUrl = `http://localhost:8000/login`;
+    const apiUrl = `${import.meta.env.VITE_API_URL}/login`;
 
     try {
       const res = await fetch(apiUrl, {
@@ -39,7 +39,7 @@ export default function Login() {
       const token = data.access_token;
 
       // 2) ดึงข้อมูล user จาก /users/me
-      const meRes = await fetch("http://localhost:8000/users/me", {
+      const meRes = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -79,7 +79,7 @@ export default function Login() {
     }
   };
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:8000/login/google";
+    window.location.href = `${import.meta.env.VITE_API_URL}/login/google`;
   };
 
   return (
