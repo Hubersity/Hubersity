@@ -113,13 +113,13 @@ class TestConcurrentLogins:
         # First login
         response1 = client.post(
             "/auth/login",
-            json={"username": user.username, "password": "password"}
+            json={"email": user.email, "password": "password"}
         )
         
         # Second login
         response2 = client.post(
             "/auth/login",
-            json={"username": user.username, "password": "password"}
+            json={"email": user.email, "password": "password"}
         )
         
         assert response1.status_code in [200, 201]
@@ -137,7 +137,7 @@ class TestConcurrentLogins:
         # Login
         login_response = client.post(
             "/auth/login",
-            json={"username": user.username, "password": "password"}
+            json={"email": user.email, "password": "password"}
         )
         
         # Logout
@@ -219,13 +219,13 @@ class TestLoginValidation:
         """Test login with wrong password."""
         response = client.post(
             "/auth/login",
-            json={"username": "nonexistent", "password": "wrong"}
+            json={"email": "nonexistent@test.com", "password": "wrong"}
         )
         
         assert response.status_code in [401, 400]
 
     def test_login_missing_credentials(self, client, db_session):
-        """Test login without username."""
+        """Test login without email."""
         response = client.post(
             "/auth/login",
             json={"password": "password"}
@@ -245,7 +245,7 @@ class TestLoginValidation:
 
         response = client.post(
             "/auth/login",
-            json={"username": user.username, "password": ""}
+            json={"email": user.email, "password": ""}
         )
         
         assert response.status_code in [401, 400]
@@ -339,7 +339,7 @@ class TestAuthenticationEdgeCases:
         response = client.post(
             "/auth/login",
             json={
-                "username": "' OR '1'='1",
+                "email": "' OR '1'='1@test.com",
                 "password": "' OR '1'='1"
             }
         )
@@ -357,11 +357,11 @@ class TestAuthenticationEdgeCases:
         
         assert response.status_code in [401, 414]
 
-    def test_unicode_in_username(self, client, db_session):
+    def test_unicode_in_email(self, client, db_session):
         """Test login with unicode characters."""
         response = client.post(
             "/auth/login",
-            json={"username": "用户", "password": "password"}
+            json={"email": "用户@test.com", "password": "password"}
         )
         
         assert response.status_code in [401, 400, 200]
