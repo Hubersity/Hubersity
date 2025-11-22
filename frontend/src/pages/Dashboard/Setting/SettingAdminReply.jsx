@@ -1,17 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Mail } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
-function timeAgo(iso) {
+function timeAgo(iso, t) {
   if (!iso) return "";
   const d = new Date(iso);
   const diff = (Date.now() - d.getTime()) / 1000;
 
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)} mins ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
-  if (diff < 172800) return "yesterday";
+  if (diff < 60) return t("time.justNow");
+  if (diff < 3600) return t("time.minutesAgo", { count: Math.floor(diff / 60) });
+  if (diff < 86400) return t("time.hoursAgo", { count: Math.floor(diff / 3600) });
+  if (diff < 172800) return t("time.yesterday");
   return d.toLocaleString();
 }
 
@@ -19,6 +20,7 @@ export default function SettingAdminReply() {
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { t, i18n } = useTranslation();  // ใช้ i18next
 
   // =========================
   //  LOAD USER
@@ -96,13 +98,13 @@ export default function SettingAdminReply() {
     <aside className="w-1/3 bg-[#fdfaf6] border rounded-2xl shadow-sm overflow-hidden flex flex-col h-[86.5vh]">
         <div className="px-5 py-4 border-b bg-white flex items-center gap-2">
         <Mail className="text-emerald-600" />
-        <p className="font-semibold text-gray-800">From App</p>
+        <p className="font-semibold text-gray-800">{t('settingAdminReply.fromApp')}</p>
         </div>
 
         <div className="overflow-y-auto flex-1">
-        {loading && <div className="p-4 text-sm text-gray-500">Loading…</div>}
+        {loading && <div className="p-4 text-sm text-gray-500">{t('settingAdminReply.loading')}</div>}
         {!loading && items.length === 0 && (
-            <div className="p-4 text-sm text-gray-500">No messages yet.</div>
+            <div className="p-4 text-sm text-gray-500">{t('settingAdminReply.noMessage')}</div>
         )}
 
         {!loading &&
@@ -116,7 +118,7 @@ export default function SettingAdminReply() {
             >
                 <div className="min-w-0 flex-1">
                 <p className="font-semibold text-gray-800 truncate">
-                    {n.title || "(No title)"}
+                    {n.title || t('settingAdminReply.noTitle')}
                 </p>
                 <p className="text-sm text-gray-600 line-clamp-1">
                     {n.message || ""}
@@ -124,7 +126,7 @@ export default function SettingAdminReply() {
                 </div>
 
                 <span className="ml-auto text-[11px] text-gray-500 whitespace-nowrap pt-1">
-                {timeAgo(n.created_at)}
+                {timeAgo(n.created_at, t)}
                 </span>
             </button>
             ))}
@@ -134,17 +136,17 @@ export default function SettingAdminReply() {
     {/* RIGHT DETAIL */}
     <section className="w-2/3 bg-[#fdfaf6] border rounded-2xl shadow-sm p-8 flex flex-col h-[86.5vh] overflow-y-auto">
         <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2 mb-4">
-        <Mail className="text-emerald-600" /> Admin Reply
+        <Mail className="text-emerald-600" /> {t('settingAdminReply.adminReply')}
         </h2>
 
         {selected ? (
         <div className="bg-white border rounded-xl p-6 shadow-sm w-full max-w-[85%]">
             <p className="text-xl font-semibold text-gray-900">{selected.title}</p>
-            <p className="text-sm text-gray-500 mb-4">{timeAgo(selected.created_at)}</p>
+            <p className="text-sm text-gray-500 mb-4">{timeAgo(selected.created_at, t)}</p>
             <p className="text-gray-700 leading-relaxed">{selected.message}</p>
         </div>
         ) : (
-        <div className="text-sm text-gray-500">Select a message.</div>
+        <div className="text-sm text-gray-500">{t('settingAdminReply.selectMessage')}</div>
         )}
     </section>
     </div>

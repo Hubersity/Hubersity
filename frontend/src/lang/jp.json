@@ -2,7 +2,8 @@
   "sidebar": {
     "board": "掲示板",
     "time": "学習時間",
-    "follow": "フォロー",
+    "follow": "フォロー中",
+    "followers": "フォロワー",
     "chat": "チャット",
     "notification": "通知",
     "tags": "タグ",
@@ -10,78 +11,69 @@
     "account": "アカウント",
     "setting": "設定"
   },
-
   "board": {
-    "search": "検索テキスト",
+    "search": "検索",
     "universityTalk": "大学トーク",
     "followTalk": "フォロートーク",
-    "newPostPlaceholder": "ここに入力してください...",
+    "newPostPlaceholder": "ここにあなたの考えを書いてください...",
     "postButton": "投稿",
     "comment": "コメント",
     "writeComment": "コメントを書く...",
     "send": "送信",
-    "noPosts": "投稿が見つかりません。"
+    "noPosts": "投稿が見つかりません"
   },
-
   "editPost": {
     "title": "投稿を編集",
     "cancel": "キャンセル",
     "save": "変更を保存"
   },
-
   "common": {
     "cancel": "キャンセル",
     "saveChanges": "変更を保存",
     "delete": "削除",
-    "submit": "送信"
+    "submit": "確認"
   },
-
   "post": {
     "edit": "投稿を編集",
     "delete": "削除",
     "report": "報告"
   },
-
   "report": {
     "titlePost": "投稿を報告",
     "titleComment": "コメントを報告",
-    "description": "この投稿を報告する理由を選択してください",
+    "description": "報告理由を選択してください",
     "harassment": "嫌がらせ（いじめ、差別、宗教・性別・集団への攻撃など）",
-    "sexual": "性的な内容（アダルト、わいせつ、不適切な内容）",
-    "illegal": "違法行為（違法な行為やサービスの助長）",
+    "sexual": "性的コンテンツ（不適切/露骨/ポルノ）",
+    "illegal": "違法行為（違法な行為やサービスの促進）",
     "spam": "スパム（同じ内容の繰り返し投稿）",
-    "privacy": "プライバシー侵害（本人の許可なく個人情報や写真を共有）",
-    "other": "その他（詳細を記入）",
+    "privacy": "プライバシー侵害（許可なく個人情報や写真を共有）",
+    "other": "その他（記入してください）",
     "otherPlaceholder": "理由を記入してください",
-    "additional": "追加情報",
+    "additional": "追加詳細",
     "optional": "任意",
-    "postId": "投稿ID",
-    "detailsPlaceholder": "状況や報告理由の詳細を記入してください。",
+    "postId": "投稿 ID",
+    "detailsPlaceholder": "何が起きたか、確認に役立つ情報を記入してください。",
     "submit": "報告を送信"
   },
-
   "delete": {
     "title": "投稿を削除",
-    "confirm": "本当にこの投稿を削除しますか？",
-    "warning": "この操作は元に戻せません。",
+    "confirm": "この投稿を削除しますか？",
+    "warning": "この操作は元に戻せません",
     "cancel": "キャンセル",
     "delete": "削除"
   },
-
   "deleteComment": {
     "title": "コメントを削除",
-    "confirm": "本当にこのコメントを削除しますか？",
-    "warning": "この操作は元に戻せません。",
+    "confirm": "このコメントを削除しますか？",
+    "warning": "この操作は元に戻せません",
     "cancel": "キャンセル",
     "delete": "削除"
   },
-
   "account": {
     "title": "アカウント情報",
     "username": "ユーザー名",
     "following": "フォロー中",
     "followers": "フォロワー",
-
     "name": "名前",
     "birthdate": "生年月日",
     "age": "年齢",
@@ -92,46 +84,36 @@
     "private": "非公開",
     "public": "公開",
     "saveChanges": "変更を保存",
-
     "myPosts": "自分の投稿",
-    "noPosts": "まだ投稿がありません。",
-
+    "noPosts": "まだ投稿がありません",
     "edit": "編集",
     "delete": "削除",
-
     "editPostTitle": "投稿を編集",
     "deletePostTitle": "投稿を削除",
-    "deletePostConfirm": "本当にこの投稿を削除しますか？",
-    "deleteWarning": "この操作は元に戻せません。",
+    "deletePostConfirm": "この投稿を削除しますか？",
+    "deleteWarning": "この操作は元に戻せません",
     "cancel": "キャンセル",
     "confirmDelete": "削除"
   },
-
   "follow": {
     "title": "フォロー",
-    "searchPlaceholder": "アカウントを検索...",
-    "noFollow": "まだ誰もフォローしていません。",
+    "searchPlaceholder": "アカウントを探す...",
+    "noFollow": "まだ誰もフォローしていません",
     "following": "フォロー中",
-
     "modalTitle": "フォロー解除",
-    "modalMessage": "本当にフォローを解除しますか？",
-    "modalSubMessage": "フォローリストにこのユーザーの投稿が表示されなくなります。",
-
+    "modalMessage": "フォローを解除しますか",
+    "modalSubMessage": "フォロー一覧に投稿が表示されなくなります。",
     "cancel": "キャンセル",
     "unfollow": "フォロー解除"
   },
-
   "notification": {
     "title": "通知",
-
     "today": "今日",
     "yesterday": "昨日",
     "thisWeek": "今週",
-
-    "followBack": "フォローバック",
+    "followBack": "フォロー返し",
     "following": "フォロー中",
-
-    "noNotification": "通知はまだありません。"
+    "noNotification": "通知はまだありません"
   },
   "userProfile": {
     "follow": "フォロー",
@@ -139,46 +121,106 @@
     "block": "ブロック",
     "blocked": "ブロック済み",
     "report": "報告",
-
+    "requestSent": "リクエスト送信済み",
     "age": "年齢",
-    "bioEmpty": "自己紹介はありません。",
+    "bioEmpty": "自己紹介なし",
     "private": "このアカウントは非公開です",
-
     "history": "履歴",
     "comments": "コメント",
-    "noPosts": "投稿はまだありません。",
-    "studyToday": "今日の勉強時間",
-
-    "postDetail": "投稿の詳細",
+    "noPosts": "投稿なし",
+    "studyToday": "今日の学習",
+    "postDetail": "投稿詳細",
     "close": "閉じる",
-
     "reportPostTitle": "投稿を報告",
     "reportAccountTitle": "アカウントを報告",
-    "selectReasonPost": "この投稿を報告する理由を選択してください：",
-    "selectReasonAccount": "このアカウントを報告する理由を選択してください：",
-    "additionalDetails": "追加情報（任意）",
-
+    "selectReasonPost": "報告理由を選択してください：",
+    "selectReasonAccount": "報告理由を選択してください：",
+    "additionalDetails": "追加詳細（任意）",
     "submitReport": "報告を送信",
     "cancel": "キャンセル",
-
     "blockUser": "ユーザーをブロック",
-    "blockConfirm": "本当にブロックしますか？",
-    "blockDetail": "ブロックされたユーザーはあなたの投稿を見たり、あなたと交流することができません。いつでも解除できます。",
+    "blockConfirm": "ブロックしますか",
+    "blockDetail": "あなたの投稿ややり取りが見られなくなります。いつでも解除できます。",
     "confirmBlock": "ブロックを確認"
   },
-  "chat": {
-    "findFriend": "友達を探す...",
-    "typeMessage": "メッセージを入力...",
-    "noChats": "チャットがありません",
-    "selectChat": "メッセージを送信するにはチャットを選択してください",
-    "deleteMessage": "メッセージを削除",
-    "forwardMessage": "メッセージを転送",
-    "copyMessage": "メッセージをコピー",
-    "downloadFile": "ファイルをダウンロード",
+  "settings": {
+    "changePassword": "パスワード変更",
+    "blockedUsers": "ブロックしたユーザー",
+    "deleteAccount": "アカウント削除"
+  },
+  "setting": {
+    "accountSettings": "アカウント設定",
+    "language": "言語",
+    "forHelp": "ヘルプ",
+    "fromHubersity": "Hubersity から"
+  },
+  "changePassword": {
+    "title": "パスワード変更",
+    "current": "現在のパスワード",
+    "new": "新しいパスワード",
+    "confirmNew": "新しいパスワード確認",
+    "confirmBtn": "確認",
+    "errorCurrent": "現在のパスワードを入力してください",
+    "errorMatch": "パスワードが一致しません",
+    "rule1": "8文字以上",
+    "rule2": "大文字を1つ以上含む",
+    "rule3": "数字を1つ以上含む",
+    "rule4": "特殊文字を1つ以上含む (!@#$...)"
+  },
+  "blockedUsers": {
+    "title": "ブロックしたユーザー",
+    "loading": "ブロックユーザーを読み込み中...",
+    "unblock": "解除",
+    "noBlocked": "まだ誰もブロックしていません",
+    "popupTitle": "ブロック解除？",
+    "popupMessage": "解除しますか",
     "cancel": "キャンセル",
-    "send": "送信",
-    "notFoundUserName": "このユーザー名は見つかりません",
-    "remove": "削除"
+    "confirm": "解除"
+  },
+  "deleteAccount": {
+    "title": "アカウント管理",
+    "logout": "ログアウト",
+    "dangerTitle": "危険ゾーン",
+    "dangerText": "アカウント削除は永久で元に戻せません。",
+    "deleteButton": "アカウント削除",
+    "modalTitle": "削除の確認",
+    "modalText1": "本当に削除しますか？",
+    "modalText2": "この操作は取り消せません。",
+    "cancel": "キャンセル",
+    "confirmDelete": "削除",
+    "deletedSuccess": "削除されました",
+    "deleteFailed": "削除に失敗しました",
+    "networkError": "ネットワークエラー"
+  },
+  "language": {
+    "title": "言語",
+    "appLanguage": "アプリ言語",
+    "description": "Hubersity のメニューと言語を選択",
+    "save": "言語を保存"
+  },
+  "settingHelp": {
+    "title": "ヘルプ",
+    "reportProblem": "問題を報告",
+    "description": "早く解決できるよう詳細を入力してください。",
+    "placeholder": "問題を説明してください...",
+    "addFile": "ファイル追加",
+    "confirm": "確認",
+    "attached": "添付：",
+    "success": "送信完了。ありがとうございます！"
+  },
+  "tagsPage": {
+    "popular6": "人気タグ 6 件",
+    "otherTags": "その他のタグ",
+    "noTags": "タグがありません",
+    "loadMore": "もっと見る",
+    "loading": "読み込み中…",
+    "noMore": "これ以上ありません",
+    "noOtherTags": "他のタグなし",
+    "searchPlaceholder": "タグ検索...",
+    "postWithTag": "#{{tag}} の投稿...",
+    "noPostsForTag": "このタグの投稿はまだありません",
+    "trending": "トレンド",
+    "postsCount": "投稿"
   },
   "calendar": {
     "daysOfWeek": {
@@ -191,21 +233,49 @@
       "sat": "土"
     },
     "studyHours": {
-      "study0": "学習0時間",
-      "study1": "0秒から3時間の学習",
-      "study2": "3時間から6時間の学習",
-      "study3": "6時間から9時間の学習",
-      "study4": "9時間以上学習"
+      "study0": "学習 0 時間",
+      "study1": "0 秒以上〜3 時間",
+      "study2": "3〜6 時間",
+      "study3": "6〜9 時間",
+      "study4": "9 時間以上"
     },
     "monthNames": [
-      "1月", "2月", "3月", "4月", "5月", "6月",
-      "7月", "8月", "9月", "10月", "11月", "12月"
+      "1月","2月","3月","4月","5月","6月",
+      "7月","8月","9月","10月","11月","12月"
     ]
   },
   "time_study": {
     "start": "開始",
     "pause": "一時停止",
     "today": "今日",
-    "loadingUser": "ユーザーを読み込んでいます..."
+    "loadingUser": "ユーザー読み込み中..."
+  },
+  "chat": {
+    "findFriend": "友達を検索...",
+    "typeMessage": "メッセージを入力...",
+    "noChats": "チャットがありません",
+    "selectChat": "チャットを選択してください",
+    "deleteMessage": "メッセージ削除",
+    "forwardMessage": "転送",
+    "copyMessage": "コピー",
+    "downloadFile": "ファイルをダウンロード",
+    "cancel": "キャンセル",
+    "send": "送信",
+    "notFoundUserName": "ユーザーが見つかりません",
+    "remove": "削除"
+  },
+  "settingAdminReply": {
+    "loading": "読み込み中…",
+    "noMessage": "メッセージはまだありません",
+    "adminReply": "管理者の返信",
+    "selectMessage": "メッセージを選択",
+    "noTitle": "タイトルなし",
+    "fromApp": "アプリから"
+  },
+  "time": {
+    "justNow": "たった今",
+    "minutesAgo": "{{count}} 分前",
+    "hoursAgo": "{{count}} 時間前",
+    "yesterday": "昨日"
   }
 }

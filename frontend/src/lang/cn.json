@@ -2,183 +2,225 @@
   "sidebar": {
     "board": "留言板",
     "time": "学习时间",
-    "follow": "关注",
+    "follow": "关注中",
+    "followers": "粉丝",
     "chat": "聊天",
     "notification": "通知",
     "tags": "标签",
     "news": "新闻",
-    "account": "账户",
+    "account": "账号",
     "setting": "设置"
   },
-
   "board": {
     "search": "搜索内容",
     "universityTalk": "大学讨论",
-    "followTalk": "关注动态",
-    "newPostPlaceholder": "在这里输入你的想法…",
+    "followTalk": "关注讨论",
+    "newPostPlaceholder": "在这里输入你的想法...",
     "postButton": "发布",
     "comment": "评论",
-    "writeComment": "写下评论...",
+    "writeComment": "写评论...",
     "send": "发送",
-    "noPosts": "未找到任何帖子。"
+    "noPosts": "未找到帖子"
   },
-
   "editPost": {
     "title": "编辑帖子",
     "cancel": "取消",
     "save": "保存更改"
   },
-
   "common": {
     "cancel": "取消",
     "saveChanges": "保存更改",
     "delete": "删除",
-    "submit": "提交"
+    "submit": "确认"
   },
-
   "post": {
     "edit": "编辑帖子",
     "delete": "删除",
     "report": "举报"
   },
-
   "report": {
     "titlePost": "举报帖子",
     "titleComment": "举报评论",
-    "description": "请选择举报该帖子的原因",
-    "harassment": "骚扰（欺凌、歧视、攻击宗教/性别/群体等）",
-    "sexual": "色情内容（性暗示、不雅、不适宜内容）",
-    "illegal": "违法行为（宣传非法活动或服务）",
-    "spam": "垃圾信息（重复发布同样内容）",
-    "privacy": "隐私侵犯（未经允许共享他人个人信息或照片）",
+    "description": "请选择举报原因",
+    "harassment": "骚扰（霸凌、歧视或针对宗教、性别或群体）",
+    "sexual": "色情内容（露骨、不当或成人视频）",
+    "illegal": "违法活动（宣传违法行为或服务）",
+    "spam": "垃圾信息（重复发布相同内容）",
+    "privacy": "隐私侵权（未经同意分享他人信息或照片）",
     "other": "其他（请说明）",
-    "otherPlaceholder": "请填写具体原因",
-    "additional": "附加信息",
+    "otherPlaceholder": "请说明原因",
+    "additional": "更多细节",
     "optional": "可选",
     "postId": "帖子 ID",
-    "detailsPlaceholder": "请描述相关情况或有助于我们审核的信息。",
+    "detailsPlaceholder": "描述发生了什么或任何有助于我们审核的背景信息。",
     "submit": "提交举报"
   },
-
   "delete": {
     "title": "删除帖子",
-    "confirm": "确定要删除该帖子吗？",
-    "warning": "此操作无法撤销。",
+    "confirm": "确定要删除此帖子吗？",
+    "warning": "此操作无法撤销",
     "cancel": "取消",
     "delete": "删除"
   },
-
   "deleteComment": {
     "title": "删除评论",
-    "confirm": "确定要删除该评论吗？",
-    "warning": "此操作无法撤销。",
+    "confirm": "确定要删除此评论吗？",
+    "warning": "此操作无法撤销",
     "cancel": "取消",
     "delete": "删除"
   },
-
   "account": {
-    "title": "账户信息",
+    "title": "账号信息",
     "username": "用户名",
-    "following": "关注",
+    "following": "关注中",
     "followers": "粉丝",
-
     "name": "姓名",
-    "birthdate": "出生日期",
+    "birthdate": "生日",
     "age": "年龄",
-    "bio": "个人简介",
+    "bio": "简介",
     "university": "大学",
     "selectUniversity": "选择大学",
-    "visibility": "隐私设置",
+    "visibility": "可见性",
     "private": "私密",
     "public": "公开",
     "saveChanges": "保存更改",
-
     "myPosts": "我的帖子",
-    "noPosts": "你还没有发布任何帖子。",
-
+    "noPosts": "你还没有发布任何帖子",
     "edit": "编辑",
     "delete": "删除",
-
     "editPostTitle": "编辑帖子",
     "deletePostTitle": "删除帖子",
     "deletePostConfirm": "确定要删除此帖子吗？",
-    "deleteWarning": "此操作无法撤销。",
+    "deleteWarning": "此操作无法撤销",
     "cancel": "取消",
     "confirmDelete": "删除"
   },
-
   "follow": {
     "title": "关注",
-    "searchPlaceholder": "搜索账户…",
-    "noFollow": "你还没有关注任何人。",
-    "following": "已关注",
-
+    "searchPlaceholder": "查找账号...",
+    "noFollow": "你还没有关注任何人",
+    "following": "关注中",
     "modalTitle": "取消关注",
-    "modalMessage": "你确定要取消关注吗？",
-    "modalSubMessage": "取消后，你将不会再看到此用户的关注动态。",
-
+    "modalMessage": "确定要取消关注",
+    "modalSubMessage": "你将不再在关注列表中看到他们的帖子。",
     "cancel": "取消",
     "unfollow": "取消关注"
   },
-
   "notification": {
     "title": "通知",
-
     "today": "今天",
     "yesterday": "昨天",
     "thisWeek": "本周",
-
     "followBack": "回关",
-    "following": "已关注",
-
-    "noNotification": "你还没有任何通知。"
+    "following": "关注中",
+    "noNotification": "暂无通知"
   },
   "userProfile": {
     "follow": "关注",
-    "following": "已关注",
-    "block": "屏蔽",
-    "blocked": "已屏蔽",
+    "following": "关注中",
+    "block": "拉黑",
+    "blocked": "已拉黑",
     "report": "举报",
-
+    "requestSent": "请求已发送",
     "age": "年龄",
-    "bioEmpty": "没有个人简介。",
-    "private": "此账号为私人账号",
-
-    "history": "历史记录",
+    "bioEmpty": "暂无简介",
+    "private": "此账号为私密账号",
+    "history": "历史",
     "comments": "评论",
-    "noPosts": "暂无发布内容。",
-    "studyToday": "今日学习时间",
-
+    "noPosts": "暂无帖子",
+    "studyToday": "今日学习",
     "postDetail": "帖子详情",
     "close": "关闭",
-
     "reportPostTitle": "举报帖子",
     "reportAccountTitle": "举报账号",
-    "selectReasonPost": "请选择举报该帖子的原因：",
-    "selectReasonAccount": "请选择举报该账号的原因：",
-    "additionalDetails": "其他说明（可选）",
-
+    "selectReasonPost": "请选择举报原因：",
+    "selectReasonAccount": "请选择举报原因：",
+    "additionalDetails": "更多细节（可选）",
     "submitReport": "提交举报",
     "cancel": "取消",
-
-    "blockUser": "屏蔽用户",
-    "blockConfirm": "你确定要屏蔽",
-    "blockDetail": "该用户将无法查看你的帖子或与你互动。你可以随时取消屏蔽。",
-    "confirmBlock": "确认屏蔽"
+    "blockUser": "拉黑用户",
+    "blockConfirm": "确定要拉黑",
+    "blockDetail": "他们将无法看到你的帖子或与你互动。你可以随时解除拉黑。",
+    "confirmBlock": "确认拉黑"
   },
-  "chat": {
-    "findFriend": "查找朋友...",
-    "typeMessage": "输入信息...",
-    "noChats": "还没有聊天",
-    "selectChat": "选择一个聊天开始发送消息",
-    "deleteMessage": "删除消息",
-    "forwardMessage": "转发消息",
-    "copyMessage": "复制消息",
-    "downloadFile": "下载文件",
+  "settings": {
+    "changePassword": "修改密码",
+    "blockedUsers": "已拉黑用户",
+    "deleteAccount": "删除账号"
+  },
+  "setting": {
+    "accountSettings": "账号设置",
+    "language": "语言",
+    "forHelp": "帮助",
+    "fromHubersity": "来自 Hubersity"
+  },
+  "changePassword": {
+    "title": "修改密码",
+    "current": "当前密码",
+    "new": "新密码",
+    "confirmNew": "确认新密码",
+    "confirmBtn": "确认",
+    "errorCurrent": "请输入当前密码",
+    "errorMatch": "两次密码不一致",
+    "rule1": "至少 8 个字符",
+    "rule2": "至少包含 1 个大写字母",
+    "rule3": "至少包含 1 个数字",
+    "rule4": "至少包含 1 个特殊字符 (!@#$...)"
+  },
+  "blockedUsers": {
+    "title": "已拉黑用户",
+    "loading": "正在加载拉黑用户...",
+    "unblock": "解除拉黑",
+    "noBlocked": "你还没有拉黑任何人",
+    "popupTitle": "解除拉黑？",
+    "popupMessage": "你要解除拉黑",
     "cancel": "取消",
-    "send": "发送",
-    "notFoundUserName": "未找到此用户名",
-    "remove": "删除"
+    "confirm": "解除拉黑"
+  },
+  "deleteAccount": {
+    "title": "账号管理",
+    "logout": "退出登录",
+    "dangerTitle": "危险区域",
+    "dangerText": "删除账号是永久的，无法恢复。",
+    "deleteButton": "删除账号",
+    "modalTitle": "确认删除账号",
+    "modalText1": "你确定要删除账号吗？",
+    "modalText2": "此操作永久且不可撤销。",
+    "cancel": "取消",
+    "confirmDelete": "删除账号",
+    "deletedSuccess": "账号已删除",
+    "deleteFailed": "删除失败",
+    "networkError": "网络错误"
+  },
+  "language": {
+    "title": "语言",
+    "appLanguage": "应用语言",
+    "description": "选择 Hubersity 菜单与导航语言",
+    "save": "保存语言"
+  },
+  "settingHelp": {
+    "title": "帮助",
+    "reportProblem": "报告问题",
+    "description": "请提供详细信息以便我们尽快解决。",
+    "placeholder": "在此描述你的问题...",
+    "addFile": "添加文件",
+    "confirm": "确认",
+    "attached": "已附加：",
+    "success": "提交成功，谢谢！"
+  },
+  "tagsPage": {
+    "popular6": "6 个热门标签",
+    "otherTags": "其他标签",
+    "noTags": "暂无标签",
+    "loadMore": "加载更多",
+    "loading": "正在加载…",
+    "noMore": "没有更多标签",
+    "noOtherTags": "没有其他标签",
+    "searchPlaceholder": "搜索标签...",
+    "postWithTag": "与 #{{tag}} 相关的帖子...",
+    "noPostsForTag": "此标签暂无帖子",
+    "trending": "热门",
+    "postsCount": "帖子"
   },
   "calendar": {
     "daysOfWeek": {
@@ -192,14 +234,14 @@
     },
     "studyHours": {
       "study0": "学习 0 小时",
-      "study1": "学习 0 秒到 3 小时",
-      "study2": "学习 3 到 6 小时",
-      "study3": "学习 6 到 9 小时",
+      "study1": "学习超过 0 秒至 3 小时",
+      "study2": "学习 3 至 6 小时",
+      "study3": "学习 6 至 9 小时",
       "study4": "学习超过 9 小时"
     },
     "monthNames": [
-      "一月", "二月", "三月", "四月", "五月", "六月",
-      "七月", "八月", "九月", "十月", "十一月", "十二月"
+      "一月","二月","三月","四月","五月","六月",
+      "七月","八月","九月","十月","十一月","十二月"
     ]
   },
   "time_study": {
@@ -207,5 +249,33 @@
     "pause": "暂停",
     "today": "今天",
     "loadingUser": "正在加载用户..."
+  },
+  "chat": {
+    "findFriend": "查找朋友...",
+    "typeMessage": "输入消息...",
+    "noChats": "暂无聊天",
+    "selectChat": "选择聊天开始对话",
+    "deleteMessage": "删除消息",
+    "forwardMessage": "转发消息",
+    "copyMessage": "复制消息",
+    "downloadFile": "下载文件",
+    "cancel": "取消",
+    "send": "发送",
+    "notFoundUserName": "未找到该用户名",
+    "remove": "移除"
+  },
+  "settingAdminReply": {
+    "loading": "正在加载…",
+    "noMessage": "暂无消息",
+    "adminReply": "管理员回复",
+    "selectMessage": "选择消息",
+    "noTitle": "无标题",
+    "fromApp": "来自应用"
+  },
+  "time": {
+    "justNow": "刚刚",
+    "minutesAgo": "{{count}} 分钟前",
+    "hoursAgo": "{{count}} 小时前",
+    "yesterday": "昨天"
   }
 }
