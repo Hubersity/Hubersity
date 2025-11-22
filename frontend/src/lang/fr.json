@@ -113,7 +113,11 @@
     "thisWeek": "Cette semaine",
     "followBack": "S’abonner en retour",
     "following": "Abonné",
-    "noNotification": "Aucune notification."
+    "noNotification": "Aucune notification.",
+    "startedFollowingYou": "{{username}} a commencé à vous suivre",
+    "requestedToFollowYou": "{{username}} a demandé à vous suivre",
+    "likedYourPost": "{{username}} a aimé votre publication",
+    "commentedOnYourPost": "{{username}} a commenté votre publication"
   },
   "userProfile": {
     "follow": "Suivre",
@@ -274,6 +278,7 @@
   },
   "time": {
     "justNow": "À l’instant",
+    "secondsAgo": "il y a {{count}} sec",
     "minutesAgo": "Il y a {{count}} min",
     "hoursAgo": "Il y a {{count}} h",
     "yesterday": "Hier"
