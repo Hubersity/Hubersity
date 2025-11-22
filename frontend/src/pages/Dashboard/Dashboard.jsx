@@ -15,9 +15,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { getCurrentUser } from "../../api/user";
 
-// =========================
-// 🔹 Navbar Item Config
-// =========================
+
+// Navbar Item Config
 const navItems = [
   { to: "/app/board", key: "sidebar.board", icon: Home },
   { to: "/app/time-study", key: "sidebar.time", icon: Clock },
@@ -30,9 +29,8 @@ const navItems = [
   { to: "/app/account", key: "sidebar.account", icon: User },
 ];
 
-// =========================
-// 🔹 Topbar Component
-// =========================
+
+// Topbar Component
 function Topbar() {
   const [user, setUser] = useState({});
   const [openMenu, setOpenMenu] = useState(false);
@@ -137,12 +135,12 @@ function Topbar() {
   );
 }
 
-// =========================
-// 🔹 Sidebar Component
-// =========================
+
+// Sidebar Component
 function Sidebar() {
   const location = useLocation();
   const { t } = useTranslation();
+
 
   return (
     <div className="fixed top-16 left-0 w-56 h-[calc(100vh-64px)] bg-white border-r shadow pt-6">
@@ -167,7 +165,7 @@ function Sidebar() {
           })}
         </div>
 
-        {/* Setting (ล่างสุด) */}
+        {/* Setting */}
         <Link
           to="/app/setting"
           className={`flex items-center gap-3 px-5 py-3 mb-4 transition-all w-full ${
@@ -184,9 +182,8 @@ function Sidebar() {
   );
 }
 
-// =========================
-// 🔹 Dashboard Layout
-// =========================
+
+// Dashboard Layout
 export default function Dashboard() {
   return (
     <div className="flex">

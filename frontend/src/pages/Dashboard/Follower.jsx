@@ -5,9 +5,8 @@ import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
-/* ========================================================= */
-/* =================== DELETE CONFIRM MODAL ================= */
-/* ========================================================= */
+
+/* DELETE CONFIRM MODAL */
 function DeleteFollowerModal({ open, user, onCancel, onConfirm }) {
   const { t } = useTranslation();
   if (!open) return null;
@@ -50,10 +49,8 @@ function DeleteFollowerModal({ open, user, onCancel, onConfirm }) {
   );
 }
 
-/* ========================================================= */
-/* ======================== MAIN PAGE ======================= */
-/* ========================================================= */
 
+/* MAIN PAGE */
 export default function FollowerPage() {
   const navigate = useNavigate();
 
@@ -123,7 +120,7 @@ export default function FollowerPage() {
 
   const goToProfile = (id) => navigate(`/app/user/${id}`);
 
-  /* ====================== ACCEPT REQUEST ====================== */
+  /* ACCEPT REQUEST */
   const approveRequest = async (req) => {
     await fetch(`${API_URL}/follow/requests/${req.id}/approve`, {
       method: "POST",
@@ -139,7 +136,7 @@ export default function FollowerPage() {
       prev.some((x) => x.uid === u.uid) ? prev : [u, ...prev]
     );
 
-    // ⭐⭐ ส่ง event เพื่อ refresh หน้า user profile ⭐⭐
+    // Send an event to refresh the user profile page.
     window.dispatchEvent(new Event("refresh_user_profile"));
   };
 
@@ -163,7 +160,7 @@ export default function FollowerPage() {
     setFollowers((prev) => prev.filter((x) => x.uid !== targetUser.uid));
     setRemoveModalOpen(false);
 
-    // ⭐ แจ้ง profile refresh ด้วย
+    // Please notify me of profile refresh.
     window.dispatchEvent(new Event("refresh_user_profile"));
   };
 
@@ -171,7 +168,7 @@ export default function FollowerPage() {
     <div className="p-10 w-full h-full">
       <h1 className="text-2xl font-bold text-gray-800 mb-8">{t('Followers.followers')}</h1>
 
-      {/* ==================== FOLLOW REQUESTS ==================== */}
+      {/* FOLLOW REQUESTS */}
       {isPrivate && (
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
@@ -223,7 +220,7 @@ export default function FollowerPage() {
         </section>
       )}
 
-      {/* ======================== FOLLOWERS ======================== */}
+      {/* FOLLOWERS */}
       <section>
         <div className="flex items-center gap-2 mb-4">
           <UserX className="w-5 h-5 text-rose-500" />

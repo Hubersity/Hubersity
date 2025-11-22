@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
 from app.database import Base
 import re
 
-# สร้างบัญชีใหม่ (Sign Up)
+# Create a new account (Sign Up)
 class UserCreate(BaseModel):
     username: str
     email: EmailStr
@@ -19,7 +19,7 @@ class UserCreate(BaseModel):
     description: Optional[str] = None
     profile_image: Optional[str] = None
 
-    # ตรวจสอบ password 
+    # Check password
     @field_validator("password")
     def password_rules(cls, v):
         if len(v) < 8:
@@ -39,29 +39,8 @@ class UserCreate(BaseModel):
             raise ValueError("Passwords do not match")
         return v
 
-# # ใช้เวลาส่งข้อมูล user ออกไปให้ frontend
-# class UserOut(BaseModel):
-#     uid: int
-#     username: str
-#     email: EmailStr
-#     is_admin: bool
 
-#     class Config:
-#         orm_mode = True
-
-# # ใช้เป็น response ตอน /login
-# class LoginResponse(BaseModel):
-#     access_token: str
-#     username: str
-#     uid: int
-#     is_admin: bool
-#     token_type: str = "bearer"
-
-# class LoginRequest(BaseModel):
-#     email: EmailStr
-#     password: str
-
-# ตอบกลับหลังจากสร้างบัญชี หรือดึงโปรไฟล์
+# Reply after creating an account or pulling up a profile
 class UserResponse(BaseModel):
     uid: int
     username: str
@@ -75,9 +54,8 @@ class UserResponse(BaseModel):
     created_at: datetime
     follower_count: int
     following_count: int
-
-
     model_config = ConfigDict(from_attributes=True)
+
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
@@ -95,6 +73,7 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+
 class UserBriefResponse(BaseModel):
     uid: int
     username: str
@@ -108,18 +87,22 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class TokenData(BaseModel):
     id: Optional[int] = None
+
 
 class PostImageCreate(BaseModel):
     path: str
     caption: Optional[str] = None
+
 
 class PostCreate(BaseModel):
     post_content: str
     forum_id: int
     tags: Optional[List[int]] = []           
     images: Optional[List[PostImageCreate]] = []
+
 
 class PostImageResponse(BaseModel):
     id: int
@@ -128,14 +111,17 @@ class PostImageResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class PostTagResponse(BaseModel):
     ptid: int
     name: str
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class CommentCreate(BaseModel):
     content: str
+
 
 class CommentFileResponse(BaseModel):
     id: int
@@ -143,6 +129,7 @@ class CommentFileResponse(BaseModel):
     file_type: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class CommentResponse(BaseModel):
     cid: int
@@ -152,7 +139,6 @@ class CommentResponse(BaseModel):
     profile_image: Optional[str] = None
     created_at: datetime
     files: Optional[List[CommentFileResponse]] = []
-
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -169,14 +155,16 @@ class PostResponse(BaseModel):
     images: List[PostImageResponse] = []
     comments: List[CommentResponse] = []
     created_at: datetime
-
     model_config = ConfigDict(from_attributes=True)
+
 
 class BanRequest(BaseModel):
     duration: str
 
+
 class ReportRequest(BaseModel):
     reason: str
+
 
 class AdminPost(BaseModel):
     id: str
@@ -185,6 +173,7 @@ class AdminPost(BaseModel):
     likes: int
     comments: int
     status: str
+
 
 class AdminUserDetailResponse(BaseModel):
     uid: int
@@ -197,11 +186,13 @@ class AdminUserDetailResponse(BaseModel):
     status: str
     posts: List[AdminPost]
 
+
 class NotificationCreate(BaseModel):
     title: str
     message: str
     receiver_id: Optional[int] = None
     target_role: Optional[str] = "admin"
+
 
 class NotificationResponse(BaseModel):
     id: int
@@ -214,16 +205,14 @@ class NotificationResponse(BaseModel):
     target_role: Optional[str]
     created_at: datetime
     is_read: Optional[bool] = False
-
     model_config = ConfigDict(from_attributes=True)
 
-    # class Config:
-    #     from_attributes = True
 
 class PostUpdate(BaseModel):
     post_content: Optional[str] = None
     forum_id: Optional[int] = None
     tags: Optional[List[int]] = None
+
 
 class NewsBase(BaseModel):
     title: str
@@ -251,7 +240,6 @@ class NewsResponse(NewsBase):
     id: int
     created_at: datetime
     updated_at: datetime | None = None
-
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -262,14 +250,15 @@ class NewsOut(NewsBase):
 
     class Config:
         orm_mode = True
-        
+
+
 class BlockOut(BaseModel):
     blocker_id: int
     blocked_id: int
 
-
     class SomeModel(BaseModel):
         model_config = ConfigDict(from_attributes=True)
+
 
 class HelpReportCreate(BaseModel):  # Pydantic
     user_id: int
@@ -284,7 +273,6 @@ class HelpReportResponse(BaseModel):
     created_at: Optional[datetime]
     username: Optional[str] = None
     avatar: Optional[str] = None
-
 
     class SomeModel(BaseModel):
         model_config = ConfigDict(from_attributes=True)

@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 import os
 from fastapi.middleware.cors import CORSMiddleware
 
-# สร้างตารางทั้งหมดในฐานข้อมูล
+# Create all tables in the database
 # Allow tests to skip DB init by setting SKIP_DB_INIT=1 in the environment.
 SKIP_DB_INIT = os.getenv("SKIP_DB_INIT", "") == "1"
 if not SKIP_DB_INIT:
@@ -49,21 +49,20 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # ที่ frontend เปิดอยู่
+    allow_origins=["http://localhost:5173"],  # The frontend is open
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
 os.makedirs("uploads/post", exist_ok=True)
 os.makedirs("uploads/comments", exist_ok=True)
 os.makedirs("uploads/user", exist_ok=True)
 
-# ให้โหลดไฟล์จากโฟลเดอร์ uploads ได้
+# Allows you to download files from the uploads folder.
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-# ตรวจสอบการเชื่อมต่อฐานข้อมูล (skippable in tests)
+# Database connection check (skippable in tests)
 if not SKIP_DB_INIT:
     try:
         with engine.connect() as conn:
@@ -94,7 +93,7 @@ async def lifespan(app):
             db.close()
     yield
 
-# รวมทุก router
+# All routers included
 app.include_router(user_public.router) 
 app.include_router(users.router)
 app.include_router(auth.router)

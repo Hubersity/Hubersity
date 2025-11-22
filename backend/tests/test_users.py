@@ -209,4 +209,3 @@ def test_user_profile_view_own_profile(client):
     res = client.get(f"/users/{user_id}", headers=headers)
     assert res.status_code == 200
     assert res.json()["uid"] == user_id
-

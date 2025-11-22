@@ -4,38 +4,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import {Heart, MessageCircle } from "lucide-react";
 
 const API_URL = `http://localhost:8000`; 
-const MOCK_USER = {
-    username: "zaza123",   // as same as user id
-    fullName: "Zaza",
-    avatar: "/images/default-avatarzaza.png",
-    bio: "Student, likes memes",
-    numberOfReports: 12,
-    reportCategories: { "Harassment": 11, "Spam": 1 },
-    action: "Ban",
-    status: "Pending",
-};
-  
-const MOCK_USER_POSTS = Array.from({ length: 27 }).map((_, i) => ({
-    id: String(203 + i),
-    content: `Example post content #${203 + i}`,
-    createdAt: new Date(Date.now() - i * 1000 * 60 * 60 * 6).toISOString(),
-    likes: Math.floor(Math.random() * 100),
-    comments: Math.floor(Math.random() * 10),
-    status: i % 4 === 0 ? "Removed" : "Active",
-    createdAt: "2025-10-10T20:00:00Z",
-}));
 
-// แปลง object หมวดเป็นข้อความ
+// Convert category object to text
 function formatCategories(categorises) {
-    // Object.entries()แปลง Object ให้เป็น Array ของคู่ข้อมูล (key, value)
+    // Object.entries() converts an Object into an array of key, value pairs.
     return Object.entries(categorises)
     .map(([reason, count]) => `${reason}: ${count} report${count > 1 ? "s" : ""}`)
-    .join("<br />");   // รวม array เป็น string เดียวโดยคั่นด้วยเครื่องหมาย,และช่องว่าง
+    .join("<br />");   // Combine arrays into a single string separated by commas and spaces.
 }
 
-// คำนวณเวลาที่ผ่านมา
+// Calculate the elapsed time
 function timeAgo(time_) {
-    // new Date(isoString).getTime() เวลาที่เรากำหนดเอง (เช่น เวลาโพสต์), Date.now()เวลาปัจจุบันตอนนี้เลย
+    // new Date(isoString).getTime() our custom time (such as posting time), Date.now() the current time now.
     const then = new Date(time_).getTime();
     const now = Date.now();
     const diffSec = Math.floor((now - then) / 1000);
@@ -52,7 +32,6 @@ function timeAgo(time_) {
 
 export default function UserDetail() {
     const navigate = useNavigate();
-
     const { username } = useParams(); // /app_admin/user/:username
     const [user, setUser] = useState(null);
     const [posts, setPosts] = useState([]);
@@ -63,34 +42,13 @@ export default function UserDetail() {
     const [message, setMessage] = useState("");
     const [saving, setSaving] = useState(false);
     const [allPosts, setAllPosts] = useState([]);
-
     const PAGE_SIZE = 3;
     const [offset, setOffset] = useState(0);
     const [hasMore, setHasMore] = useState(true);
 
+
     useEffect(() => {
         let cancelled = false;
-        // async function loadInitial() {
-        //   setLoading(true);
-        //   setError(null);
-        //   setOffset(0);   // setOffset(0) → รีเซ็ตการนับโพสต์ (เริ่มหน้าแรก)
-        //   try {
-        //     await new Promise(r => setTimeout(r, 200)); // simulate latency
-        //     const profile = MOCK_USER;
-        //     const page = MOCK_USER_POSTS.slice(0, PAGE_SIZE);   //ดึงโพสต์หน้าแรกจำนวน PAGE_SIZE
-        //     if (cancelled) return;  //ถ้าผู้ใช้ “เปลี่ยนหน้าไปก่อนโหลดเสร็จ” → หยุดเลย ไม่ต้อง setState
-        //     setUser(profile);
-        //     setPosts(page);
-        //     setHasMore(MOCK_USER_POSTS.length > PAGE_SIZE);   //ตรวจว่ามีโพสต์มากกว่าที่โหลดมาไหม
-        //   } 
-        //   catch (e) {
-        //     console.error(e);
-        //     if (!cancelled) setError("Failed to load user posts");
-        //   } 
-        //   finally {
-        //     if (!cancelled) setLoading(false);
-        //   }
-        // }
         async function loadInitial() {
             setLoading(true);
             setError(null);
@@ -131,18 +89,19 @@ export default function UserDetail() {
         return () => { cancelled = true; };
     }, [username]);
 
-    // โหลดโพสต์เพิ่ม
+
+    // Load more posts
     async function handleLoadMore() {
         if (loadingMore) return;
         setLoadingMore(true);
         setError(null);
         try {
-          const nextOffset = offset + PAGE_SIZE;   // offset คือ ตำแหน่งโพสต์ล่าสุดที่โหลดถึง (0+8) next time start with post 8
+          const nextOffset = offset + PAGE_SIZE;   // Offset is the last post position loaded to (0+8), next time start with post 8.
           await new Promise(r => setTimeout(r, 200));
           const page = allPosts.slice(nextOffset, nextOffset + PAGE_SIZE);
-          setPosts(prev => [...prev, ...page]);  // เพิ่มโพสต์ใหม่เข้าไปต่อท้ายโพสต์เก่าที่มีอยู่แล้วใน state
+          setPosts(prev => [...prev, ...page]);  // Add a new post to the end of an existing post in the state.
           setOffset(nextOffset);
-          setHasMore(allPosts.length > nextOffset + PAGE_SIZE);   // เช็กว่ามีโพสต์เหลืออีกไหม ไว้ใช้ตัดสินใจว่า จะแสดงปุ่ม “Load more” ต่อไหม
+          setHasMore(allPosts.length > nextOffset + PAGE_SIZE);   // Check if there are any more posts left to decide whether to continue showing the “Load more” button.
         } 
         catch (e) {
           console.error(e);
@@ -285,11 +244,12 @@ export default function UserDetail() {
           <div className="text-red-600 mb-4">{error}</div>
           <button onClick={() => navigate(-1)} className="px-4 py-2 bg-gray-200 rounded">Back</button>
         </div>
-    );  // navigate(-1) ย้อนกลับ 1 หน้า
+    );  // navigate(-1) go back 1 page
 
     if (loading) return <div className="p-6">Loading user posts…</div>;
     if (error) return <div className="p-6 text-red-600">{error}</div>;
-// className="w-full border rounded-full pl-10 pr-4 py-2 bg-white text-gray-700 focus:ring-2 focus:ring-[#e0ebe2] appearance-none hover:bg-[#f6faf7]"
+
+    
     return (
     <div className="p-6">
         {/* top row: back button + action + update */}

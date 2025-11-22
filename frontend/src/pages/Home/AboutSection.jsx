@@ -54,7 +54,7 @@ export default function AboutSection() {
 
           {/* RIGHT: chat column */}
           <div className="relative z-10 flex flex-col gap-5">
-            {/* ✅ BG now anchored to this column */}
+            {/* BG now anchored to this column */}
             <div
               aria-hidden
               className={`pointer-events-none absolute -z-10 inset-x-[-16px] md:inset-x-[-24px]

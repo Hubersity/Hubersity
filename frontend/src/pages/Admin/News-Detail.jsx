@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
-import { Pencil, Image as ImageIcon } from "lucide-react";  // << เพิ่มอันนี้
+import { Pencil, Image as ImageIcon } from "lucide-react";
 
 const API_URL = "http://localhost:8000";
 const toAbs = (u) => (u?.startsWith?.("http") ? u : `${API_URL}${u || ""}`);
@@ -9,23 +9,22 @@ const toAbs = (u) => (u?.startsWith?.("http") ? u : `${API_URL}${u || ""}`);
 export default function New_Detail() {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [detail, setDetail] = useState("");
-  const [imageUrl, setImageUrl] = useState("");   // ใช้ตัวนี้แทน image
+  const [imageUrl, setImageUrl] = useState("");   // Use this instead of image
   const [hoverText, setHoverText] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errMsg, setErrMsg] = useState("");
-
   const currentKey = localStorage.getItem("currentUserKey");
   const authData = currentKey
     ? JSON.parse(localStorage.getItem(currentKey) || "{}")
     : {};
   const token = authData.token || null;
 
-  // โหลดข่าวจาก backend
+
+  // Load news from backend
   useEffect(() => {
     const fetchNews = async () => {
       try {
@@ -70,12 +69,13 @@ export default function New_Detail() {
       }
   
       const data = await res.json();
-      setImageUrl(data.image_url); // ตอนนี้เป็น /uploads/news/{id}/xxx.jpg
+      setImageUrl(data.image_url); // It is now /uploads/news/{id}/xxx.jpg
     } catch (err) {
       console.error("Upload error:", err);
       alert("Upload image error");
     }
   }
+
 
   const handleDelete = async () => {
     if (!token) {
@@ -107,6 +107,7 @@ export default function New_Detail() {
     }
   };
 
+
   const handleUpdate = async () => {
     if (!token) {
       alert("No admin token found.");
@@ -126,7 +127,7 @@ export default function New_Detail() {
           summary,
           detail,
           hover_text: hoverText,
-          image_url: imageUrl,   // ส่งค่ารูปปัจจุบันขึ้น backend
+          image_url: imageUrl,   // Send the current image value to the backend.
         }),
       });
 
@@ -160,6 +161,7 @@ export default function New_Detail() {
       </div>
     );
 
+
   return (
     <div className="w-full bg-white min-h-screen rounded-xl shadow-lg overflow-y-auto">
       {/* back button */}
@@ -192,17 +194,17 @@ export default function New_Detail() {
                     className="w-full h-full object-cover"
                     />
                 ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-3">
-                        <div className="w-14 h-14 rounded-xl bg-white/80 backdrop-blur-md flex items-center justify-center shadow-md">
-                            <ImageIcon size={28} className="text-emerald-600" />
-                        </div>
-                        <p className="text-base text-gray-800 font-medium">
-                            Upload cover image
-                        </p>
-                        <p className="text-sm text-gray-400">
-                            Click to choose file (JPG/PNG)
-                        </p>
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-3">
+                    <div className="w-14 h-14 rounded-xl bg-white/80 backdrop-blur-md flex items-center justify-center shadow-md">
+                      <ImageIcon size={28} className="text-emerald-600" />
                     </div>
+                    <p className="text-base text-gray-800 font-medium">
+                      Upload cover image
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      Click to choose file (JPG/PNG)
+                    </p>
+                  </div>
                 )}
 
                 {/* edit icon top-right */}
@@ -213,16 +215,16 @@ export default function New_Detail() {
                     hover:bg-gray-800 hover:scale-110 transition
                     "
                 >
-                    <Pencil size={16} />
+                  <Pencil size={16} />
                 </div>
 
                 <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageUpload}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
                 />
-                </label>
+              </label>
             </div>
         </div>
 

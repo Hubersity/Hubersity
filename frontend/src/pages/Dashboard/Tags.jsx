@@ -14,9 +14,9 @@ import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
+
 export default function Tags() {
   const { t } = useTranslation();
-
   const [allTags, setAllTags] = useState([]);
   const [tags, setTags] = useState([]);
   const [offset, setOffset] = useState(0);

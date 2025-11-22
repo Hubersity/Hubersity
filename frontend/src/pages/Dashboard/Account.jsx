@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
+
 export default function Account() {
   const [profilePic, setProfilePic] = useState("/images/default-avatar.png");
   const [name, setName] = useState("");
@@ -24,7 +25,7 @@ export default function Account() {
   const [editContent, setEditContent] = useState("");
   const { t } = useTranslation();
 
-  // ดึงข้อมูลผู้ใช้ + โพสต์ของตัวเอง
+  // Pull user data + own posts
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -35,7 +36,7 @@ export default function Account() {
 
         if (!authData?.token) return;
 
-        // โหลดข้อมูล user
+        // Load user data
         const res = await fetch(`${API_URL}/users/me`, {
           headers: { Authorization: `Bearer ${authData.token}` },
         });
@@ -48,7 +49,7 @@ export default function Account() {
         setUniversity(data.university || "");
         setVisibility(data.is_private ? "private" : "public");
         setBirthdate(data.birthdate ? new Date(data.birthdate) : null);
-        setFollowers(data.followers_count || 0);
+        setFollowers(data.follower_count || 0);
         setFollowing(data.following_count || 0);
         setProfilePic(
           data.profile_image
@@ -56,7 +57,7 @@ export default function Account() {
             : "/images/default-avatar.png"
         );
 
-        // โหลดโพสต์ของตัวเอง (ยกเว้นพวกจับเวลา)
+        // Load your own posts (except for timers)
         const postsRes = await fetch(`${API_URL}/posts/me`, {
           headers: { Authorization: `Bearer ${authData.token}` },
         });
@@ -75,7 +76,7 @@ export default function Account() {
     fetchData();
   }, []);
 
-  // คำนวณอายุ
+  // Calculate age
   const calculateAge = (birth) => {
     if (!birth) return "";
     const b = new Date(birth);
@@ -86,7 +87,7 @@ export default function Account() {
     return isNaN(age) ? "" : age;
   };
 
-  // เปลี่ยนรูปโปรไฟล์ (preview ก่อน)
+  // Change profile picture (preview first)
   const handleImageChange = (e) => {
     const f = e.target.files?.[0];
     if (f) {
@@ -95,7 +96,7 @@ export default function Account() {
     }
   };
 
-  // อัปเดตโปรไฟล์
+  // Update your profile
   const handleSave = async () => {
     try {
       const currentKey = localStorage.getItem("currentUserKey");
@@ -110,7 +111,7 @@ export default function Account() {
 
       let uploadedImagePath = null;
 
-      // 🔹 ถ้ามีอัปโหลดรูปใหม่
+      // If there is a new upload
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
@@ -127,7 +128,7 @@ export default function Account() {
         uploadedImagePath = uploadData.file_path;
       }
 
-      // 🔹 ส่งข้อมูลอัปเดตทั่วไป
+      // Send general updates
       const res = await fetch(`${API_URL}/users/${authData.uid}`, {
         method: "PUT",
         headers: {
@@ -153,7 +154,7 @@ export default function Account() {
     }
   };
 
-  // ลบโพสต์
+  // Delete post
   const handleDeletePost = async (pid) => {
     if (!window.confirm("Are you sure you want to delete this post?")) return;
     try {
@@ -171,7 +172,7 @@ export default function Account() {
     }
   };
 
-  // แก้ไขโพสต์
+  // Edit post
   const handleEditPost = async (post) => {
     const newContent = prompt("Edit your post:", post.post_content);
     if (!newContent || newContent.trim() === "") return;
@@ -256,10 +257,12 @@ export default function Account() {
       console.error(err);
     }
   };
+
+
   return (
     <div className="w-full min-h-[calc(100vh-64px)] flex flex-col items-center bg-[#fff9ef] overflow-y-auto pb-20">
       <div className="bg-[#fff3e6] w-[80%] max-w-5xl rounded-2xl shadow-lg p-10 flex flex-row gap-10 items-center justify-center relative mt-10">
-        {/* โปรไฟล์ */}
+        {/* profile */}
         <div className="flex flex-col items-center justify-center w-[40%] relative">
           <div className="w-44 h-44 rounded-full overflow-hidden border-4 border-[#d1d1d1] bg-white relative">
             <img
@@ -294,7 +297,7 @@ export default function Account() {
           </p>
         </div>
 
-        {/* ข้อมูลบัญชี */}
+        {/* Account information */}
         <div className="flex-1 space-y-5">
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
             {t("account.title")}
@@ -455,107 +458,109 @@ export default function Account() {
             </div>
           </div>
 
-              {/* รูปภาพ / ไฟล์แนบ */}
-              {p.images && p.images.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {p.images.map((img, i) =>
-                    img.path.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                      <img
-                        key={i}
-                        src={`${API_URL}${img.path}`}
-                        alt="attachment"
-                        className="w-24 h-24 object-cover rounded-md border"
-                      />
-                    ) : (
-                      <a
-                        key={i}
-                        href={`${API_URL}${img.path}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded hover:bg-gray-200"
-                      >
-                        📎 {img.path.split("/").pop()}
-                      </a>
-                    )
-                  )}
-                </div>
-              )}
-
-              {/* คอมเมนต์ */}
-              {p.comments && p.comments.length > 0 && (
-                <div className="mt-3 border-t border-[#f0e0c8] pt-2">
-                  <h4 className="text-sm font-semibold text-gray-800 mb-2">
-                    Comments
-                  </h4>
-                  <div className="flex flex-col gap-2">
-                    {p.comments.map((c) => (
-                      <div
-                        key={c.cid}
-                        className="flex items-start gap-2 bg-white/60 rounded-md p-2 border border-[#f7e8c2]"
-                      >
-                        <img
-                          src={
-                            c.profile_image
-                              ? `${API_URL}${c.profile_image}`
-                              : "/images/default-avatar.png"
-                          }
-                          alt={c.username}
-                          className="w-7 h-7 rounded-full border border-gray-200"
-                        />
-                        <div>
-                          <p className="text-sm text-gray-800">
-                            <span className="font-semibold text-black mr-1">
-                              {c.username}
-                            </span>
-                            {c.content}
-                          </p>
-
-                          {/* ไฟล์แนบในคอมเมนต์ */}
-                          {c.files && c.files.length > 0 && (
-                            <div className="mt-1 flex flex-wrap gap-1">
-                              {c.files.map((f, i) =>
-                                f.file_type === "image" ? (
-                                  <img
-                                    key={i}
-                                    src={`${API_URL}${f.path}`}
-                                    alt="comment file"
-                                    className="w-14 h-14 object-cover rounded-md border"
-                                  />
-                                ) : (
-                                  <a
-                                    key={i}
-                                    href={`${API_URL}${f.path}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-xs text-gray-600 hover:underline"
-                                  >
-                                    📎 {f.path.split("/").pop()}
-                                  </a>
-                                )
-                              )}
-                            </div>
-                          )}
-                          <p className="text-[11px] text-gray-500">
-                            {formatTimeAgo(c.created_at)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+          {/* Image / Attachment */}
+          {p.images && p.images.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {p.images.map((img, i) =>
+                img.path.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                  <img
+                    key={i}
+                    src={`${API_URL}${img.path}`}
+                    alt="attachment"
+                    className="w-24 h-24 object-cover rounded-md border"
+                  />
+                ) : (
+                  <a
+                    key={i}
+                    href={`${API_URL}${img.path}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded hover:bg-gray-200"
+                  >
+                    📎 {img.path.split("/").pop()}
+                  </a>
+                )
               )}
             </div>
-          ))
+          )}
+
+          {/* Comments */}
+          {p.comments && p.comments.length > 0 && (
+            <div className="mt-3 border-t border-[#f0e0c8] pt-2">
+              <h4 className="text-sm font-semibold text-gray-800 mb-2">
+                Comments
+              </h4>
+              <div className="flex flex-col gap-2">
+                {p.comments.map((c) => (
+                  <div
+                    key={c.cid}
+                    className="flex items-start gap-2 bg-white/60 rounded-md p-2 border border-[#f7e8c2]"
+                  >
+                    <img
+                      src={
+                        c.profile_image
+                        ? `${API_URL}${c.profile_image}`
+                        : "/images/default-avatar.png"
+                      }
+                      alt={c.username}
+                      className="w-7 h-7 rounded-full border border-gray-200"
+                    />
+                    <div>
+                      <p className="text-sm text-gray-800">
+                        <span className="font-semibold text-black mr-1">
+                          {c.username}
+                        </span>
+                        {c.content}
+                      </p>
+
+                      {/* Attachments in comments */}
+                      {c.files && c.files.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {c.files.map((f, i) =>
+                            f.file_type === "image" ? (
+                              <img
+                                key={i}
+                                src={`${API_URL}${f.path}`}
+                                alt="comment file"
+                                className="w-14 h-14 object-cover rounded-md border"
+                              />
+                            ) : (
+                              <a
+                                key={i}
+                                href={`${API_URL}${f.path}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-gray-600 hover:underline"
+                              >
+                                📎 {f.path.split("/").pop()}
+                              </a>
+                            )
+                          )}
+                        </div>
+                      )}
+                      <p className="text-[11px] text-gray-500">
+                        {formatTimeAgo(c.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        ))
         )}
-      </div>
-      {/* Edit Modal (เหมือนหน้า Board เป๊ะ) */}
+    </div>
+
+    {/*Edit Modal (exactly like the Board page) */}
       {editingPost && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* overlay */}
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-            onClick={() => setEditingPost(null)}
-          />
+        {/* overlay */}
+        <div
+          className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+          onClick={() => setEditingPost(null)}
+        />
+
           {/* modal */}
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 border border-gray-100 overflow-hidden animate-fadeIn">
             <div className="px-5 py-4 border-b bg-gradient-to-r from-green-50 to-amber-50 flex justify-between items-center">
@@ -595,7 +600,7 @@ export default function Account() {
         </div>
       )}
 
-      {/* Delete Modal (เหมือนหน้า Board เป๊ะ) */}
+      {/* Delete Modal (exactly like the Board page) */}
       {deletingPost && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* overlay */}

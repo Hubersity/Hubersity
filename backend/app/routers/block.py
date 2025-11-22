@@ -14,12 +14,11 @@ router = APIRouter(
 @router.post("/{uid}")
 def block_user(uid: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
 
-    # ❗ แก้จาก id → uid
     if uid == current_user.uid:
         raise HTTPException(status_code=400, detail="You cannot block yourself")
 
     exists = db.query(models.Block).filter(
-        models.Block.blocker_id == current_user.uid,   # แก้ id → uid
+        models.Block.blocker_id == current_user.uid,
         models.Block.blocked_id == uid
     ).first()
 
@@ -27,7 +26,7 @@ def block_user(uid: int, db: Session = Depends(get_db), current_user: User = Dep
         raise HTTPException(status_code=400, detail="Already blocked")
 
     block = models.Block(
-        blocker_id=current_user.uid,  # แก้ id → uid
+        blocker_id=current_user.uid,
         blocked_id=uid
     )
     db.add(block)
@@ -40,7 +39,7 @@ def block_user(uid: int, db: Session = Depends(get_db), current_user: User = Dep
 def unblock_user(uid: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
 
     block = db.query(models.Block).filter(
-        models.Block.blocker_id == current_user.uid,  # แก้ id → uid
+        models.Block.blocker_id == current_user.uid,
         models.Block.blocked_id == uid
     ).first()
 
@@ -57,7 +56,7 @@ def unblock_user(uid: int, db: Session = Depends(get_db), current_user: User = D
 def get_block_list(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
 
     blocks = db.query(models.Block).filter(
-        models.Block.blocker_id == current_user.uid   # แก้ id → uid
+        models.Block.blocker_id == current_user.uid
     ).all()
 
     return [{"blocked_id": b.blocked_id} for b in blocks]

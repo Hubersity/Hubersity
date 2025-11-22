@@ -235,7 +235,7 @@ export default function PostDetail() {
             </div>
             {/* last report */}
             <div className="flex flex-row mt-4 gap-4 items-start">
-                {/* คอลัมน์ซ้าย: last date + action box (action อยู่ใต้ last date) */}
+                {/* Left column: last date + action box (action is under last date) */}
                 <div className="flex flex-col w-[25vw] gap-4">
                     <div className="w-full h-[14vh] bg-[#fdfaf6] rounded-xl shadow-2xl p-4">
                     <h1 className="mt-1 text-xl">Last date of report posts</h1>
@@ -244,7 +244,7 @@ export default function PostDetail() {
                     </div>
                     </div>
 
-                    {/* Action box อยู่ใต้ last date */}
+                    {/* Action box is under last date */}
                     <div className="w-[50vw] h-[30vh] bg-[#fdfaf6] rounded-xl shadow-2xl p-4 mt-12">
                         <h3 className="text-lg font-medium mb-3">Action</h3>
 
@@ -270,13 +270,13 @@ export default function PostDetail() {
                     </div>
                 </div>
 
-                {/* คอลัมน์กลาง: status */}
+                {/* Center column: status */}
                 <div className="w-[25vw] h-[14vh] bg-[#fdfaf6] rounded-xl shadow-2xl p-4 flex flex-col justify-center items-center">
                     <h1 className="text-xl">Status</h1>
                     <div className="text-xl font-bold mt-2">{post.status}</div>
                 </div>
 
-                {/* คอลัมน์ขวา: number of reports + Update button ใต้ card */}
+                {/* Right column: number of reports + Update button under card */}
                 <div className="w-[25vw] h-[50vh] bg-[#fdfaf6] rounded-xl shadow-2xl ml-[2vw]">
                         <div className="flex flex-col h-full ml-4">
                             <h1 className="mt-4 text-xl">Number of reports</h1>
@@ -289,7 +289,7 @@ export default function PostDetail() {
                             <div dangerouslySetInnerHTML={{ __html: formatCategories(post.reportCategories) }} className="mb-4" />
                         </div>
 
-                    {/* Update button อยู่ด้านล่าง card */}
+                    {/* The Update button is located at the bottom of the card. */}
                     <div className="flex justify-center">
                     <motion.button
                         type="button"

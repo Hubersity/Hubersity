@@ -22,14 +22,15 @@ const weeklyData = [
 ];
 
 export default function Overview() {
-    // เก็บจำนวนผู้ใช้
+    // Collect the number of users
     const [userCount, setUserCount] = useState(0);
     const [numPosts, setNumPosts] = useState(0);
     const [reportedPosts, setReportedPosts] = useState(0);
     const [reportedUsers, setReportedUsers] = useState(0);
     const [universityData, setUniversityData] = useState([]);
-    // State สำหรับจัดการ Loading
+    // State for managing loading
     const [isLoading, setIsLoading] = useState(true);
+
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -72,7 +73,7 @@ export default function Overview() {
         <div className="flex p-2 gap-4">
 
             <div className="flex flex-col gap-4">
-                {/* === คอลัมน์ซ้าย (Column 1): สำหรับกล่องที่มีความสูงเท่ากัน === */}
+                {/* Left Column (Column 1): For boxes with the same height. */}
                 <div className="flex flex-row gap-4">
                     
                     {/* Box 1: Number of users (w-[25vw] h-[20vh]) */}
@@ -105,10 +106,10 @@ export default function Overview() {
                 <div className="w-[50vw] h-[60vh] bg-[#fdfaf6] rounded-xl shadow-2xl mt-8 p-6">
                     <h1 className="text-2xl font-semibold mb-4">Num of users in each university</h1>
                     <ResponsiveContainer width="100%" height="85%"> 
-                    {/* ช่วยให้กราฟปรับขนาดอัตโนมัติ ตามพื้นที่ของ parent */}
+                    {/* Enables the graph to automatically resize based on the parent's area. */}
                         <BarChart data={universityData}>
                             <CartesianGrid strokeDasharray="3 3" />
-                            {/* เพิ่มเส้นตารางแบบขีดจุดในพื้นหลังกราฟ */}
+                            {/* Add dotted gridlines to the graph background. */}
                             <XAxis dataKey="name" />
                             <YAxis />
                             <Tooltip />
@@ -124,10 +125,10 @@ export default function Overview() {
                 </div>
             </div>
 
-            {/* === คอลัมน์ขวา (Column 2): สำหรับกล่องสถิติรายสัปดาห์ === */}
+            {/* Right Column (Column 2): For weekly statistics box. */}
             <div className="flex flex-col gap-4">
                 
-                {/* Box 3: Weekly user statistics (w-[25vw] h-[50vh] - กล่องที่สูงกว่า) */}
+                {/* Box 3: Weekly user statistics (w-[25vw] h-[50vh] - higher boxes) */}
                 <div className="w-[25vw] h-[43vh] bg-[#fdfaf6] rounded-xl shadow-2xl">
                     {/* Line Chart for Weekly user statistics */}
                     <div className="w-[28vw] h-[43vh] bg-[#fdfaf6] rounded-xl shadow-2xl p-6 mb-4">

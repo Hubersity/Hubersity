@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Globe2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+
 export default function Language() {
   const { t, i18n } = useTranslation();
 
@@ -9,7 +10,6 @@ export default function Language() {
     localStorage.getItem("appLang") || "en"
   );
 
-  // เพิ่ม 3 ภาษาใหม่: เกาหลี / ฝรั่งเศส / อาหรับ
   const languages = [
     { code: "th", label: "Thai", emoji: "🇹🇭" },
     { code: "en", label: "English", emoji: "🇬🇧" },
@@ -25,6 +25,7 @@ export default function Language() {
     localStorage.setItem("appLang", selectedLang);
     window.location.reload();
   };
+
 
   return (
     <div className="p-6">
