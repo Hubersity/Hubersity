@@ -215,6 +215,7 @@ def follow_user(
         following_id=id
     )
     db.add(follow)
+    db.flush()
     db.commit()
     db.refresh(follow)
 
@@ -249,8 +250,7 @@ def get_my_followers(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    db.expire_all() 
-    
+
     follows = db.query(models.Follow).filter(models.Follow.following_id == current_user.uid).all()
     response = []
     
