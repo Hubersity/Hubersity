@@ -12,6 +12,19 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    env:                # 👈 add env here so all steps inherit
+      SECRET_KEY: a01bab3de81800ab87a642dfd99209674697704a8eb35e4cd95f78f38f10ee1e
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: password
+      DB_NAME: hubersity
+      UPLOAD_ROOT: uploads
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+      API_PORT: 8000
+      SKIP_DB_INIT: 1
+      PYTHONPATH: ${{ github.workspace }}/backend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
