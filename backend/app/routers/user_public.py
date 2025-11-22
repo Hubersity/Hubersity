@@ -4,10 +4,12 @@ from .. import models
 from ..database import get_db
 from sqlalchemy import or_
 
+
 router = APIRouter(
     prefix="/users",
     tags=["Users Public"]
 )
+
 
 @router.get("/search")
 def search_users(q: str, db: Session = Depends(get_db)):

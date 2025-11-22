@@ -6,13 +6,13 @@ import { useNavigate } from "react-router-dom";
 import "react-datepicker/dist/react-datepicker.css";
 import "./datepicker-fix.css";
 
+
 export default function CreateAcc() {
-  // ✅ ดึงข้อมูลผู้ใช้จาก localStorage
+  // Fetch user data from localStorage
   const currentKey = localStorage.getItem("currentUserKey");
   const authData = currentKey
     ? JSON.parse(localStorage.getItem(currentKey) || "{}")
     : {};
-
   const [image, setImage] = useState(null);
   const [isPrivate, setIsPrivate] = useState(true);
   const [birthdate, setBirthdate] = useState(new Date());
@@ -24,7 +24,7 @@ export default function CreateAcc() {
 
   const navigate = useNavigate();
 
-  // 📸 เมื่อเลือกรูปใหม่
+  // When selecting a new image
   const handleImageChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -36,7 +36,7 @@ export default function CreateAcc() {
     document.getElementById("profile-upload").click();
   };
 
-  // 💾 ฟังก์ชันบันทึกข้อมูลโปรไฟล์
+  // Profile data saving function
   const handleSave = async () => {
     if (!authData.uid || !authData.token) {
       alert("Missing signup info. Please sign up again.");
@@ -46,7 +46,7 @@ export default function CreateAcc() {
     let uploadedImagePath = null;
     console.log("🔘 Button state:", isPrivate ? "Private" : "Public");
 
-    // ✅ อัปโหลดรูปก่อน ถ้ามี
+    // Upload a photo first, if available.
     if (selectedFile) {
       const fd = new FormData();
       fd.append("file", selectedFile);
@@ -91,7 +91,7 @@ export default function CreateAcc() {
     });
 
     if (res.ok) {
-      // ✅ เก็บข้อมูลโปรไฟล์กลับเข้าคีย์ปัจจุบัน
+      // Save profile data back to the current key
       localStorage.setItem(
         currentKey,
         JSON.stringify({
@@ -119,7 +119,7 @@ export default function CreateAcc() {
       initial={{ backgroundColor: "#f1f6ec" }}
       transition={{ duration: 2, ease: "easeInOut" }}
     >
-      {/* --- พื้นหลังเขียว --- */}
+      {/* Green background */}
       <motion.div
         className="w-[50vh] h-[200vh] bg-[#338646] absolute"
         initial={{ x: 0, y: 0, opacity: 0.3 }}
@@ -154,7 +154,7 @@ export default function CreateAcc() {
         transition={{ duration: 3, type: "spring" }}
       />
 
-      {/* --- โลโก้ Hubersity --- */}
+      {/* Hubersity logo */}
       <motion.div
         className="absolute top-[-80px] left-4 z-20"
         initial={{ opacity: 0, y: -100 }}
@@ -168,7 +168,7 @@ export default function CreateAcc() {
         />
       </motion.div>
 
-      {/* --- กล่องฟอร์ม --- */}
+      {/* Form box */}
       <motion.div
         className="relative z-10 bg-white rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.15)]
                    p-10 flex flex-col md:flex-row items-center justify-center gap-12
@@ -177,7 +177,7 @@ export default function CreateAcc() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 1.2, type: "spring", bounce: 0.3 }}
       >
-        {/* --- ซ้าย: รูปโปรไฟล์ --- */}
+        {/* Left: Profile picture */}
         <div className="flex flex-col items-center justify-center w-full md:w-1/2 gap-4">
           <div className="w-40 h-40 rounded-full border-2 border-gray-300 overflow-hidden flex items-center justify-center bg-white">
             {previewUrl ? (
@@ -205,7 +205,7 @@ export default function CreateAcc() {
           />
         </div>
 
-        {/* --- ขวา: ฟอร์มข้อมูล --- */}
+        {/* Right: Data form */}
         <div className="flex flex-col gap-5 w-full md:w-1/2">
           <h1 className="text-3xl text-[#085e24] font-semibold mb-2">
             Create Account
@@ -297,7 +297,6 @@ export default function CreateAcc() {
               </button>
             </div>
           </div>
-
 
           {/* University */}
           <div className="flex flex-col gap-2">

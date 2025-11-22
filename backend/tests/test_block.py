@@ -175,3 +175,4 @@ def test_get_blocked_users_list(client):
 
     # Verify blocks were created successfully
     assert True  # Blocks created
+    

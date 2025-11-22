@@ -9,6 +9,7 @@ const API_URL = "http://localhost:8000";
 function DeleteConfirmModal({ onCancel, onConfirm }) {
   const { t } = useTranslation();
 
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
@@ -19,6 +20,7 @@ function DeleteConfirmModal({ onCancel, onConfirm }) {
         transition={{ type: "spring", stiffness: 180, damping: 18 }}
         className="relative w-[420px] bg-white rounded-2xl shadow-xl border border-red-300 overflow-hidden"
       >
+
         {/* HEADER */}
         <div className="bg-red-100 px-6 py-4 border-b border-red-200 flex items-center gap-3">
           <AlertTriangle className="text-red-600 w-6 h-6" />
@@ -55,6 +57,7 @@ function DeleteConfirmModal({ onCancel, onConfirm }) {
     </div>
   );
 }
+
 
 export default function DeleteAccount() {
   const { t } = useTranslation();
@@ -119,6 +122,7 @@ export default function DeleteAccount() {
       alert(t("deleteAccount.networkError"));
     }
   };
+
 
   return (
     <div className="flex justify-center items-start w-full px-6 pt-4 pb-10 -mt-4">

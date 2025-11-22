@@ -1,13 +1,11 @@
 from sqlalchemy.sql import func
 from sqlalchemy import Table, ForeignKey, Column, Integer, String, Boolean, TIMESTAMP, text, Text, func, UniqueConstraint, CheckConstraint, Index, Date , DateTime, BigInteger
-
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from datetime import datetime
 from sqlalchemy import Enum
-
 from .database import Base
 
 
@@ -15,14 +13,14 @@ class User(Base):
     __tablename__ = "users"
 
     uid = Column(Integer, primary_key=True, nullable=False)
-    username = Column(String, nullable=False, unique=True)  # ใช้ตอนสมัคร (login)
-    name = Column(String, nullable=True)                    # ชื่อโปรไฟล์ (แก้ได้)
+    username = Column(String, nullable=False, unique=True)  # Use when registering (login)
+    name = Column(String, nullable=True)                    # Profile name (editable)
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=True)
     oauth_provider = Column(String, nullable=True)
     oauth_id = Column(String, nullable=True)
-    birthdate = Column(TIMESTAMP(timezone=False), nullable=True)  # วันเกิด
-    university = Column(String, nullable=True)                    # มหาวิทยาลัย
+    birthdate = Column(TIMESTAMP(timezone=False), nullable=True)  # birthday
+    university = Column(String, nullable=True)                    # university
     is_private = Column(Boolean, default=False, nullable=False)
 
     created_at = Column(
@@ -45,7 +43,6 @@ class User(Base):
     reports = relationship("Report", back_populates="reporter", foreign_keys="[Report.reporter_id]")
     comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
 
-
     @hybrid_property
     def follower_count(self):
         return len(self.followers)
@@ -54,12 +51,14 @@ class User(Base):
     def following_count(self):
         return len(self.following)
 
+
 forum_tags = Table(
     "forum_tags",
     Base.metadata,
     Column("forum_id", Integer, ForeignKey("forum.fid"), primary_key=True),
     Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True)
 )
+
 
 class Follow(Base):
     __tablename__ = "follows"
@@ -95,6 +94,7 @@ post_post_tags = Table(
     Column("tag_id", Integer, ForeignKey("post_tags.ptid"), primary_key=True)
 )
 
+
 class PostTag(Base):
     __tablename__ = "post_tags"
 
@@ -128,6 +128,7 @@ class Post(Base):
     comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="post", cascade="all, delete-orphan")
 
+
 class PostImage(Base):
     __tablename__ = "post_images"
 
@@ -151,18 +152,19 @@ class StudySession(Base):
     user = relationship("User", back_populates="sessions")
 
 from sqlalchemy import Column, Integer, Date, TIMESTAMP, ForeignKey
-# ถ้ายังใช้ TIMESTAMP ต่อ ก็ไม่ต้องเปลี่ยน type ตรง date
+# If you continue to use TIMESTAMP, you do not need to change the date type.
+
 
 class DailyProgress(Base):
     __tablename__ = "daily_progress"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
-    date = Column(TIMESTAMP(timezone=True), nullable=False)  # คุณใช้แบบนี้อยู่
+    date = Column(TIMESTAMP(timezone=True), nullable=False)
     total_minutes = Column(Integer, default=0, nullable=False)
     badge_level = Column(Integer, default=0, nullable=False)
 
-    # ใส่ให้ตรงกับ DB
+    # Put it in line with the DB.
     total_seconds = Column(Integer, default=0, nullable=False)
 
     user = relationship("User", back_populates="progress")
@@ -180,6 +182,7 @@ class Like(Base):
     user = relationship("User", back_populates="likes")
     post = relationship("Post", back_populates="likes")
 
+
 class Comment(Base):
     __tablename__ = "comments"
 
@@ -194,6 +197,7 @@ class Comment(Base):
     post = relationship("Post", back_populates="comments")
     files = relationship("CommentFile", back_populates="comment", cascade="all, delete-orphan")
     reports = relationship("Report", back_populates="comment", cascade="all, delete-orphan")
+
 
 class Report(Base):
     __tablename__ = "reports"
@@ -221,7 +225,6 @@ class Report(Base):
     reporter = relationship("User", back_populates="reports", foreign_keys=[reporter_id])
 
 
-    
 class CommentFile(Base):
     __tablename__ = "comment_files"
 
@@ -254,6 +257,7 @@ class Chat(Base):
         "ChatMessage", back_populates="chat", cascade="all, delete-orphan"
     )
 
+
 class ChatMessage(Base):
     __tablename__ = "chat_messages"
     __table_args__ = (Index("ix_msg_chat_created", "chat_id", "created_at"),)
@@ -261,7 +265,7 @@ class ChatMessage(Base):
     id = Column(Integer, primary_key=True)
     chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
     sender_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
-    kind = Column(String, default="text")   # "text" | "system" (เน้นข้อความ)
+    kind = Column(String, default="text")   # "text" | "system" (emphasis added)
     text = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
 
@@ -281,7 +285,8 @@ class ChatAttachment(Base):
     size = Column(Integer)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
     message = relationship("ChatMessage", back_populates="attachments")
-    
+
+  
 class Notification(Base):
     __tablename__ = "notifications"
     id = Column(Integer, primary_key=True)
@@ -320,6 +325,7 @@ class Block(Base):
     blocker = relationship("User", foreign_keys=[blocker_id])
     blocked = relationship("User", foreign_keys=[blocked_id])
 
+
 class HelpReport(Base):
     __tablename__ = "help_reports"
 
@@ -333,20 +339,20 @@ class HelpReport(Base):
     user = relationship("User")
     created_at = Column(
         DateTime,
-        default=datetime.utcnow,      # จะใส่เวลาอัตโนมัติ
+        default=datetime.utcnow,      # Will automatically enter time
         nullable=False
     )
+
 
 class News(Base):
     __tablename__ = "news"
 
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
-    summary = Column(Text, nullable=True)        # ใช้โชว์ใน card / hover
-    detail = Column(Text, nullable=True)         # เนื้อหาทั้งหมด
-    hover_text = Column(String(255), nullable=True)  # text เล็ก ๆ ตอน hover card
-    image_url = Column(String(255), nullable=True)   # path รูป เช่น /uploads/news/1.jpg
-
+    summary = Column(Text, nullable=True)        # Use to show in card / hover
+    detail = Column(Text, nullable=True)         # All content
+    hover_text = Column(String(255), nullable=True)  # Small text when hovering the card
+    image_url = Column(String(255), nullable=True)   # Image path, such as /uploads/news/1.jpg
     is_published = Column(Boolean, default=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -358,6 +364,7 @@ class News(Base):
 
     created_by = Column(Integer, ForeignKey("users.uid"), nullable=True)
     creator = relationship("User", backref="news_items")
+
 
 class FollowRequest(Base):
     __tablename__ = "follow_requests"

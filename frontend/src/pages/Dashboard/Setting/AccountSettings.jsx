@@ -28,6 +28,7 @@ export default function AccountSettings() {
     }
   };
 
+
   return (
     <div className="flex h-full">
       {/* Sidebar Submenu */}

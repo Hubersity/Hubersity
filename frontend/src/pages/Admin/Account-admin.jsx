@@ -3,27 +3,17 @@ import { Search, User} from "lucide-react";
 
 const API_URL = `http://localhost:8000`; 
 
-
-// ********** ข้อมูลจำลองสำหรับทดสอบ (ลบออกเมื่อใช้ API จริง) **********
-const MOCK_USERS = [
-    {profile: 'url_a', name: 'Aong12345', email: 'aong123@gmail.com', university: 'Kasetsart', joinDate: '2025-10-04', status: 'Public' },
-    {profile: 'url_b', name: 'Skibidy', email: 'skibidy@gmail.com', university: 'Chulalongkorn', joinDate: '2025-9-30', status: 'Private' },
-    {profile: 'url_c', name: 'RoseAisp', email: 'rose@gmail.com', university: 'Mahidol', joinDate: '2025-3-17', status: 'Public' },
-    {profile: 'url_d', name: 'DogDogbod34', email: 'dogbod@gmail.com', university: 'Thammasat', joinDate: '2025-6-21', status: 'Private' },
-    {profile: 'url_e', name: 'Fai876', email: 'fai@gmail.com', university: 'Chiang Mai', joinDate: '2025-10-26', status: 'Private' },
-    {profile: 'url_f', name: 'gigi78', email: 'gigi@gmail.com', university: 'Kasetsart', joinDate: '2025-8-26', status: 'Public' }
-];
-
 export default function SearchAccount() {
-    // สถานะสำหรับเก็บคำค้นหาจากผู้ใช้
+    // Status for storing search terms from users
     const [searchTerm, setSearchTerm] = useState("");
     const [allUsers, setAllUsers] = useState([]);
-    // สถานะสำหรับเก็บผลลัพธ์ที่ได้ (Array ของ Object ผู้ใช้)
+    // State for storing the resulting result (Array of user objects)
     // const [results, setResults] = useState([]);
     const [results, setResults] = useState(MOCK_USERS);
-    // สถานะสำหรับ Loading และ Error
-    const [isLoading, setIsLoading] = useState(false); // เริ่มต้นเป็น true เพื่อโหลดข้อมูลครั้งแรก
+    // Status for Loading and Error
+    const [isLoading, setIsLoading] = useState(false); // Defaults to true to load the first data.
     const [error, setError] = useState(null);
+
 
     const formatUser = (user) => ({
         profile: user.profile_image,
@@ -33,9 +23,8 @@ export default function SearchAccount() {
         joinDate: user.created_at.split("T")[0],
         status: user.is_private ? "Private" : "Public"
     });
-
-
     
+
     const fetchAllUsers = async () => {
         const API_URL = `http://localhost:8000/admin/users/all`; 
         const response = await fetch(API_URL);
@@ -44,6 +33,7 @@ export default function SearchAccount() {
         }
         return response.json();
     };
+
 
     useEffect(() => {
         const loadUsers = async () => {
@@ -112,9 +102,11 @@ export default function SearchAccount() {
         </span>
         </div>
     );
+
+
     return (
         <div className="flex flex-col p-2 gap-4">
-            {/* ส่วนกล่องค้นหา (Search Input Box) */}
+            {/* Search Input Box */}
             <div className="relative flex-1">
                 <form onSubmit={handleSearch} className="flex gap-4 mb-10">
                     <Search className="absolute left-3 top-[2.3vh] -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -134,7 +126,7 @@ export default function SearchAccount() {
                 <span className="text-xl font-bold">Join date</span>
                 <span className="text-xl font-bold ml-[4vh]">Status</span>
             </div>
-            {/* ส่วนแสดงรายการผู้ใช้ */}
+            {/* User list section */}
             <div className="bg-white rounded-lg shadow">
                 {error && <p className="p-4 text-red-600">{error}</p>}
                 

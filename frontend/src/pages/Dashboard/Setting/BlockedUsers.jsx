@@ -3,22 +3,21 @@ import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
+
 export default function BlockedUsers() {
   const { t } = useTranslation();
-
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-
   // popup state
   const [confirmUnblockOpen, setConfirmUnblockOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-
   const currentKey = localStorage.getItem("currentUserKey");
   const authData = currentKey
     ? JSON.parse(localStorage.getItem(currentKey) || "{}")
     : null;
 
-  // โหลดรายชื่อที่เราบล็อก
+
+  // Load the list of people we blocked
   useEffect(() => {
     const fetchBlockedUsers = async () => {
       if (!authData?.token) return;
@@ -50,7 +49,7 @@ export default function BlockedUsers() {
     fetchBlockedUsers();
   }, []);
 
-  // Unblock จริง
+  // Really Unblock
   const confirmUnblock = async () => {
     if (!selectedUser || !authData?.token) return;
 
@@ -72,6 +71,7 @@ export default function BlockedUsers() {
     }
   };
 
+
   if (loading)
     return (
       <p className="px-10 py-10 text-gray-500">
@@ -79,14 +79,15 @@ export default function BlockedUsers() {
       </p>
     );
 
+
   return (
     <div className="relative flex flex-col items-start justify-center px-10 py-8 w-full">
-      {/* หัวข้อ */}
+      {/* title */}
       <h2 className="text-xl font-semibold text-gray-800 mb-6">
         {t("blockedUsers.title")}
       </h2>
 
-      {/* รายชื่อผู้ถูกบล็อก */}
+      {/* List of blocked people */}
       <div className="flex flex-col gap-4 w-full">
         {blockedUsers.map((user) => (
           <div
@@ -109,7 +110,7 @@ export default function BlockedUsers() {
               </div>
             </div>
 
-            {/* ปุ่ม Unblock */}
+            {/* Unblock button*/}
             <button
               onClick={() => {
                 setSelectedUser(user);

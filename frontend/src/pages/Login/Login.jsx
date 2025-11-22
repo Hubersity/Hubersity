@@ -11,7 +11,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // ฟังก์ชัน login
+  // function login
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
@@ -34,11 +34,11 @@ export default function Login() {
         return;
       }
 
-      // 1) ได้ token
+      // 1) Get token
       const data = await res.json();
       const token = data.access_token;
 
-      // 2) ดึงข้อมูล user จาก /users/me
+      // 2) Fetch user data from /users/me
       const meRes = await fetch("http://localhost:8000/users/me", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -52,7 +52,7 @@ export default function Login() {
 
       const userData = await meRes.json();
 
-      // 3) เก็บข้อมูลแบบสมบูรณ์ลง LocalStorage
+      // 3) Store complete data to LocalStorage
       const key = `authData_${userData.username}`;
       const saveData = {
         token: token,
@@ -84,7 +84,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-[#f1f6ec] flex relative overflow-hidden">
-      {/* เส้นตกแต่งด้านซ้าย */}
+      {/* Left decorative line */}
       <motion.div
         initial={{ opacity: 0, x: -100 }}
         animate={{ opacity: 1, x: 0 }}
@@ -94,7 +94,7 @@ export default function Login() {
         style={{ top: "-5vh", left: "-15vw", width: "65vw", height: "65vw" }}
       />
 
-      {/* เส้นเขียว top */}
+      {/* Green line top */}
       <motion.div
         initial={{ opacity: 0, x: -100 }}
         animate={{ opacity: 1, x: 0 }}
@@ -104,7 +104,7 @@ export default function Login() {
         style={{ top: "8vh", left: "4vw", width: "55vw", height: "55vw" }}
       />
 
-      {/* วงกลมซ้ายล่าง */}
+      {/* Lower left circle */}
       <motion.div
         initial={{ opacity: 0, x: -200, y: 200 }}
         animate={{ opacity: 1, x: 0, y: 0 }}
@@ -120,7 +120,7 @@ export default function Login() {
         style={{ top: "90vh", right: "80vw", width: "10vw", height: "10vw" }}
       />
 
-      {/* วงกลมขวาบน */}
+      {/* Top right circle */}
       <motion.div
         initial={{ opacity: 0, x: 200, y: -200 }}
         animate={{ opacity: 1, x: 0, y: 0 }}
@@ -136,7 +136,7 @@ export default function Login() {
         style={{ top: "-8vh", right: "55vw", width: "12vw", height: "12vw" }}
       />
 
-      {/* โลโก้ฝั่งซ้าย */}
+      {/* Left logo */}
       <motion.div
         className="w-1/2 flex justify-center items-center"
         initial={{ opacity: 0, y: -150, scale: 0.8 }}
@@ -149,7 +149,7 @@ export default function Login() {
         />
       </motion.div>
 
-      {/* กล่อง login ฝั่งขวา */}
+      {/* Login box on the right */}
       <motion.div
         className="w-1/2 bg-white flex items-center justify-center rounded-l-[50px] shadow-2xl z-10"
         initial={{ opacity: 0, x: 150 }}
@@ -232,7 +232,7 @@ export default function Login() {
               </Link>
             </motion.div>
 
-            {/* ปุ่ม Google */}
+            {/* Google button */}
             <motion.button
               type="button"
               whileHover={{ scale: 1.05 }}

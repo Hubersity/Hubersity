@@ -2,27 +2,6 @@ import React, { useState, useEffect} from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
-const MOCK_POSTRE = [
-    {Post_ID: '#203', NumberOfReports: 12, PopularReasons: 'Harassment', LastDate: '2025-10-13', Action: "", status: 'Pending' },
-    {Post_ID: '#204', NumberOfReports: 8, PopularReasons: 'Illegal Activity', LastDate: '2025-10-13', Action: 'Hide Post ', status: 'Resolved' },
-    {Post_ID: '#205', NumberOfReports: 11, PopularReasons: 'Spam', LastDate: '2025-10-11', Action: '', status: 'Pending' },
-    {Post_ID: '#206', NumberOfReports: 6, PopularReasons: 'Privacy Violation', LastDate: '2025-10-10', Action: 'Remove', status: 'Resolved' }
-];
-
-const MOCK_USERSRE = [
-    {UserName: 'zaza123', NumberOfReports: 12, PopularReasons: 'Harassment', LastDate: '2025-1-13', Action: '', status: 'Pending'},
-    {UserName: 'totototo', NumberOfReports: 8, PopularReasons: 'Illegal Activity', LastDate: '2025-8-12', Action: 'Report 1 month', status: 'Resolved'},
-    {UserName: 'pigiti', NumberOfReports: 11, PopularReasons: 'Spam', LastDate: '2025-9-11', Action: 'Report 1 week ', status: 'Resolved' },
-    {UserName: 'dogneverdie', NumberOfReports: 6, PopularReasons: 'Privacy Violation', LastDate: '2025-10-10', Action: 'Report 1 year', status: 'Resolved' }
-];
-
-const MOCK_COMMENT = [
-    {Comment_ID: '#001', NumberOfReports: 10, PopularReasons: 'Harassment', LastDate: '2025-10-13', Action: "", status: 'Pending' },
-    {Comment_ID: '#002', NumberOfReports: 8, PopularReasons: 'Illegal Activity', LastDate: '2025-10-13', Action: 'Remove', status: 'Resolved' },
-    {Comment_ID: '#003', NumberOfReports: 11, PopularReasons: 'Spam', LastDate: '2025-10-11', Action: "", status: 'Pending' },
-    {Comment_ID: '#004', NumberOfReports: 6, PopularReasons: 'Privacy Violation', LastDate: '2025-10-10', Action: 'Warn', status: 'Resolved' }
-];
-
 const InfoPost = ({ post }) => {
     if (!post) return null;
     const rawId = String(post.Post_ID || "");
@@ -44,7 +23,7 @@ const InfoPost = ({ post }) => {
   };
 
 
-// component สำหรับแถว user
+// component for user row
 const InfoUser = ({ user }) => {
     if (!user) return null;
     return (
@@ -63,11 +42,13 @@ const InfoUser = ({ user }) => {
     );
   };
 
+
 // component of comment
 const InfoComment = ({ comment }) => {
   if (!comment) return null;
   const rawId = String(comment.Comment_ID || "");
   const idForUrl = rawId.replace("#", "");
+
 
   return (
     <div className="flex items-center py-3 border-b hover:bg-gray-50 text-gray-700">
@@ -92,6 +73,7 @@ const InfoComment = ({ comment }) => {
   );
 };
 
+
 export default function Report() {
     const [numReports, setNumReports] = useState(0);
     const [numReportsUser, setNumReportUser] = useState(0);
@@ -101,16 +83,8 @@ export default function Report() {
     const [error, setError] = useState(null);
     const [numReportsComment, setNumReportComment] = useState(0);
 
-    useEffect(() => {
-        // // ถ้าเป็น comment ใช้ mock เลย ไม่ต้องเรียก backend
-        // if (lookNow === "comment") {
-        //     setIsLoading(false);
-        //     setError(null);
-        //     setNumReportComment(MOCK_COMMENT.length);
-        //     setResults(MOCK_COMMENT);
-        //     return; // ออกจาก effect ตรงนี้เลย
-        // }
 
+    useEffect(() => {
         const fetchReports = async () => {
             setIsLoading(true);
             setError(null);
@@ -184,34 +158,11 @@ export default function Report() {
     }, [lookNow]);
 
 
-
-    // // initial
-    // useEffect(() => {
-    //     setNumReports(MOCK_POSTRE.length);
-    //     setNumReportUser(MOCK_USERSRE.length);
-    //     setResults(lookNow === "post" ? MOCK_POSTRE : MOCK_USERSRE);
-    //     setIsLoading(false);
-    // }, []); // mount
-
-    // update results whenever lookNow changes — set results first, then stop loading
-    // useEffect(() => {
-    //     setIsLoading(true);
-    //     setError(null);
-
-    //     // get data (mock here; replace by fetch when ready)
-    //     const data = lookNow === "comment" ? MOCK_COMMENT;
-
-    //     // small timeout ensures state updates occur in safe order
-    //     setTimeout(() => {
-    //     setResults(data);
-    //     setIsLoading(false);
-    //     }, 0);
-    // }, [lookNow]);
-
     // optional debug helper — remove in production
     useEffect(() => {
         // console.log("lookNow:", lookNow, "results:", results);
     }, [lookNow, results]);
+
 
     return (
         <div className="flex flex-col">
@@ -300,7 +251,7 @@ export default function Report() {
                 <span className="font-bold mr-4">Status</span>
             </div>
 
-            {/* ส่วนแสดงรายการผู้ใช้ */}
+            {/* User list section */}
             <div className="bg-white rounded-lg shadow">
                 {error && <p className="p-4 text-red-600">{error}</p>}
                 

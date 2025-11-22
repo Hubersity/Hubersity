@@ -13,8 +13,8 @@ from ..schemas import AdminUserDetailResponse
 router = APIRouter(
     prefix="/admin",
     tags=["Admin"],
-    #dependencies=[Depends(oauth2.get_admin_user)]
 )
+
 
 @router.get("/users/all", response_model=List[schemas.UserResponse])
 def get_all_users(
@@ -22,6 +22,7 @@ def get_all_users(
 ):
     users = db.query(models.User).all()
     return users
+
 
 @router.get("/users/{id}", response_model=schemas.UserResponse)
 def get_user(
@@ -78,6 +79,7 @@ def get_reported_user_detail(username: str, db: Session = Depends(get_db)):
             for post in posts
         ],
     }
+
 
 @router.get("/stats")
 def get_admin_stats(
@@ -143,6 +145,7 @@ def ban_user(user_id: int, request: schemas.BanRequest, db: Session = Depends(ge
     db.commit()
     return {"message": f"{user.username} banned until {user.ban_until.strftime('%Y-%m-%d %H:%M:%S')}"}
 
+
 @router.delete("/users/{user_id}")
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.uid == user_id).first()
@@ -151,6 +154,7 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     db.delete(user)
     db.commit()
     return {"message": "User deleted"}
+
 
 @router.post("/users/{user_id}/unban")
 def unban_user(user_id: int, db: Session = Depends(get_db)):
@@ -163,6 +167,7 @@ def unban_user(user_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": f"User {user.username} has been unbanned"}
+
 
 @router.delete("/posts/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(
@@ -179,6 +184,7 @@ def delete_post(
     db.delete(post)
     db.commit()
     return
+
 
 @router.delete("/comments/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_comment(
@@ -200,9 +206,10 @@ def delete_comment(
     db.commit()
     return
 
+
 @router.get("/reports")
 def get_reported_data(db: Session = Depends(get_db)):
-    # --- Reported Posts ---
+    # Reported Posts
     reported_posts = (
         db.query(
             models.Report.post_id.label("post_id"),
@@ -237,7 +244,7 @@ def get_reported_data(db: Session = Depends(get_db)):
             "status": post.status or "Pending"
         })
 
-    # --- Reported Comments ---
+    # Reported Comments
     reported_comments = (
         db.query(
             models.Report.comment_id.label("comment_id"),
@@ -272,7 +279,7 @@ def get_reported_data(db: Session = Depends(get_db)):
             "status": comment.status or "Pending"
         })
 
-    # --- Unified Reported Users ---
+    # Unified Reported Users
     all_user_reports = (
         db.query(
             models.User.uid.label("uid"),
@@ -377,7 +384,6 @@ def get_report_detail(
     username = user.username if user else "-"
     avatar = user.profile_image if user and user.profile_image else "/images/default-avatar.png"
 
-
     return {
         "id": str(post.pid),
         "uid": post.user_id,
@@ -390,6 +396,7 @@ def get_report_detail(
         "reportCategories": report_categories,
         "status": status.capitalize()
     }
+
 
 @router.get("/reports/comment/{cid}")
 def get_comment_report_detail(

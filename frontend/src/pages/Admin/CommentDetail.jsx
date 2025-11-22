@@ -1,25 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
-const API_URL = `http://localhost:8000`; 
-// MOCK ข้อมูลคอมเมนต์ที่ถูกรีพอร์ต (ใช้แทนการเรียก API)
-const MOCK_POSTS = [
-  {
-    id: "001",
-    author: "Fai876",
-    avatar: "/images/default-avatar.png",
-    content:
-      "Religion X is stupid and anyone wearing that outfit looks worthless.",
-    createdAt: "2025-10-17T12:30:00Z",
-    lastReportDate: "2025-10-13",
-    numberOfReports: 10,
-    reportCategories: { Harassment: 10},
-    status: "Pending",
-    action: "",
-  },
-];
 
-// แปลง object หมวดเป็นข้อความ
+const API_URL = `http://localhost:8000`; 
+
+
+// Convert category object to text
 function formatCategories(categories) {
   return Object.entries(categories)
     .map(
@@ -29,7 +15,8 @@ function formatCategories(categories) {
     .join("<br />");
 }
 
-// คำนวณเวลาที่ผ่านมา
+
+// Calculate the elapsed time
 function timeAgo(time_) {
   const then = new Date(time_).getTime();
   const now = Date.now();
@@ -44,8 +31,9 @@ function timeAgo(time_) {
   return `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
 }
 
+
 export default function CommentDetail() {
-  // ต้องให้ route เป็น /app_admin/report/comment/:commentId
+  // The route must be /app_admin/report/comment/:commentId
   const { commentId } = useParams();
   const navigate = useNavigate();
 
@@ -99,9 +87,7 @@ export default function CommentDetail() {
   }, [commentId]);
 
 
-
-
-  // mock handleUpdate ไม่เรียก API จริง
+  // Mock handleUpdate does not call the actual API.
   async function handleUpdate() {
     if (!comment) return;
     if (!action) {
@@ -154,8 +140,6 @@ export default function CommentDetail() {
     }
   }
 
-
-
   if (loading) {
     return <div className="p-6">Loading comment...</div>;
   }
@@ -173,6 +157,7 @@ export default function CommentDetail() {
       </div>
     );
   }
+
 
   // UI
   return (
@@ -215,7 +200,7 @@ export default function CommentDetail() {
 
       {/* last report + action + status + number of reports */}
       <div className="flex flex-row mt-4 gap-4 items-start">
-        {/* ซ้าย: last date + action box */}
+        {/* Left: last date + action box */}
         <div className="flex flex-col w-[25vw] gap-4">
           <div className="w-full h-[14vh] bg-[#fdfaf6] rounded-xl shadow-2xl p-4">
             <h1 className="mt-1 text-xl">Last date of report comment</h1>
@@ -251,13 +236,13 @@ export default function CommentDetail() {
           </div>
         </div>
 
-        {/* กลาง: status */}
+        {/* Middle: status */}
         <div className="w-[25vw] h-[14vh] bg-[#fdfaf6] rounded-xl shadow-2xl p-4 flex flex-col justify-center items-center">
           <h1 className="text-xl">Status</h1>
           <div className="text-xl font-bold mt-2">{comment.status}</div>
         </div>
 
-        {/* ขวา: number of reports + Update button */}
+        {/* Right: number of reports + Update button */}
         <div className="w-[25vw] h-[50vh] bg-[#fdfaf6] rounded-xl shadow-2xl ml-[2vw]">
           <div className="flex flex-col h-full ml-4">
             <h1 className="mt-4 text-xl">Number of reports</h1>

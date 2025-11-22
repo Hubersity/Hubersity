@@ -82,6 +82,7 @@ function DeleteCommentModal({ open, onClose, onConfirm }) {
   );
 }
 
+
 function ReportCommentModal({ open, onClose, onSubmit, commentId }) {
   const { t } = useTranslation();
   const [reason, setReason] = useState("");
@@ -90,7 +91,7 @@ function ReportCommentModal({ open, onClose, onSubmit, commentId }) {
 
   if (!open) return null;
 
-  // คง key เดิมไว้สำหรับส่ง backend, label ใช้ i18n
+  // Keep the original key for sending backend, label uses i18n.
   const reasons = [
     { key: "Harassment",       label: t("report.harassment") },
     { key: "Sexual Content",   label: t("report.sexual") },
@@ -206,7 +207,7 @@ function ReportCommentModal({ open, onClose, onSubmit, commentId }) {
 }
 
 
-// ============ Edit Modal ============
+// Edit Modal
 function EditPostModal({ open, onClose, text, setText, onSubmit }) {
   const { t } = useTranslation();
 
@@ -267,7 +268,7 @@ function EditPostModal({ open, onClose, text, setText, onSubmit }) {
 }
 
 
-// ============ Delete Modal ============
+// Delete Modal
 function DeleteConfirmModal({ open, onClose, onConfirm }) {
   const { t } = useTranslation();
 
@@ -327,9 +328,7 @@ function DeleteConfirmModal({ open, onClose, onConfirm }) {
 }
 
 
-// ============ Report Modal ============
-
-
+// Report Modal
 function ReportModal({ open, onClose, postId, onSubmit }) {
   const { t } = useTranslation();
 
@@ -338,7 +337,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
   const [details, setDetails] = useState("");
   const mountedRef = useRef(false);
 
-  // ตรวจจับ mount / unmount
+  // Detect mount/unmount
   useEffect(() => {
     if (open && !mountedRef.current) {
       mountedRef.current = true;
@@ -348,7 +347,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
     }
   }, [open]);
 
-  // ปิดด้วย ESC
+  // Close with ESC
   useEffect(() => {
     if (!open) return;
     const onEsc = (e) => e.key === "Escape" && onClose();
@@ -356,7 +355,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
     return () => window.removeEventListener("keydown", onEsc);
   }, [open, onClose]);
 
-  // Reset เมื่อปิด
+  // Reset when closed
   useEffect(() => {
     if (!open) {
       setReason("");
@@ -367,7 +366,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
 
   if (!open || !postId || (mountedRef.current && !open)) return null;
 
-  // ใช้ reason จากไฟล์แปล
+  // Use reason from translation file
   const reasons = [
     { key: "harassment", label: t("report.harassment") },
     { key: "sexual", label: t("report.sexual") },
@@ -515,12 +514,10 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
 }
 
 
-
 export default function TagDetail() {
   const { tagName } = useParams();
   const navigate = useNavigate();
   const { t } = useTranslation();
-
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState("");
   const [pendingFiles, setPendingFiles] = useState([]);
@@ -530,24 +527,19 @@ export default function TagDetail() {
   const [search, setSearch] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [menuOpen, setMenuOpen] = useState(null);
-
   const [editOpen, setEditOpen] = useState(false);
   const [editPostId, setEditPostId] = useState(null);
   const [editText, setEditText] = useState("");
-
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletePostId, setDeletePostId] = useState(null);
-
   const [reportOpen, setReportOpen] = useState(false);
   const [reportPostId, setReportPostId] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [commentInputs, setCommentInputs] = useState({});
   const [commentFiles, setCommentFiles] = useState({});
   const [openComments, setOpenComments] = useState({});
-
   const [deleteCommentOpen, setDeleteCommentOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
-
   const [reportCommentOpen, setReportCommentOpen] = useState(false);
   const [reportTarget, setReportTarget] = useState(null);
 
@@ -555,7 +547,7 @@ export default function TagDetail() {
     setOpenComments((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-    // ลบคอมเมนต์ของตัวเอง
+  // Delete your own comments
   const handleDeleteComment = async (pid, cid) => {
   const token = authData?.token;
       if (!token) return alert("Please log in again.");
@@ -576,7 +568,7 @@ export default function TagDetail() {
       }
       };
 
-      // รายงานคอมเมนต์ของคนอื่น
+  // Report other people's comments
   const handleReportComment = (cid) => {
   setReportPostId(`comment-${cid}`);
   setReportOpen(true);
@@ -599,7 +591,7 @@ export default function TagDetail() {
 
   useEffect(() => setSearch(`#${tagName}`), [tagName]);
 
-  // โหลดโพสต์และแท็ก
+  // Load posts and tags
   useEffect(() => {
     const token = authData?.token;
     if (!token) return;
@@ -611,7 +603,7 @@ export default function TagDetail() {
         });
         const data = await res.json();
 
-        // นับแท็กจากโพสต์ทั้งหมด
+        // Count tags from all posts
         const tagCount = {};
         data.forEach((p) => {
         const tags = p.post_content?.match(/#[A-Za-z0-9_ก-๙]+/g) || [];
@@ -628,14 +620,13 @@ export default function TagDetail() {
         setAllTags(formattedTags);
         setTrending(formattedTags.slice(0, 20));
 
-        // เพิ่มตรงนี้เลย
         setSuggestions(
         formattedTags
             .filter((t) => t.name.toLowerCase().includes(tagName.toLowerCase()))
             .slice(0, 6)
         );
 
-        // โหลดโพสต์ของแท็กนั้น
+        // Load posts for that tag
         const regex = new RegExp(`(^|\\s)#${tagName}(\\s|$)`, "i");
         const filtered = data.filter((p) => regex.test(p.post_content));
         const mapped = filtered.map((p) => ({
@@ -674,12 +665,11 @@ export default function TagDetail() {
       const res = await fetch(`${API_URL}/tags/trending?limit=10`);
       const data = await res.json();
 
-      // รองรับทั้งกรณี backend ส่ง array ตรงๆ หรือส่งแบบมี key
       const tags = Array.isArray(data)
         ? data
         : data.trending_tags || data.tags || [];
 
-      // ถ้าไม่มีค่าเลย ให้ fallback
+      // If there is no value, use fallback.
       if (tags.length === 0) {
         setTrending([
           { name: "foodaroundTU", count: 30 },
@@ -703,7 +693,7 @@ export default function TagDetail() {
       fetchTrending();
     }, [tagName]);
 
-  // แนะนำแท็ก
+  // Recommended tags
   useEffect(() => {
     const input = search.replace("#", "").trim().toLowerCase();
     if (!input) return setSuggestions([]);
@@ -730,7 +720,7 @@ export default function TagDetail() {
     const token = authData?.token;
     if (!token) return alert("Please log in to like posts.");
 
-    // 1. อัปเดต UI ทันที (optimistic update)
+    // 1. Instant UI update (optimistic update)
     setPosts((prev) =>
         prev.map((p) =>
         p.id === id
@@ -740,7 +730,7 @@ export default function TagDetail() {
     );
 
     try {
-        // 2. ส่งคำขอจริงไป backend
+        // 2. Send the actual request to the backend.
         const res = await fetch(`${API_URL}/posts/${id}/like`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
@@ -750,7 +740,7 @@ export default function TagDetail() {
 
         const updated = await res.json();
 
-        // 3. ถ้า backend ส่งข้อมูลใหม่มา (บางระบบมี delay)
+        // 3. If the backend sends new data (some systems have delays)
         if (updated.like_count !== undefined) {
         setPosts((prev) =>
             prev.map((p) =>
@@ -762,7 +752,7 @@ export default function TagDetail() {
         }
     } catch (err) {
         console.error("Error updating like:", err);
-        // 4. ถ้า error ให้ revert กลับ
+        // 4. If error, revert back.
         setPosts((prev) =>
         prev.map((p) =>
             p.id === id
@@ -772,7 +762,7 @@ export default function TagDetail() {
         );
     }
     };
-  // ========== COMMENTS ==========
+  //  COMMENTS 
   const handleCommentFile = (pid, e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -879,7 +869,7 @@ export default function TagDetail() {
     }
   };
 
-  // ===== Edit =====
+  // Edit
   const openEditModal = (post) => {
     setEditPostId(post.id);
     setEditText(post.text);
@@ -912,7 +902,7 @@ export default function TagDetail() {
     }
   };
 
-  // ===== Delete =====
+  // Delete
   const handleDeletePost = (id) => {
     setDeletePostId(id);
     setDeleteOpen(true);
@@ -935,7 +925,7 @@ export default function TagDetail() {
     }
   };
 
-  // ===== Report =====
+  // Report
   const openReport = (id) => {
     setReportPostId(id);
     setReportOpen(true);
@@ -966,7 +956,7 @@ export default function TagDetail() {
 
   return (
     <div className="flex w-full bg-[#f7f7f5] min-h-screen p-6">
-      {/* ซ้าย */}
+      {/* left */}
       <div className="flex-1 pr-6 border-r border-gray-300">
         {/* Search */}
         <div className="relative mb-5">
@@ -1009,7 +999,7 @@ export default function TagDetail() {
           )}
         </div>
 
-        {/* กล่องโพสต์ */}
+        {/* Post box */}
         <div className="flex flex-col gap-3 mb-6 p-4 rounded-xl bg-[#fdfaf6] shadow-sm">
           <input
             type="text"
@@ -1051,7 +1041,7 @@ export default function TagDetail() {
           </div>
         </div>
 
-        {/* โพสต์ */}
+        {/* Post */}
         <div className="space-y-6">
           {posts.length === 0 ? (
             <p className="text-gray-500 text-center py-6">
@@ -1137,7 +1127,7 @@ export default function TagDetail() {
                     )}
                 </div>
 
-                {/* เนื้อหาโพสต์ */}
+                {/* Post content */}
                 <p className="text-slate-800 flex flex-wrap gap-1">
                     {p.text.split(/(\s+)/).map((word, i) =>
                     word.startsWith("#") ? (
@@ -1154,7 +1144,7 @@ export default function TagDetail() {
                     )}
                 </p>
 
-                {/* รูป / วิดีโอ / PDF */}
+                {/* Photo / Video / PDF */}
                 {p.images.length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-3">
                     {p.images.map((img, i) => {
@@ -1195,7 +1185,7 @@ export default function TagDetail() {
                     </div>
                 )}
 
-                {/* ปุ่ม Like / Comment */}
+                {/* Like / Comment button */}
                 <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
                 <div className="flex items-center gap-4">
                     <button
@@ -1222,7 +1212,7 @@ export default function TagDetail() {
                 </div>
                 </div>
 
-                {/* ===== COMMENTS SECTION ===== */}
+                {/* COMMENTS SECTION */}
                 {openComments[p.id] && (
                 <div className="mt-3 space-y-2">
                     {p.comments.map((c, i) => (
@@ -1323,9 +1313,9 @@ export default function TagDetail() {
                     </div>
                     ))}
 
-                    {/* กล่องพิมพ์คอมเมนต์ */}
+                    {/* Comment box */}
                     <div className="flex gap-2 ml-6 items-center">
-                    {/* ปุ่มแนบไฟล์ */}
+                    {/* Attach File Button */}
                     <div className="flex items-center gap-3">
                         <button
                         onClick={() =>
@@ -1396,7 +1386,7 @@ export default function TagDetail() {
                         />
                     </div>
 
-                    {/* กล่องข้อความ */}
+                    {/* Message box */}
                     <input
                         type="text"
                         placeholder={t("board.writeComment")}
@@ -1410,7 +1400,7 @@ export default function TagDetail() {
                         className="flex-1 border rounded-full px-3 py-1 text-sm"
                     />
 
-                    {/* ปุ่มส่ง */}
+                    {/* Send button */}
                     <button
                         onClick={() => handleCommentSubmit(p.id)}
                         className="bg-green-600 text-white px-3 py-1 rounded-full text-sm hover:bg-green-700"
@@ -1419,7 +1409,7 @@ export default function TagDetail() {
                     </button>
                     </div>
 
-                    {/* แสดงไฟล์แนบก่อนส่ง */}
+                    {/* Show attachments before sending */}
                     {commentFiles[p.id]?.length > 0 && (
                     <div className="ml-6 mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
                         {commentFiles[p.id].map((file, index) => {
@@ -1467,7 +1457,7 @@ export default function TagDetail() {
         </div>
       </div>
 
-      {/* ขวา */}
+      {/* right */}
       <div className="w-72 pl-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-3">{t("tagsPage.trending")}</h3>
         <ol className="list-decimal pl-5 space-y-1 text-gray-700">

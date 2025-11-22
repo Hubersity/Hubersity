@@ -1,4 +1,3 @@
-// src/pages/Home/TeamSection.jsx
 import React, { useEffect, useRef, useState } from "react";
 
 const PEOPLE = [

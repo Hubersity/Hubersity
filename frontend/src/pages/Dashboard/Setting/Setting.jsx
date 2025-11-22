@@ -6,10 +6,11 @@ import Language from "./Language";
 import ForHelp from "./ForHelp";
 import FromApp from "./SettingAdminReply";
 
+
 export default function Setting() {
   const { t } = useTranslation();
 
-  // เมนูทั้งหมด + key ใช้กับ i18n
+  // All menu + key use with i18n
   const menuItems = [
     { key: "accountSettings", label: t("setting.accountSettings") },
     { key: "language", label: t("setting.language") },
@@ -17,17 +18,17 @@ export default function Setting() {
     { key: "fromHubersity", label: t("setting.fromHubersity") }
   ];
 
-  // อ่านแท็บล่าสุดจาก localStorage (default = accountSettings)
+  // Read recent tabs from localStorage (default = accountSettings)
   const [selected, setSelected] = useState(
     localStorage.getItem("settingTab") || "accountSettings"
   );
 
-  // เมื่อเปลี่ยนแท็บ → เซฟลง localStorage
+  // When changing tab → Save to localStorage
   useEffect(() => {
     localStorage.setItem("settingTab", selected);
   }, [selected]);
 
-  // เลือกคอนเทนต์ตามแท็บ
+  // Select content by tab
   const renderContent = () => {
     switch (selected) {
       case "accountSettings":
@@ -42,6 +43,7 @@ export default function Setting() {
         return <AccountSettings />;
     }
   };
+
 
   return (
     <div className="flex h-full bg-white rounded-lg border">

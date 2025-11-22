@@ -7,6 +7,7 @@ import os
 
 router = APIRouter(prefix="/help_reports", tags=["Help Reports"])
 
+
 # =====================================================================
 # 0. USER — CREATE HELP REPORT
 # =====================================================================

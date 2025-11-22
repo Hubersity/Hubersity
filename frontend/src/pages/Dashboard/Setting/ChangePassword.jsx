@@ -4,20 +4,18 @@ import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
+
 export default function ChangePassword() {
   const { t } = useTranslation();
-
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordAgain, setNewPasswordAgain] = useState("");
-
   const [errors, setErrors] = useState({
     current: "",
     newPass: [],
     confirm: "",
     api: "",
   });
-
   const currentKey = localStorage.getItem("currentUserKey");
   const authData = currentKey
     ? JSON.parse(localStorage.getItem(currentKey) || "{}")
@@ -85,6 +83,7 @@ export default function ChangePassword() {
       setErrors((prev) => ({ ...prev, api: "Network error. Please try again." }));
     }
   };
+
 
   return (
     <div className="flex flex-col items-start px-10 py-8 w-full">

@@ -22,7 +22,7 @@ import Setting from "./pages/Dashboard/Setting/Setting";
 import News from './pages/Dashboard/News';
 import NewDetail from './pages/Dashboard/NewDetail.jsx';
 
-// ⬇admin: lazy imports (so they don't execute until visited)
+// admin: lazy imports (so they don't execute until visited)
 const Dashboard_admin     = lazy(() => import('./pages/Admin/Dashboard-admin.jsx'));
 const Overview            = lazy(() => import('./pages/Admin/Overview.jsx'));
 const Account_admin       = lazy(() => import('./pages/Admin/Account-admin.jsx'));

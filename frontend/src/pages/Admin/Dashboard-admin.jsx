@@ -14,6 +14,7 @@ const navItems = [
   { to: "/app_admin/forhelp-admin", label: "For Help", icon: AlertTriangle },
 ];
 
+
 function Topbar() {
   const [user, setUser] = useState(null);
 
@@ -27,17 +28,17 @@ function Topbar() {
 
   return (
     <div className="fixed top-0 left-0 right-0 z-20 border-b bg-white shadow h-16 flex items-center justify-between px-6">
-      {/* โลโก้ */}
+      {/* logo */}
       <img
         src="/images/horizontal-logo.png"
         alt="Hubersity"
         className="h-[120px] w-auto"
       />
 
-      {/* ไอคอนด้านขวา */}
+      {/* Right icon */}
       <div className="flex items-center gap-6">
 
-        {/* กดเข้าแจ้งเตือน */}
+        {/* Press to enter notification */}
         <Link to="/app_admin/noti-admin">
           <div className="relative">
             <Bell
@@ -48,7 +49,7 @@ function Topbar() {
           </div>
         </Link>
 
-        {/* โปรไฟล์จริงจาก backend */}
+        {/* Real profile from backend */}
         <Link
           to="/app_admin/acc-admin"
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
@@ -66,6 +67,7 @@ function Topbar() {
     </div>
   );
 }
+
 
 // Sidebar
 function Sidebar() {
@@ -95,7 +97,8 @@ function Sidebar() {
   );
 }
 
-// Layout หลัก Dashboard
+
+// Main Dashboard Layout
 export default function Dashboard() {
   return (
     <div className="flex">

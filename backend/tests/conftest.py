@@ -18,7 +18,6 @@ from app import models  # noqa: F401
 from app.main import app
 from fastapi.testclient import TestClient
 
-
 # Use an in-memory SQLite database for fast, isolated tests
 TEST_DATABASE_URL = "sqlite:///:memory:"
 # Use StaticPool so the same in-memory database is used across threads/connections
@@ -28,7 +27,6 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 
 @pytest.fixture(scope="session", autouse=True)
 def create_test_db():
@@ -48,7 +46,6 @@ def create_test_db():
     yield
     Base.metadata.drop_all(bind=engine)
 
-
 @pytest.fixture()
 def db_session():
     session = TestingSessionLocal()
@@ -56,7 +53,6 @@ def db_session():
         yield session
     finally:
         session.close()
-
 
 @pytest.fixture()
 def client(db_session):
@@ -71,7 +67,6 @@ def client(db_session):
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
-
 
 @pytest.fixture(autouse=True)
 def cleanup_uploads():

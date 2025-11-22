@@ -4,13 +4,12 @@ import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
+
 export default function ForHelp() {
   const { t } = useTranslation();
-
   const [message, setMessage] = useState("");
   const [file, setFile] = useState(null);
   const [submitted, setSubmitted] = useState(false);
-
   const currentKey = localStorage.getItem("currentUserKey");
   const authData = currentKey
     ? JSON.parse(localStorage.getItem(currentKey) || "{}")
@@ -45,6 +44,7 @@ export default function ForHelp() {
       alert("Network error, please try again.");
     }
   };
+
 
   return (
     <div className="p-6 max-w-3xl w-full">

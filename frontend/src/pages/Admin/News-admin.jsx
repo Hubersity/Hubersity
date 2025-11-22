@@ -2,17 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
 const API_URL = "http://localhost:8000";
-// ถ้า image_url ไม่ใช่ http ให้เติม base url ให้
+// If image_url is not http, add base url.
 const toAbs = (u) => (u?.startsWith("http") ? u : `${API_URL}${u || ""}`);
 
+
 export default function NewsAdminPage() {
-  // const [newsList] = useState([
-  //   { id: 1, image: "/images/New1.jpg", title: "Google Releases Gemini for KU Students", summary: "Google announces free Gemini access for KU students." },
-  //   { id: 2, image: "/images/New2.jpg", title: "New Engineering Upskill Project", summary: "Apply to join the new engineering upskill project." },
-  //   { id: 3, image: "/images/New3.jpg", title: "AI Tools for Academic Assistants", summary: "Explore new tools for students and researchers." },
-  //   { id: 4, image: "/images/New4.jpg", title: "Adobe Creative Cloud Update", summary: "Adobe services updated exclusively for KU students." },
-  //   { id: 5, image: "/images/New5.jpg", title: "Research Square & KULC Studio Program", summary: "Training for research & academic writing." },
-  // ]);
   const [newsList, setNewsList] = useState([]);
 
   useEffect(() => {
@@ -28,6 +22,7 @@ export default function NewsAdminPage() {
   
     fetchNews();
   }, []);
+
 
   return (
     <div className="w-full">

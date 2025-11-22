@@ -16,10 +16,10 @@ router = APIRouter(
 )
 
 
-# สมัครผู้ใช้ใหม่ (Sign Up)
+# Sign Up
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.UserResponse)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    # ตรวจซ้ำ email
+    # Recheck email
     existing_user = db.query(models.User).filter(models.User.email == user.email).first()
     if existing_user:
         raise HTTPException(
@@ -27,7 +27,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
             detail="Email is already in use"
         )
     
-    # ตรวจซ้ำ username
+    # Recheck username
     existing_username = db.query(models.User).filter(models.User.username == user.username).first()
     if existing_username:
         raise HTTPException(
@@ -35,21 +35,21 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
             detail="Username is already taken"
         )
     
-    # แฮชรหัสผ่านก่อนเก็บ
+    # hash the password before storing it.
     hashed_pwd = utils.hash(user.password)
     user.password = hashed_pwd
 
-    # สร้าง user ใหม่ (ยกเว้น confirm_password)
+    # Create a new user (except confirm_password)
     new_user = models.User(**user.model_dump(exclude={"confirm_password"}))
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     access_token = oauth2.create_access_token(data={"user_id": new_user.uid})
 
-
     return new_user
 
-# ดึงข้อมูลผู้ใช้ปัจจุบัน (ใช้ JWT token)
+
+# Retrieve current user information (using JWT token)
 @router.get("/me", response_model=schemas.UserResponse)
 def get_current_user_data(
     db: Session = Depends(get_db),
@@ -62,6 +62,7 @@ def get_current_user_data(
             detail="User not found"
         )
     return user
+
 
 @router.patch("/me/privacy")
 def update_privacy(
@@ -80,7 +81,8 @@ def update_privacy(
 
     return {"message": "Privacy updated", "is_private": current_user.is_private}
 
-# แก้ไขข้อมูลโปรไฟล์
+
+# Edit profile information
 @router.put("/{id}", response_model=schemas.UserResponse)
 def update_user(
     id: int,
@@ -106,7 +108,6 @@ def update_user(
     return user
 
 
-
 @router.post("/upload-avatar")
 def upload_user_avatar(
     file: UploadFile = File(...),
@@ -129,13 +130,14 @@ def upload_user_avatar(
 
     return {"filename": current_user.profile_image}
 
+
 @router.post("/{id}/follow", status_code=status.HTTP_201_CREATED)
 def follow_user(
     id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    # ห้าม follow ตัวเอง
+    # Do not follow yourself
     if id == current_user.uid:
         raise HTTPException(status_code=400, detail="You cannot follow yourself")
 
@@ -144,7 +146,7 @@ def follow_user(
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # เช็คว่า follow อยู่แล้วหรือยัง
+    # Check if you are already following
     existing_follow = db.query(models.Follow).filter_by(
         follower_id=current_user.uid,
         following_id=id
@@ -154,11 +156,11 @@ def follow_user(
         raise HTTPException(status_code=400, detail="Already following this user")
 
     # ---------------------------------------
-    # PRIVATE ACCOUNT → ส่ง follow request
+    # PRIVATE ACCOUNT → Send follow request
     # ---------------------------------------
     if target_user.is_private:
 
-        # เช็คว่า request ค้างอยู่ไหม
+        # Check if the request is pending.
         existing_req = db.query(models.FollowRequest).filter(
             models.FollowRequest.requester_id == current_user.uid,
             models.FollowRequest.receiver_id == id,
@@ -179,7 +181,7 @@ def follow_user(
 
         db.add(follow_req)
 
-        # แจ้งเตือน
+        # notification
         try:
             create_notification_template(
                 db=db,
@@ -204,7 +206,7 @@ def follow_user(
         }
 
     # ---------------------------------------
-    # PUBLIC ACCOUNT → follow ได้ทันที
+    # PUBLIC ACCOUNT → Follow immediately
     # ---------------------------------------
     follow = models.Follow(
         follower_id=current_user.uid,
@@ -214,7 +216,6 @@ def follow_user(
     db.flush()
     db.commit()
     db.refresh(follow)
-
 
     return {
         "mode": "follow",
@@ -241,6 +242,7 @@ def unfollow_user(
 
     return {"message": f"You have unfollowed user {id}"}
 
+
 @router.get("/me/followers", response_model=List[schemas.UserBriefResponse])
 def get_my_followers(
     db: Session = Depends(get_db),
@@ -263,6 +265,7 @@ def get_my_followers(
             )
     return response
 
+
 @router.get("/me/following", response_model=List[schemas.UserBriefResponse])
 def get_my_following(
     db: Session = Depends(get_db),
@@ -283,7 +286,6 @@ def get_my_following(
                 )
             )
     return response
-
 
 
 @router.get("/{id}/followers", response_model=List[schemas.UserBriefResponse])
@@ -313,6 +315,7 @@ def get_user_followers(
 
     return response
 
+
 @router.get("/{id}/following", response_model=List[schemas.UserBriefResponse])
 def get_user_following(
     id: int,
@@ -339,6 +342,7 @@ def get_user_following(
             )
 
     return response
+
 
 @router.post("/{user_id}/report", status_code=status.HTTP_201_CREATED)
 def report_user(
@@ -400,7 +404,8 @@ class ChangePasswordRequest(BaseModel):
         if "new_password" in values and v != values["new_password"]:
             raise ValueError("Passwords do not match")
         return v
-    
+
+
 @router.post("/change-password")
 def change_password(
     data: ChangePasswordRequest,
@@ -427,6 +432,7 @@ def change_password(
 
     return {"message": "Password changed successfully"}
 
+
 @router.delete("/delete", status_code=200)
 def delete_current_user(
     db: Session = Depends(get_db),
@@ -442,6 +448,7 @@ def delete_current_user(
     db.commit()
 
     return {"message": "Account deleted successfully"}
+
 
 @router.get("/{id}")
 def get_user_detail(
@@ -478,7 +485,6 @@ def get_user_detail(
         "description": user.description,
         "is_private": user.is_private,
         "can_view": can_view,
-
         "created_at": user.created_at if hasattr(user, "created_at") else None,
         "follower_count": follower_count,
         "following_count": following_count

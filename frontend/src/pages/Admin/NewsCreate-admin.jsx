@@ -15,7 +15,7 @@ export default function NewsCreateAdmin() {
 
   const API_URL = "http://localhost:8000";
 
-  // ดึง token แบบเดียวกับหน้าที่ใช้ login อยู่ (ตัวอย่าง)
+  // Get the same token as the login page (example)
   const navigate = useNavigate();
   const currentKey = localStorage.getItem("currentUserKey");
   const auth = currentKey
@@ -23,26 +23,30 @@ export default function NewsCreateAdmin() {
     : {};
   const token = auth?.token || null;
 
-  // เลือกไฟล์ + preview
+
+  // Select file + preview
   function handleImageChange(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    setImageFile(file);                        // เก็บไว้ส่งตอนหลัง
-    setImagePreview(URL.createObjectURL(file)); // ไว้โชว์บนหน้า
+    setImageFile(file);                        // Save it for later delivery
+    setImagePreview(URL.createObjectURL(file)); // To show on the face
   }
+
 
   function handleImageUpload(e) {
     const file = e.target.files[0];
     if (file) setImage(URL.createObjectURL(file));
   }
 
+
   function handleDetailGrow(e) {
     setDetail(e.target.value);
     setDetailHeight(e.target.scrollHeight);
   }
 
-  // ฟังก์ชันอัปโหลดรูปให้ข่าวที่สร้างแล้ว
+
+  // Image upload function for created news
   async function uploadImageForNews(newsId, file) {
     const form = new FormData();
     form.append("file", file);
@@ -63,7 +67,8 @@ export default function NewsCreateAdmin() {
     return data.image_url;
   }
 
-  // สร้างข่าว + ถ้ามีรูปค่อยอัปโหลดต่อ
+
+  // Create news + upload photos if you have them.
   const handlePost = async () => {
     if (!token) {
       alert("No admin token found.");
@@ -73,7 +78,7 @@ export default function NewsCreateAdmin() {
     try {
       setSaving(true);
 
-      // สร้างข่าวก่อน (ยังไม่ต้องส่งรูป)
+      // Create news first (no need to send photos yet)
       const res = await fetch(`${API_URL}/news/admin`, {
         method: "POST",
         headers: {
@@ -85,7 +90,7 @@ export default function NewsCreateAdmin() {
           summary,
           detail,
           hover_text: hoverText,
-          image_url: null, // ให้ backend เซ็ตทีหลังจาก upload
+          image_url: null, // Let the backend set after upload.
         }),
       });
 
@@ -96,10 +101,10 @@ export default function NewsCreateAdmin() {
         return;
       }
 
-      const created = await res.json(); // ควรได้ { id, ... }
+      const created = await res.json(); // Should get { id, ... }
       const newsId = created.id;
 
-      // ถ้ามีไฟล์รูป ให้เรียก upload
+      // If you have an image file, call upload.
       if (imageFile) {
         await uploadImageForNews(newsId, imageFile);
       }
@@ -114,13 +119,15 @@ export default function NewsCreateAdmin() {
     }
   };
 
+
   function handleImageUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
   
-    setImagePreview(URL.createObjectURL(file)); // แค่ preview
-    setImageFile(file);                          // เก็บไฟล์จริงไว้ upload ทีหลัง
+    setImagePreview(URL.createObjectURL(file)); // Just a preview
+    setImageFile(file);                          // Keep the actual file to upload later.
   }
+
 
   return (
     <div
@@ -278,4 +285,3 @@ export default function NewsCreateAdmin() {
     </div>
   );
 }
-

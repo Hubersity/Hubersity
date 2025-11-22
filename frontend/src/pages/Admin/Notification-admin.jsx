@@ -3,66 +3,18 @@ import React, { useState, useEffect } from "react";
 const API_URL = "http://localhost:8000";
 
 export default function NotificationsAdmin() {
-  // mock data สำหรับการแจ้งเตือน (แก้ smart-quote/ให้เป็น string ปกติ)
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      name: "Skibidi",
-      avatar: "/images/Skibidi.png",
-      created_at: "2020-11-11T08:30:00Z",
-      text: "Skibidi report post user zaza123.",
-    },
-    {
-      id: 2,
-      name: "Skibidi",
-      avatar: "/images/Skibidi.png",
-      created_at: "2025-11-09T09:00:00Z",
-      text: "Skibidi and 47 others report post ID 203.",
-    },
-    {
-      id: 3,
-      name: "DogDogbodbod34",
-      avatar: "/images/dogneverdie.png",
-      created_at: "2025-11-10T15:00:00Z",
-      text: "DogDogbodbod34 report post ID 205.",
-    },
-    {
-      id: 4,
-      name: "Aong12345",
-      avatar: "/images/Aong12345.png",
-      created_at: "2025-11-08T12:00:00Z",
-      text: "Aong12345 and 102 others report user eiei56.",
-    },
-    {
-      id: 5,
-      name: "Pysart",
-      avatar: "/images/Pysart.png",
-      created_at: "2025-11-07T18:00:00Z",
-      text: "Pysart and 23 others report post ID 202.",
-    },
-    {
-      id: 6,
-      name: "Gege",
-      avatar: "/images/Pysart.png",
-      created_at: "2025-11-10T18:00:00Z",
-      text: "Pysart and 23 others report post ID 202.",
-    },
-  ]);
-
   function groupByDate(notifications) {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
-
     const formatDate = (date) => date.toISOString().split("T")[0];
-
     const grouped = {};
+
 
     notifications.forEach((n) => {
       const created = new Date(n.created_at);
@@ -82,7 +34,7 @@ export default function NotificationsAdmin() {
     return grouped;
   }
 
-  // แยกกลุ่มตามเวลา
+  // Group by time
   const grouped = groupByDate(notifications);
   const order = ["today", "yesterday", "this week"];
   const sections = order
@@ -125,7 +77,7 @@ export default function NotificationsAdmin() {
         <h1 className="text-2xl font-semibold text-gray-800">Notification</h1>
       </div>
 
-      {/* รายการแจ้งเตือน */}
+      {/* Notification list */}
       <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
         {sections.map((section) => (
           <div key={section}>
@@ -150,11 +102,6 @@ export default function NotificationsAdmin() {
                       </p>
                     </div>
                   </div>
-
-                  {/* ถ้าต้องการปุ่ม action (ตัวอย่าง) */}
-                  {/* <div>
-                    <button className="text-sm px-3 py-1 border rounded">Mark read</button>
-                  </div> */}
                 </div>
               ))}
             </div>
