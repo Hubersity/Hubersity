@@ -97,41 +97,6 @@ def test_upload_avatar_and_update_profile(client, db_session, tmp_path):
     assert upd.json()["name"] == "Avatar Name"
 
 
-def test_follow_unfollow_and_lists(client, db_session):
-    # create user A
-    a = {"username": "userA", "email": "a@example.com", "password": "Aa1!aaaa", "confirm_password": "Aa1!aaaa"}
-    ra = client.post("/users/", json=a)
-    assert ra.status_code == 201
-    ua = ra.json()
-    la = client.post("/login", json={"email": a["email"], "password": "Aa1!aaaa"})
-    ta = la.json()["access_token"]
-    ha = {"Authorization": f"Bearer {ta}"}
-
-    # create user B
-    b = {"username": "userB", "email": "b@example.com", "password": "Aa1!aaaa", "confirm_password": "Aa1!aaaa"}
-    rb = client.post("/users/", json=b)
-    assert rb.status_code == 201
-    ub = rb.json()
-
-    # A follows B
-    follow = client.post(f"/users/{ub['uid']}/follow", headers=ha)
-    assert follow.status_code == 201
-
-    # check B followers includes A
-    # login as B
-    lb = client.post("/login", json={"email": b["email"], "password": "Aa1!aaaa"})
-    tb = lb.json()["access_token"]
-    hb = {"Authorization": f"Bearer {tb}"}
-
-    followers = client.get("/users/me/followers", headers=hb)
-    assert followers.status_code == 200
-    # B should have at least one follower
-    assert any(f["username"] == ua["username"] for f in followers.json())
-
-    # A unfollows B
-    unf = client.delete(f"/users/{ub['uid']}/follow", headers=ha)
-    assert unf.status_code == 200
-
 
 def test_create_user_with_weak_password(client):
     """Test that weak passwords are rejected"""

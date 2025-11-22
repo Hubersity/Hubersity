@@ -46,7 +46,7 @@ export default function Account() {
         setName(data.name || "");
         setBio(data.description || "");
         setUniversity(data.university || "");
-        setVisibility(data.privacy || "public");
+        setVisibility(data.is_private ? "private" : "public");
         setBirthdate(data.birthdate ? new Date(data.birthdate) : null);
         setFollowers(data.followers_count || 0);
         setFollowing(data.following_count || 0);
@@ -138,7 +138,7 @@ export default function Account() {
           name,
           description: bio,
           university,
-          privacy: visibility,
+          is_private: visibility === "private",
           birthdate: birthdate ? birthdate.toISOString().split("T")[0] : null,
           profile_image: uploadedImagePath || undefined,
         }),

@@ -12,6 +12,7 @@ import TimeStudy from './pages/Dashboard/TimeStudy';
 import CreateAcc from "./pages/Create-account/create-acc.jsx";
 import Account from './pages/Dashboard/Account';
 import Follow from './pages/Dashboard/Follow';
+import FollowerPage from "./pages/Dashboard/Follower.jsx";
 import Chat from './pages/Dashboard/Chat';
 import Notifications from './pages/Dashboard/Notifications';
 import UserProfile from './pages/Dashboard/UserProfile';
@@ -76,6 +77,7 @@ export default function App() {
         <Route path="board" element={<Board />} />
         <Route path="time-study" element={<TimeStudy />} />
         <Route path="follow" element={<Follow />} />
+        <Route path="followers" element={<FollowerPage />} />
         <Route path="chat" element={<Chat />} />
         <Route path="notification" element={<Notifications />} />
         <Route path="account" element={<Account />} />

@@ -3,6 +3,7 @@
     "board": "Board",
     "time": "Time study",
     "follow": "Follow",
+    "followers": "Followers",
     "chat": "Chat",
     "notification": "Notification",
     "tags": "Tags",
@@ -129,6 +130,7 @@
     "block": "Block",
     "blocked": "Blocked",
     "report": "Report",
+    "requestSent": "Request Sent",
 
     "age": "Age",
     "bioEmpty": "No bio provided.",
