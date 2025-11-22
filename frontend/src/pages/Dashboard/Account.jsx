@@ -48,7 +48,7 @@ export default function Account() {
         setUniversity(data.university || "");
         setVisibility(data.is_private ? "private" : "public");
         setBirthdate(data.birthdate ? new Date(data.birthdate) : null);
-        setFollowers(data.followers_count || 0);
+        setFollowers(data.follower_count || 0);
         setFollowing(data.following_count || 0);
         setProfilePic(
           data.profile_image
