@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 
 const API_URL = `${import.meta.env.VITE_API_URL}`;
 
-/* ---------------------- Modal ---------------------- */
+/* Modal */
 function UnfollowConfirmModal({ open, onClose, onConfirm, user }) {
   const { t } = useTranslation();
   if (!open) return null;
@@ -62,9 +62,8 @@ function UnfollowConfirmModal({ open, onClose, onConfirm, user }) {
   );
 }
 
-/* --------------------------------------------------- */
-/* --------------------- MAIN PAGE ------------------- */
-/* --------------------------------------------------- */
+
+/* MAIN PAGE */
 export default function Follow() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -80,7 +79,7 @@ export default function Follow() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [targetUser, setTargetUser] = useState(null);
 
-  /* ---------------- Load Following ---------------- */
+  /* Load Following */
   useEffect(() => {
     if (!token) return;
 
@@ -98,7 +97,7 @@ export default function Follow() {
     fetchFollowing();
   }, [token]);
 
-  /* ---------------- Live Search ---------------- */
+  /* Live Search */
   useEffect(() => {
     const controller = new AbortController();
 
@@ -140,7 +139,7 @@ export default function Follow() {
     return () => controller.abort();
   }, [search]);
 
-  /* ---------------- Submit ---------------- */
+  /* Submit */
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (search.trim() !== "") navigate(`/app/user/${search.trim()}`);
@@ -179,7 +178,7 @@ export default function Follow() {
                 key={u.uid}
                 className="flex items-center gap-4 p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
 
-                /* 🔥 เด้งไปหน้าโปรไฟล์แบบ Board */
+                /* Bounce to the Board profile page */
                 onClick={() => navigate(`/app/user/${u.uid}`)}
               >
                 <img
@@ -214,7 +213,7 @@ export default function Follow() {
               <div
                 className="flex items-center gap-4 cursor-pointer"
 
-                /* 🔥 เด้งไปหน้าโปรไฟล์แบบ Board */
+                /* Bounce to the Board profile page */
                 onClick={() => navigate(`/app/user/${u.uid}`)}
               >
                 <img

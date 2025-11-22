@@ -1,4 +1,3 @@
-// src/pages/Home/Homepage.jsx
 import React, { useState } from "react";
 import { FiArrowUpRight } from "react-icons/fi";
 import UniversitySelector from "./UniversitySelector";
@@ -27,7 +26,7 @@ export default function Homepage() {
             </p>
           </div>
 
-          {/* ปุ่มด้านขวา */}
+          {/* Right button */}
           <div className="absolute inset-y-0 right-0 flex items-center pr-10 md:pr-12">
          <Link
               to="/signin"
@@ -40,7 +39,7 @@ export default function Homepage() {
          </Link>
          </div>
 
-          {/* ปุ่มเลือกมหาลัย */}
+          {/* University selection button */}
           <div className="absolute bottom-[50px] left-1/2 -translate-x-1/2 z-20 w-full flex justify-center">
             <UniversitySelector setBackgroundImage={setBackgroundImage} />
           </div>

@@ -16,6 +16,7 @@ router = APIRouter(
     #dependencies=[Depends(oauth2.get_admin_user)]
 )
 
+
 def create_notification_template(
     db: Session,
     current_user: models.User,
@@ -63,6 +64,7 @@ def create_notification_template(
     db.add(noti)
     return noti
 
+
 @router.post("/", response_model=schemas.NotificationResponse)
 def create_notification(
     payload: schemas.NotificationCreate,
@@ -83,7 +85,6 @@ def create_notification(
 @router.get("/", response_model=List[schemas.NotificationResponse])
 def get_all_notifications(db: Session = Depends(get_db)):
     return db.query(models.Notification).order_by(models.Notification.created_at.desc()).all()
-
 
 
 @router.get("/admin", response_model=List[schemas.NotificationResponse])
@@ -151,6 +152,7 @@ def get_user_notifications(uid: int, db: Session = Depends(get_db)):
         )
     return result
 
+
 @router.get("/me", response_model=List[schemas.NotificationResponse])
 def get_my_notifications(
     skip: int = 0,
@@ -185,7 +187,6 @@ def get_my_notifications(
         )
     ).order_by(models.Notification.created_at.desc()).all()
 
-
     # Annotate each with is_read
     result = []
     for noti in notifications:
@@ -199,7 +200,6 @@ def get_my_notifications(
             })
         )
     return result
-
 
 
 @router.post("/{id}/read", status_code=204)
@@ -242,12 +242,14 @@ def get_unread_count(
 
     return {"unread_count": count}
 
+
 @router.get("/{id}", response_model=schemas.NotificationResponse)
 def get_notification_by_id(id: int, db: Session = Depends(get_db)):
     noti = db.query(models.Notification).filter(models.Notification.id == id).first()
     if not noti:
         raise HTTPException(status_code=404, detail="Notification not found")
     return noti
+
 
 @router.get("/system/{uid}", response_model=List[schemas.NotificationResponse])
 def get_system_notifications(uid: int, db: Session = Depends(get_db)):
@@ -256,8 +258,7 @@ def get_system_notifications(uid: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # 🔥 RULE: เอาเฉพาะ notification จากระบบ
-    # ถ้าอยากเปลี่ยน rule บอกฉันได้
+    # RULE: Only take notifications from the system.
     system_titles = ["HelpReport", "HelpReportReply", "Help Update", "Report Update"]
 
     notifications = db.query(models.Notification).filter(
@@ -271,7 +272,7 @@ def get_system_notifications(uid: int, db: Session = Depends(get_db)):
         sender = db.query(models.User).filter(models.User.uid == noti.sender_id).first()
         result.append(
             schemas.NotificationResponse.from_orm(noti).copy(update={
-                "is_read": False,  # system Tab ไม่ track read
+                "is_read": False,  # System Tab does not track read
                 "sender_username": sender.username if sender else None,
                 "sender_avatar": sender.profile_image if sender else None,
             })

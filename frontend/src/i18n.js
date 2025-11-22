@@ -1,15 +1,14 @@
-// src/i18n.js
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
-// โหลดไฟล์ JSON ตรงโฟลเดอร์ lang
+// Load the JSON file in the lang folder.
 import en from "./lang/en.json";
 import th from "./lang/th.json";
 import jp from "./lang/jp.json";
 import cn from "./lang/cn.json";
-import kr from "./lang/kr.json";   // Korean
-import fr from "./lang/fr.json";   // French
-import ar from "./lang/ar.json";   // Arabic
+import kr from "./lang/kr.json";
+import fr from "./lang/fr.json";
+import ar from "./lang/ar.json";
 
 i18n.use(initReactI18next).init({
   resources: {
@@ -27,5 +26,4 @@ i18n.use(initReactI18next).init({
     escapeValue: false,
   },
 });
-
 export default i18n;

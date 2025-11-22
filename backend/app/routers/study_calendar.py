@@ -1,4 +1,3 @@
-# app/routers/study_calendar.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -6,7 +5,6 @@ from datetime import datetime, timezone, date as dt_date, timedelta
 from zoneinfo import ZoneInfo
 from calendar import monthrange
 from typing import Optional
-
 from ..database import get_db
 from .. import models
 
@@ -19,7 +17,6 @@ router = APIRouter(prefix="/study", tags=["Study Timer"])
 # ---------------------------
 # Helpers
 # ---------------------------
-
 def get_year_in_local_language(year: int, lang: str) -> str:
     """Return year string in Thai Buddhist Era if lang=th, else AD."""
     if lang == "th":
@@ -48,7 +45,7 @@ def upsert_daily_progress(
 
     dialect_name = db.bind.dialect.name
 
-    # ---------------- SQLite (tests) ----------------
+    # SQLite (tests)
     if dialect_name == "sqlite":
         target_date_bkk = target_day_utc.astimezone(TZ).date()
 
@@ -88,7 +85,7 @@ def upsert_daily_progress(
         }
 
     # ---------------- Postgres (production) ----------------
-    # หา row ของ "วันตาม Bangkok" ก่อน
+    # Find the row of "Days according to Bangkok" first.
     target_date_bkk = target_day_utc.astimezone(TZ).date()
 
     dp = (
@@ -97,14 +94,14 @@ def upsert_daily_progress(
         .filter(
             func.date(func.timezone(LOCAL_TZ, models.DailyProgress.date)) == target_date_bkk
         )
-        .with_for_update()  # กัน race เบา ๆ ถ้าหยุดซ้อน
+        .with_for_update()  # Gently race if you stop overlapping.
         .first()
     )
 
     if not dp:
         dp = models.DailyProgress(
             user_id=user_id,
-            date=target_day_utc,  # เก็บเป็น UTC midnight ของวันนั้น
+            date=target_day_utc,  # Save as UTC midnight of that day.
             total_seconds=add_seconds,
             total_minutes=add_seconds // 60,
             badge_level=badge,
@@ -126,7 +123,6 @@ def upsert_daily_progress(
 # ---------------------------
 # Routes
 # ---------------------------
-
 @router.get("/today/{user_id}")
 def get_today_study(user_id: int, db: Session = Depends(get_db)):
     now_bkk = datetime.now(TZ)

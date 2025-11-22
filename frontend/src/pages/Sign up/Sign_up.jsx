@@ -15,7 +15,7 @@ export default function Sign_up() {
   const [error, setError] = useState([]);
   const navigate = useNavigate();
 
-  // signup function (พร้อมระบบ session แยก user)
+  // signup function (with separate user session system)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -36,7 +36,7 @@ export default function Sign_up() {
     console.log("Sending signup request to:", apiUrl);
 
     try {
-      // สร้าง user ใหม่
+      // Create a new user
       const res = await fetch(apiUrl, {
         method: "POST",
         headers: {
@@ -71,7 +71,7 @@ export default function Sign_up() {
       const user = await res.json();
       console.log("Signup success:", user);
 
-      // Login หลัง signup ทันที
+      // Login immediately after signing up
       const loginRes = await fetch(loginUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,7 +86,7 @@ export default function Sign_up() {
       const loginData = await loginRes.json();
       console.log("Auto-login success:", loginData);
 
-      // เก็บ session แยกตาม user เหมือน Login.jsx
+      // Keep sessions separated by user like Login.jsx.
       const usernameKey = username || email.split("@")[0] || "guest";
 
       localStorage.setItem(
@@ -102,7 +102,7 @@ export default function Sign_up() {
 
       console.log("💾 Signed up & saved session for:", usernameKey);
 
-      // ไปหน้า create account
+      // Go to the create account page.
       navigate("/create-account");
     } catch (err) {
       console.error("Connection error:", err);
@@ -116,7 +116,7 @@ export default function Sign_up() {
 
   return (
     <div className="min-h-screen bg-[#f1f6ec] flex justify-center items-center relative overflow-hidden px-4">
-      {/* เส้นเขียว */}
+      {/* Green line */}
       <motion.div
         initial={{ opacity: 0, x: 200 }}
         animate={{ opacity: 1, x: 0 }}
@@ -131,7 +131,7 @@ export default function Sign_up() {
         }}
       />
 
-      {/* วงกลมซ้ายล่าง */}
+      {/* Lower left circle */}
       <motion.div
         initial={{ opacity: 0, x: -150, y: 150 }}
         animate={{ opacity: 1, x: 0, y: 0 }}
@@ -147,7 +147,7 @@ export default function Sign_up() {
         style={{ top: "90vh", right: "80vw", width: "10vw", height: "10vw" }}
       />
 
-      {/* วงกลมขวาบน */}
+      {/* Top right circle */}
       <motion.div
         initial={{ opacity: 0, x: 200, y: -200 }}
         animate={{ opacity: 1, x: 0, y: 0 }}
@@ -163,7 +163,7 @@ export default function Sign_up() {
         style={{ top: "3vh", right: "-5vw", width: "12vw", height: "12vw" }}
       />
 
-      {/* วงกลม gradient */}
+      {/* gradient circle */}
       <motion.div
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -172,7 +172,7 @@ export default function Sign_up() {
         style={{ top: "6vh", right: "8vw", width: "10vw", height: "10vw" }}
       />
 
-      {/* โลโก้ */}
+      {/* logo */}
       <motion.div
         className="absolute top-[-80px] left-4"
         initial={{ opacity: 0, y: -100 }}
@@ -186,7 +186,7 @@ export default function Sign_up() {
         />
       </motion.div>
 
-      {/* กล่อง Sign Up */}
+      {/* Sign Up box */}
       <motion.div
         className="w-full max-w-lg md:max-w-2xl bg-white rounded-[70px] shadow-lg z-10"
         initial={{ opacity: 0, scale: 0.9, y: 100 }}
@@ -274,7 +274,7 @@ export default function Sign_up() {
               </ul>
             )}
 
-            {/* ปุ่ม Sign up */}
+            {/* Sign up button */}
             <motion.button
               type="submit"
               whileHover={{ scale: 1.05 }}
@@ -284,7 +284,7 @@ export default function Sign_up() {
               Sign up
             </motion.button>
 
-            {/* ปุ่ม Google */}
+            {/*Google button */}
             <motion.button
               type="button"
               whileHover={{ scale: 1.05 }}

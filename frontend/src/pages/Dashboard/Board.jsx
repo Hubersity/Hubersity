@@ -33,10 +33,11 @@ const initialPosts = [
   { id: 3, username: "Pysart", text: "Share the summary file for English 2, course code 01355102-64", minutes: 32, likes: 102, liked: false, comments: [], category: "university" },
 ];
 
-// ============ Edit Modal ============
+// Edit Modal
 function EditPostModal({ open, onClose, text, setText, onSubmit }) {
   const { t } = useTranslation(); 
   if (!open) return null;
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -88,7 +89,7 @@ function EditPostModal({ open, onClose, text, setText, onSubmit }) {
   );
 }
 
-// ============ Delete Modal ============
+// Delete Modal
 function DeleteConfirmModal({ open, onClose, onConfirm }) {
   const { t } = useTranslation();
   if (!open) return null;
@@ -140,7 +141,7 @@ function DeleteConfirmModal({ open, onClose, onConfirm }) {
     </div>
   );
 }
-// ============ Delete Comment Modal ============
+// Delete Comment Modal
 function DeleteCommentModal({ open, onClose, onConfirm }) {
   const { t } = useTranslation(); 
   if (!open) return null;
@@ -193,15 +194,15 @@ function DeleteCommentModal({ open, onClose, onConfirm }) {
     </div>
   );
 }
-// ============ Report Summit/ Modal ============
 
 
+// Report Summit/ Modal
 function ReportModal({ open, onClose, postId, onSubmit }) {
   const [reason, setReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [details, setDetails] = useState("");
   const { t } = useTranslation();
-  const mountedRef = useRef(false); // ใช้กัน render ซ้ำ
+  const mountedRef = useRef(false); // Use repeated rendering
 
   async function handleReportSubmit({ postId, reason, details }) {
     const currentKey = localStorage.getItem("currentUserKey");
@@ -260,7 +261,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
     }
   }
 
-  // ตรวจจับ mount / unmount
+  // Detect mount/unmount
   useEffect(() => {
     if (open && !mountedRef.current) {
       mountedRef.current = true;
@@ -272,7 +273,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
     }
   }, [open, postId]);
 
-  // ปิดด้วยปุ่ม Esc
+  // Close with the Esc key.
   useEffect(() => {
     if (!open) return;
     const onEsc = (e) => e.key === "Escape" && onClose();
@@ -280,7 +281,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
     return () => window.removeEventListener("keydown", onEsc);
   }, [open, onClose]);
 
-  // Reset เมื่อ modal ปิด
+  // Reset when modal is closed
   useEffect(() => {
     if (!open) {
       setReason("");
@@ -289,7 +290,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
     }
   }, [open]);
 
-  // ป้องกัน render ซ้ำตอน dev mode
+  // Prevent duplicate renders in dev mode
   if (!open || !postId || (mountedRef.current && !open)) return null;
 
   const reasons = [
@@ -309,6 +310,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
       reason: finalReason,
     });
   };
+
 
   return (
     <div
@@ -426,13 +428,13 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
   );
 }
 
-// ฟังก์ชันคำนวณเวลาโพสต์
+// Post time calculation function
 function formatTimeAgo(createdAt) {
   if (!createdAt) return "--";
 
   const now = new Date();
   const postTime = new Date(createdAt);
-  const diffMs = now - postTime; // ส่วนต่างเป็นมิลลิวินาที
+  const diffMs = now - postTime; // The difference is in milliseconds.
   const diffSec = Math.floor(diffMs / 1000);
   const diffMin = Math.floor(diffSec / 60);
   const diffHr = Math.floor(diffMin / 60);
@@ -442,7 +444,7 @@ function formatTimeAgo(createdAt) {
   if (diffMin < 60) return `${diffMin} min ago`;
   if (diffHr < 24) return `${diffHr} hr ago`;
 
-  // ถ้าเกิน 1 วัน → แสดงเป็นวันที่จริง
+  // If it is more than 1 day → Show as the actual date.
   return postTime.toLocaleString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -453,8 +455,7 @@ function formatTimeAgo(createdAt) {
 }
 
 
-// ============ Main Board ============
-
+// Main Board
 export default function Board() {
   const [posts, setPosts] = useState(initialPosts);
   const [newPost, setNewPost] = useState("");
@@ -489,11 +490,9 @@ export default function Board() {
   }, []);
 
 
-
-  // state สำหรับหน้าต่าง Report
+  // state for the Report window
   const [reportOpen, setReportOpen] = useState(false);
   const [reportPostId, setReportPostId] = useState(null);
-
   const fileInputRef = useRef(null);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
@@ -517,7 +516,6 @@ export default function Board() {
         const res = await fetch(endpoint, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
       
         if (!res.ok) throw new Error("Failed to fetch posts");
         const data = await res.json();
@@ -556,12 +554,12 @@ export default function Board() {
     };
 
     fetchPosts();
-  }, [activeTab]); // 🔥 สำคัญ ต้องใส่ activeTab
+  }, [activeTab]); // Important: You must include the activeTab.
   const forumIdMap = {
   university: 1, // University Talk → forum id 1
   follow: 2,     // Follow Talk → forum id 2
 };
-  // โพสต์ใหม่
+  // New post
 const handlePost = async () => {
   if (newPost.trim() === "") return;
 
@@ -578,23 +576,22 @@ const handlePost = async () => {
       return;
     }
 
-    // ใช้ forum_id ตามแท็บที่เลือก
+    // Use forum_id according to the selected tab.
     const forum_id = forumIdMap[activeTab] || 1;
-
     const formData = new FormData();
     formData.append("post_content", newPost);
     formData.append("forum_id", forum_id);
     formData.append("user_id", uid);
 
-    // เพิ่มส่วนนี้ (แนบไฟล์ทั้งหมดใน pendingFiles)
+    // Add this section (Attach all files in pendingFiles)
     pendingFiles.forEach((file) => {
-      formData.append("files", file); // "files" ต้องตรงกับ backend
+      formData.append("files", file);
     });
 
     const res = await fetch(`${API_URL}/posts/`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
-      body: formData, // อย่าลืม! ห้ามใส่ Content-Type เอง (browser จัดการ)
+      body: formData,
     });
 
     if (!res.ok) {
@@ -606,7 +603,7 @@ const handlePost = async () => {
     const created = await res.json();
     console.log("Post created:", created);
 
-    // เคลียร์ state หลังโพสต์เสร็จ
+    // Clear state after posting
     setPosts((prev) => [
       {
         id: created.pid || Date.now(),
@@ -625,13 +622,13 @@ const handlePost = async () => {
     ]);
 
     setNewPost("");
-    setPendingFiles([]); // ล้างไฟล์ที่เลือกไว้
+    setPendingFiles([]); // Clear selected files
   } catch (err) {
     console.error("Error posting:", err);
     alert("Post failed — check console for details.");
   }
 };
-  // อัปโหลดไฟล์
+  // Upload file
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -674,7 +671,7 @@ const handlePost = async () => {
     if (!content && files.length === 0) return;
 
     setCommentInputs({ ...commentInputs, [postId]: "" });
-    setCommentFiles({ ...commentFiles, [postId]: [] }); // ล้างไฟล์
+    setCommentFiles({ ...commentFiles, [postId]: [] }); // Clear files
 
     try {
       const currentKey = localStorage.getItem("currentUserKey");
@@ -724,7 +721,7 @@ const handlePost = async () => {
     }
   };
 
-  // เปิด modal ยืนยันลบคอมเมนต์
+  // Open the modal to confirm deleting comments.
   const handleDeleteComment = (postId, commentIndex, commentId) => {
     setDeleteCommentTarget({ postId, commentIndex, commentId });
     setDeleteCommentOpen(true);
@@ -734,7 +731,7 @@ const handlePost = async () => {
   const [editPostId, setEditPostId] = useState(null);
   const [editText, setEditText] = useState("");
 
-  // เปิด modal แก้ไข
+  // Open the edit modal
   const openEditModal = (post) => {
     setEditPostId(post.id);
     setEditText(post.text);
@@ -742,7 +739,7 @@ const handlePost = async () => {
     setMenuOpen(null);
   };
 
-  // ส่งไป backend
+  // Send to backend
   const handleEditSubmit = async () => {
     if (!editText.trim()) return;
     try {
@@ -780,12 +777,12 @@ const handlePost = async () => {
   const handleDeletePost = (id) => {
     setDeletePostId(id);
     setDeleteOpen(true);
-    setMenuOpen(null); // ปิดเมนู dropdown
+    setMenuOpen(null); // Close the dropdown menu
   };
-  // สำหรับ modal ลบคอมเมนต์
+  // For modal delete comment
   const [deleteCommentOpen, setDeleteCommentOpen] = useState(false);
   const [deleteCommentTarget, setDeleteCommentTarget] = useState(null); // {postId, commentIndex, commentId}
-  // ฟังก์ชันลบจริง (เรียกจากปุ่ม Delete ใน modal)
+  // True delete function (called from the Delete button in the modal)
   const confirmDelete = async () => {
     try {
       const currentKey = localStorage.getItem("currentUserKey");
@@ -807,6 +804,7 @@ const handlePost = async () => {
       console.error("Error deleting post:", err);
     }
   };
+
   const confirmDeleteComment = async () => {
     if (!deleteCommentTarget) return;
     const { postId, commentIndex, commentId } = deleteCommentTarget;
@@ -841,9 +839,8 @@ const handlePost = async () => {
     }
   };
 
-
   const openReport = (id) => {
-    // ถ้ามี modal เปิดอยู่และเป็นโพสต์เดียวกัน → ไม่ต้องเปิดใหม่
+    // If there is a modal open and it is the same post → do not open it again.
     if (reportOpen && reportPostId === id) {
       console.log("Report already open for post:", id);
       return;
@@ -851,24 +848,24 @@ const handlePost = async () => {
 
     console.log("Opening report modal for post:", id);
 
-    // ปิดก่อนถ้ามี modal ค้าง
+    // Close first if there is a stuck modal.
     setReportOpen(false);
     setTimeout(() => {
       setReportPostId(id);
       setReportOpen(true);
     }, 50);
 
-    // ปิดเมนู dropdown
+    // Close the dropdown menu
     setMenuOpen(null);
   };
 
-  // เปิดหน้าต่างรีพอร์ตคอมเมนต์
+  // Open the comment report window
   const openReportComment = (commentId) => {
-    setReportPostId(`comment-${commentId}`); // ใช้ prefix แยกจาก post
+    setReportPostId(`comment-${commentId}`); // Use prefix separately from post.
     setReportOpen(true);
   };
 
-  // ส่งรีพอร์ต 
+  // Send a report
   const submitReport = async ({ postId, reason, details }) => {
     try {
       const currentKey = localStorage.getItem("currentUserKey");
@@ -881,12 +878,9 @@ const handlePost = async () => {
       const form = new FormData();
       form.append("reason", reason);
       form.append("details", details || "");
-
-      // ถ้าเป็น comment (prefix comment-)
       const endpoint = postId.startsWith("comment-")
       ? `${API_URL}/posts/comments/${postId.replace("comment-", "")}/report`
       : `${API_URL}/posts/${postId}/report`;
-
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -908,6 +902,7 @@ const handlePost = async () => {
   const filteredPosts = posts.filter(
     (p) => p.category === activeTab && p.text.toLowerCase().includes(search.toLowerCase())
   );
+
 
   return (
     <div className="p-4">
@@ -979,7 +974,7 @@ const handlePost = async () => {
             className="flex-1 bg-transparent outline-none px-2 text-gray-700 placeholder-gray-400"
           />
 
-          {/* ปุ่มแนบไฟล์ */}
+          {/* Attach File Button */}
           <div className="flex items-center gap-5 pr-2">
             <button
               onClick={() => fileInputRef.current.click()}
@@ -1023,7 +1018,7 @@ const handlePost = async () => {
             />
           </div>
 
-          {/* ปุ่มโพสต์ */}
+          {/* Post button */}
           <button
             onClick={handlePost}
             className="bg-green-600 text-white px-4 py-1.5 rounded-full hover:bg-green-700 text-sm font-medium"
@@ -1040,7 +1035,7 @@ const handlePost = async () => {
                 key={index}
                 className="group flex items-center gap-2 px-3 py-1 bg-white border border-[#32a349]/30 rounded-full text-sm text-gray-700 shadow-sm hover:shadow-md transition-all"
               >
-                {/* ไอคอนไฟล์ */}
+                {/* File icon */}
                 <div className="flex items-center justify-center w-6 h-6 rounded-full bg-[#32a349]/15 text-[#32a349]">
                   {file.type.startsWith("image/") ? (
                     <Image className="w-3.5 h-3.5" />
@@ -1051,14 +1046,14 @@ const handlePost = async () => {
                   )}
                 </div>
 
-                {/* ชื่อไฟล์ */}
+                {/* File name */}
                 <span className="truncate max-w-[140px] font-medium">
                   {file.name.length > 20
                     ? file.name.slice(0, 17) + "..."
                     : file.name}
                 </span>
 
-                {/* ปุ่มลบ */}
+                {/* Delete button */}
                 <button
                   onClick={() =>
                     setPendingFiles((prev) => prev.filter((_, i) => i !== index))
@@ -1164,7 +1159,7 @@ const handlePost = async () => {
                 )}
               </div>
 
-              {/* เนื้อหาโพสต์ */}
+              {/* Post content */}
               <p className="text-slate-800 flex flex-wrap gap-1">
                 {p.text.split(/(\s+)/).map((word, i) =>
                   word.startsWith("#") ? (
@@ -1172,9 +1167,8 @@ const handlePost = async () => {
                       key={i}
                       onClick={(e) => {
                         e.stopPropagation();
-                        // ไปหน้า tag หรือ filter โพสต์
+                        // Go to the tag page or filter posts.
                         navigate(`/app/tags/${word.slice(1)}`);
-                        // ถ้ามีหน้า tag แล้วใช้ navigate(`/tags/${word.slice(1)}`)
                       }}
                       className="text-green-700 hover:text-green-800 font-medium cursor-pointer"
                     >
@@ -1186,7 +1180,7 @@ const handlePost = async () => {
                 )}
               </p>
 
-              {/* รูป/ไฟล์แนบของโพสต์ */}
+              {/* Post images/attachments */}
               {p.images && p.images.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-3">
                   {p.images.map((img, i) => {
@@ -1262,7 +1256,7 @@ const handlePost = async () => {
                 </div>
               </div>
 
-              {/* ส่วนคอมเมนต์ */}
+              {/* Comment section */}
               {openComments[p.id] && (
                 <div className="mt-3 space-y-2">
                   {p.comments.map((c, i) => (
@@ -1283,7 +1277,7 @@ const handlePost = async () => {
                       </div>
 
                       <div className="flex-1 p-2 rounded-lg bg-[#fff6ee] relative">
-                        {/* ปุ่มลบหรือรีพอร์ตคอมเมนต์ */}
+                        {/* Delete or report comment button */}
                         {c.username === currentUser?.username ? (
                           <button
                             onClick={() => handleDeleteComment(p.id, i, c.cid)}
@@ -1305,7 +1299,7 @@ const handlePost = async () => {
                         <span className="font-medium text-xs block">{c.username}</span>
                         <p className="text-sm text-slate-800">{c.content}</p>
 
-                        {/* รูป / วิดีโอ / PDF */}
+                        {/* Photo / Video / PDF */}
                         {c.files && c.files.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-2">
                             {c.files.map((file, j) => {
@@ -1360,11 +1354,11 @@ const handlePost = async () => {
                     </div>
                   ))}
 
-                  {/* กล่องเขียนคอมเมนต์ + แนบไฟล์ */}
+                  {/* Comment box + file attachment */}
                   <div className="flex gap-2 ml-6 items-center">
-                    {/* ปุ่มแนบไฟล์ */}
+                    {/* Attach File Button */}
                     <div className="flex items-center gap-3">
-                      {/* ไฟล์ */}
+                      {/* flie */}
                       <button
                         onClick={() =>
                           document.getElementById(`comment-file-${p.id}`).click()
@@ -1387,7 +1381,7 @@ const handlePost = async () => {
                         }}
                       />
 
-                      {/* รูป */}
+                      {/* picture */}
                       <button
                         onClick={() =>
                           document.getElementById(`comment-image-${p.id}`).click()
@@ -1411,7 +1405,7 @@ const handlePost = async () => {
                         }}
                       />
 
-                      {/* วิดีโอ */}
+                      {/* video */}
                       <button
                         onClick={() =>
                           document.getElementById(`comment-video-${p.id}`).click()
@@ -1436,7 +1430,7 @@ const handlePost = async () => {
                       />
                     </div>
 
-                    {/* กล่องข้อความ */}
+                    {/* Message box */}
                     <input
                       type="text"
                       placeholder={t("board.writeComment")}
@@ -1450,7 +1444,7 @@ const handlePost = async () => {
                       className="flex-1 border rounded-full px-3 py-1 text-sm"
                     />
 
-                    {/* ปุ่มส่ง */}
+                    {/* Send button */}
                     <button
                       onClick={() => handleAddComment(p.id)}
                       className="bg-green-600 text-white px-3 py-1 rounded-full text-sm hover:bg-green-700"
@@ -1459,7 +1453,7 @@ const handlePost = async () => {
                     </button>
                   </div>
 
-                  {/* แสดงไฟล์แนบก่อนส่ง */}
+                  {/* Show attachments before sending */}
                   {commentFiles[p.id]?.length > 0 && (
                     <div className="ml-6 mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
                       {commentFiles[p.id].map((file, index) => {

@@ -9,7 +9,8 @@ export default function ForHelpAdmin() {
   const [selected, setSelected] = useState(null);
   const [adminReply, setAdminReply] = useState("");
 
-  // โหลดข้อมูลจาก backend
+
+  // Load data from backend
   useEffect(() => {
     fetch(`${API_URL}/help_reports/`)
       .then((res) => res.json())
@@ -18,6 +19,7 @@ export default function ForHelpAdmin() {
         setSelected(data[0] || null);
       });
   }, []);
+
 
   const buttonClass = `
     px-7 py-2 rounded-full
@@ -28,13 +30,15 @@ export default function ForHelpAdmin() {
     active:translate-y-0 active:shadow-sm
   `;
 
+
   const whiteButton = `
     px-7 py-2 rounded-full
     bg-white text-gray-700 font-medium text-sm border border-gray-300
     shadow-sm transition hover:bg-gray-100
   `;
 
-  // Admin reply ส่งกลับ user
+
+  // Admin reply sent back to user
   const sendReply = async () => {
     if (!adminReply.trim()) return;
 
@@ -52,6 +56,7 @@ export default function ForHelpAdmin() {
     }
   };
 
+
   // mark as resolved
   const markResolved = async () => {
     const res = await fetch(`${API_URL}/help_reports/${selected.id}/resolve`, {
@@ -66,6 +71,7 @@ export default function ForHelpAdmin() {
       setSelected({ ...selected, resolved: true });
     }
   };
+
 
   return (
     <div className="w-full">
@@ -164,7 +170,7 @@ export default function ForHelpAdmin() {
                 {selected.message}
               </div>
 
-              {/* attachment (แก้เรียบร้อย) */}
+              {/* attachment */}
               {selected.file_path && (
                 <a
                   href={selected.file_path}

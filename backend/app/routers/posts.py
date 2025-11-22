@@ -7,12 +7,14 @@ import shutil
 from .notification import create_notification_template
 from .. import models, schemas, database, oauth2, utils
 
+
 def is_blocked(db, viewer_uid, target_uid):
     block = db.query(models.Block).filter_by(
         blocker_id=viewer_uid,
         blocked_id=target_uid
     ).first()
     return block is not None
+
 
 router = APIRouter(
     prefix="/posts",
@@ -26,6 +28,7 @@ COMMENT_UPLOAD_DIR = "uploads/comments"
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(COMMENT_UPLOAD_DIR, exist_ok=True)
+
 
 @router.post("/", response_model=schemas.PostResponse)
 def create_post(
@@ -58,7 +61,7 @@ def create_post(
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid tag IDs")
 
-    # บันทึกไฟล์แนบ
+    # Save the attachment
     for upload_file in files:
         filename = f"{new_post.pid}_{upload_file.filename}"
         file_path = os.path.join(UPLOAD_DIR, filename)
@@ -78,16 +81,16 @@ def create_post(
         else:
             file_type = "file"
 
-        # บันทึกโดยไม่อ้างถึงคอลัมน์ที่อาจยังไม่มีใน DB
+        # Record without referencing columns that may not yet exist in the DB.
         try:
             db.add(models.PostImage(
                 post_id=new_post.pid,
                 path=f"/{UPLOAD_DIR}/{filename}",
                 caption=None,
-                file_type=file_type,   # ใช้ได้ถ้ามีใน model
+                file_type=file_type,   # Available if available in the model
             ))
         except TypeError:
-            # ถ้า model ยังไม่มี column file_type ให้ fallback
+            # If the model does not have a file_type column, fallback is used.
             db.add(models.PostImage(
                 post_id=new_post.pid,
                 path=f"/{UPLOAD_DIR}/{filename}",
@@ -95,7 +98,7 @@ def create_post(
             ))
     db.commit()
 
-    # ดึงโพสต์ใหม่อีกครั้ง พร้อม images
+    # Re-upload the post with images
     refreshed_post = (
         db.query(models.Post)
         .options(
@@ -109,7 +112,7 @@ def create_post(
     )
     db.refresh(refreshed_post)
 
-    # คืนข้อมูลใหม่ที่มี images ด้วย
+    # Return new data with images.
     return schemas.PostResponse(
         pid=refreshed_post.pid,
         post_content=refreshed_post.post_content,
@@ -125,7 +128,6 @@ def create_post(
         comments=refreshed_post.comments,
         created_at=refreshed_post.created_at
     )
-
 
 
 @router.post("/{post_id}/upload-files")
@@ -170,7 +172,6 @@ def upload_post_files(
             file_type = "pdf"
         else:
             file_type = "file"
-
         try:
             image_record = models.PostImage(
                 post_id=post_id,
@@ -193,7 +194,6 @@ def upload_post_files(
         "files": [img.path for img in saved_files]
     }
 
-    
 
 @router.get("/me", response_model=List[schemas.PostResponse])
 def get_my_posts(
@@ -223,6 +223,8 @@ def get_my_posts(
         )
 
     return response
+
+
 @router.get("/all", response_model=List[schemas.PostResponse])
 def get_all_posts(
     db: Session = Depends(get_db),
@@ -287,20 +289,21 @@ def get_all_posts(
 
     return response
 
+
 @router.get("/", response_model=List[schemas.PostResponse])
 def get_posts(
     user_id: Optional[int] = None,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    # เริ่มต้น query หลัก
+    # Start main query
     query = db.query(models.Post)
 
-    # ถ้ามี user_id → ดึงเฉพาะโพสต์ของคนนั้น
+    # If user_id exists → only pull that person's posts
     if user_id is not None:
         query = query.filter(models.Post.user_id == user_id)
 
-    # เรียงโพสต์จากใหม่ไปเก่า
+    # Sort posts from newest to oldest
     posts = (
         query.options(
             joinedload(models.Post.images),
@@ -319,15 +322,15 @@ def get_posts(
         if is_blocked(db, current_user.uid, post.user_id):
             continue
 
-        # นับจำนวนไลก์
+        # Count the number of likes
         like_count = db.query(models.Like).filter(models.Like.post_id == post.pid).count()
 
-        # enrich ข้อมูลคอมเมนต์
+        # Enrich comment data
         enriched_comments = []
         for c in post.comments:
             user = db.query(models.User).filter(models.User.uid == c.user_id).first()
 
-            # ดึงไฟล์แนบของคอมเมนต์
+            # Pull comment attachments
             files = db.query(models.CommentFile).filter(models.CommentFile.comment_id == c.cid).all()
             files_response = [
                 schemas.CommentFileResponse(
@@ -351,7 +354,7 @@ def get_posts(
                 )
             )
 
-        # เพิ่มข้อมูลแต่ละโพสต์ลง response
+        # Add information to each post in response.
         response.append(
             schemas.PostResponse(
                 pid=post.pid,
@@ -370,6 +373,7 @@ def get_posts(
         )
 
     return response
+
 
 @router.get("/forum/{forum_id}", response_model=List[schemas.PostResponse])
 def get_posts_by_forum(
@@ -404,6 +408,7 @@ def get_posts_by_forum(
         )
     return response
 
+
 @router.get("/following", response_model=List[schemas.PostResponse])
 def get_following_posts(
     db: Session = Depends(get_db),
@@ -416,7 +421,7 @@ def get_following_posts(
         .subquery()
     )
 
-    # รวมทั้งโพสต์ของตัวเองด้วย
+    # Including your own posts.
     posts = (
         db.query(models.Post)
         .filter(
@@ -451,6 +456,7 @@ def get_following_posts(
 
     return response
 
+
 @router.get("/{post_id}", response_model=schemas.PostResponse)
 def get_post(
     post_id: int,
@@ -464,7 +470,7 @@ def get_post(
 
     like_count = db.query(models.Like).filter(models.Like.post_id == post_id).count()
 
-    # ✅ Serialize comments
+    # Serialize comments
     serialized_comments = [
     schemas.CommentResponse(
         cid=comment.cid,
@@ -521,7 +527,7 @@ def update_post(
 
     like_count = db.query(models.Like).filter(models.Like.post_id == post.pid).count()
 
-    # ดึง comments พร้อม user และไฟล์แนบ
+    # Pull comments with user and attachments
     enriched_comments = []
     for c in post.comments:
         user = db.query(models.User).filter(models.User.uid == c.user_id).first()
@@ -565,6 +571,7 @@ def update_post(
         created_at=post.created_at
     )
 
+
 @router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_post(
     post_id: int,
@@ -586,6 +593,7 @@ def delete_post(
     db.commit()
     return
 
+
 @router.post("/{post_id}/comments", response_model=schemas.CommentResponse)
 async def create_comment(
     post_id: int,
@@ -594,12 +602,12 @@ async def create_comment(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(utils.check_ban_status)
 ):
-    # ตรวจสอบว่าโพสต์มีอยู่จริงไหม
+    # Check if the post actually exists
     post = db.query(models.Post).filter(models.Post.pid == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
 
-    # สร้างคอมเมนต์ใหม่
+    # Create a new comment
     new_comment = models.Comment(
         content=content,
         user_id=current_user.uid,
@@ -610,11 +618,11 @@ async def create_comment(
     db.commit()
     db.refresh(new_comment)
 
-    # ถ้ามีไฟล์แนบ
+    # If there is an attachment
     saved_files = []
     if files:
         for upload_file in files:
-            # สร้างชื่อไฟล์ใหม่ ป้องกันซ้ำ
+            # Create a new file name to prevent duplicates.
             filename = f"{new_comment.cid}_{upload_file.filename}"
             file_path = os.path.join(COMMENT_UPLOAD_DIR, filename)
 
@@ -631,7 +639,7 @@ async def create_comment(
             else:
                 file_type = "file"
 
-            # บันทึกลงตาราง comment_files (ต้องมีใน models.py)
+            # Save to comment_files table (must be in models.py)
             file_record = models.CommentFile(
                 comment_id=new_comment.cid,
                 path=f"/{COMMENT_UPLOAD_DIR}/{filename}",
@@ -641,7 +649,7 @@ async def create_comment(
             saved_files.append(file_record)
         db.commit()
 
-    # ดึงไฟล์ที่เพิ่งบันทึกใหม่ทั้งหมด (มี id แล้ว)
+    # Extract all newly saved files (with ID)
     db.refresh(new_comment)
     files_response = []
     for f in new_comment.files:
@@ -672,7 +680,7 @@ async def create_comment(
         except Exception as e:
             print(f"Error creating comment notification: {e}")
 
-    # เตรียมส่งกลับไปให้ Frontend
+    # Prepare to send back to Frontend
     return schemas.CommentResponse(
         cid=new_comment.cid,
         content=new_comment.content,
@@ -684,6 +692,7 @@ async def create_comment(
         created_at=new_comment.created_at,
         files=files_response
     )
+
 
 @router.get("/{post_id}/comments", response_model=List[schemas.CommentResponse])
 def get_comments_for_post(
@@ -705,7 +714,7 @@ def get_comments_for_post(
     for c in comments:
         user = db.query(models.User).filter(models.User.uid == c.user_id).first()
 
-        # ดึงไฟล์แนบของคอมเมนต์ (CommentFile)
+        # Pull comment attachments (CommentFile)
         files = db.query(models.CommentFile).filter(models.CommentFile.comment_id == c.cid).all()
         files_response = [
             schemas.CommentFileResponse(
@@ -715,7 +724,7 @@ def get_comments_for_post(
             ) for f in files
         ]
 
-        # รวมข้อมูลทั้งหมดกลับไป
+        # Return all data
         response.append(
             schemas.CommentResponse(
                 cid=c.cid,
@@ -726,7 +735,7 @@ def get_comments_for_post(
                 name=(user.name or user.username) if user else "Unknown",
                 profile_image=user.profile_image if user else None,
                 created_at=c.created_at,
-                files=files_response  # ตรงนี้คือของที่หายไป
+                files=files_response
             )
         )
 
@@ -856,7 +865,7 @@ def report_comment(
     db.commit()
     return {"message": "Comment report submitted"}
 
-    
+  
 @router.get("/{id}/posts", response_model=List[schemas.PostResponse])
 def get_user_posts(
     id: int,
@@ -932,6 +941,7 @@ def get_user_posts(
 
     return response
 
+
 @router.delete("/comments/{comment_id}", status_code=204)
 def delete_comment(
     comment_id: int,
@@ -954,5 +964,3 @@ def delete_comment(
     db.delete(comment)
     db.commit()
     return {"detail": "Comment deleted"}
-
-

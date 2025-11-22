@@ -4,11 +4,11 @@ import { useTranslation } from "react-i18next";
 
 const API_URL = `${import.meta.env.VITE_API_URL}`;
 
+
 function timeAgo(iso, t) {
   if (!iso) return "";
   const d = new Date(iso);
   const diff = (Date.now() - d.getTime()) / 1000;
-
   if (diff < 60) return t("time.justNow");
   if (diff < 3600) return t("time.minutesAgo", { count: Math.floor(diff / 60) });
   if (diff < 86400) return t("time.hoursAgo", { count: Math.floor(diff / 3600) });
@@ -16,15 +16,13 @@ function timeAgo(iso, t) {
   return d.toLocaleString();
 }
 
+
 export default function SettingAdminReply() {
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { t, i18n } = useTranslation();  // ใช้ i18next
-
-  // =========================
+  const { t, i18n } = useTranslation();  // use i18next
   //  LOAD USER
-  // =========================
   const currentKey = localStorage.getItem("currentUserKey");
 
   const authData = useMemo(() => {
@@ -46,9 +44,7 @@ export default function SettingAdminReply() {
 
   const token = authData?.token;
 
-  // ============================
-  //  FETCH NOTIFICATION
-  // ============================
+  // FETCH NOTIFICATION
   useEffect(() => {
     if (!uid) {
       setLoading(false);
@@ -88,9 +84,8 @@ export default function SettingAdminReply() {
     fetchNotifs();
   }, [uid, token]);
 
-  // ============================
+
   //  UI
-  // ============================
   return (
     <div className="w-full flex gap-6 items-stretch">
 

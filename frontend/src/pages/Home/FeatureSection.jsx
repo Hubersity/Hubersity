@@ -1,4 +1,3 @@
-// src/pages/Home/FeatureSection.jsx
 import React, { useEffect, useRef, useState } from "react";
 import IconBadge from "../../components/IconBadge";
 
@@ -41,9 +40,9 @@ export default function FeatureSection() {
   return (
     <section ref={ref} className="w-full bg-white">
       <div className="mx-auto w-full max-w-[1280px] px-4 md:px-6 py-16 md:py-20">
-        {/* 3/4 : 1/4 ที่คงสัดส่วนทุกจอ */}
+        {/* 3/4 : 1/4 that maintains the proportions on all screens */}
         <div className="grid grid-cols-1 lg:[grid-template-columns:3fr_1fr] gap-10 items-start">
-          {/* LEFT: cards (auto-fit ปรับจำนวนคอลัมน์อัตโนมัติ) */}
+          {/* LEFT: cards (auto-fit, automatically adjusts the number of columns) */}
           <div className="grid grid-cols-1 sm:[grid-template-columns:repeat(auto-fit,minmax(260px,1fr))] gap-7">
             {FEATURES.map((f, i) => (
               <div
@@ -60,7 +59,6 @@ export default function FeatureSection() {
 
                 {/* Icon */}
                 <div className="mb-5">
-                  {/* 176 เหมาะกับกล่อง clamp นี้ ถ้าต้องการ responsive ไอคอนค่อยแตก logic เพิ่มทีหลังได้ */}
                   <IconBadge type={f.type} size={176} />
                 </div>
 

@@ -24,5 +24,4 @@ function UniversitySelector({ setBackgroundImage }) {
     </div>
   );
 }
-
 export default UniversitySelector;

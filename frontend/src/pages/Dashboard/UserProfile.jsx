@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 
 const API_URL = `${import.meta.env.VITE_API_URL}`;
 
-// ฟังก์ชันแสดงเวลาแบบ Board
+// Board time display function
 function formatTimeAgo(createdAt) {
   if (!createdAt) return "--";
 
@@ -32,7 +32,7 @@ function formatTimeAgo(createdAt) {
   });
 }
 
-// ฟังก์ชันแปลงวินาทีเป็น HH:MM:SS
+// Seconds conversion function to HH:MM:SS
 function formatSeconds(sec) {
   if (sec == null) return "00:00:00";
   const s = Number(sec);
@@ -49,7 +49,6 @@ export default function UserProfile() {
 
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
-  // const [studyTime, setStudyTime] = useState(null); 
   const [studyTime, setStudyTime] = useState({
     seconds: 0,
     time: "00:00:00",
@@ -91,7 +90,7 @@ export default function UserProfile() {
     try {
       const url = reportPostId
         ? `${API_URL}/posts/${reportPostId}/report`
-        : `${API_URL}/users/${userId}/report`; // ✅ matches backend
+        : `${API_URL}/users/${userId}/report`; // matches backend
 
       const res = await fetch(url, {
         method: "POST",
@@ -99,15 +98,15 @@ export default function UserProfile() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authData.token}`,
         },
-        body: JSON.stringify({ reason, details }), // ✅ match schema
+        body: JSON.stringify({ reason, details }), // match schema
       });
 
       if (!res.ok) throw new Error("Failed to submit report");
 
       alert("Report submitted successfully!");
       setReportOpen(false);
-      setReportAccountOpen(false); // ✅ close user report modal
-      setReportPostId(null); // ✅ reset post report state
+      setReportAccountOpen(false); // close user report modal
+      setReportPostId(null); // reset post report state
     } catch (err) {
       console.error("Error submitting report:", err);
       alert("Failed to submit report");
@@ -135,7 +134,7 @@ export default function UserProfile() {
     };
   }
 
-  // โหลด token จาก localStorage
+  // Load token from localStorage
   useEffect(() => {
     const loadAuth = () => {
       const currentKey = localStorage.getItem("currentUserKey");
@@ -156,7 +155,7 @@ export default function UserProfile() {
     loadAuth();
   }, [userId, navigate]);
 
-  // ดึงข้อมูล user + posts
+  // Pull user + posts data
   useEffect(() => {
     if (!authData?.token) return;
 
@@ -196,7 +195,7 @@ export default function UserProfile() {
     if (!authData?.token || !userId) return;
 
     const updateFollowStatus = async () => {
-      // 1) ดึงรายการคนที่เราตามอยู่
+      // 1) Pull up a list of people we are following.
       const followingRes = await fetch(`${API_URL}/users/me/following`, {
         headers: { Authorization: `Bearer ${authData.token}` },
       });
@@ -210,20 +209,20 @@ export default function UserProfile() {
           setIsFollowing(true);
           setIsRequested(false);
 
-          // โหลด user ใหม่หลังจาก follow สำเร็จ → เพื่อเอา is_private ใหม่จาก backend
+          // Reload user after successful follow → to get new is_private from backend
           const res = await fetch(`${API_URL}/users/${encodeURIComponent(userId)}`, {
             headers: { Authorization: `Bearer ${authData.token}` },
           });
           if (res.ok) {
             const updatedUser = await res.json();
-            setUser(updatedUser);  // ⭐ สำคัญมาก
+            setUser(updatedUser);
           }
 
           return;
         }
       }
 
-      // 2) ถ้ายังไม่ได้ตาม → เช็คว่าส่ง request ค้างอยู่ไหม
+      // 2) If you haven't followed up yet → Check if there is a pending request.
       const requestRes = await fetch(`${API_URL}/follow/requests/sent`, {
         headers: { Authorization: `Bearer ${authData.token}` },
       });
@@ -302,13 +301,13 @@ export default function UserProfile() {
     checkRequestStatus();
   }, [authData, user]);
 
-  // ดึง study time + active session แล้วให้มันติ๊กทุก 1 วิ
+  // Pull the study time + active session and make it tick every 1 second.
   useEffect(() => {
     if (!authData?.token || !user) return;
 
     let cancelled = false;
 
-    // ฟังก์ชันดึงจาก backend
+    // Backend fetch function
     const syncFromServer = async () => {
       try {
         const [todayRes, activeRes] = await Promise.all([
@@ -335,7 +334,7 @@ export default function UserProfile() {
             const start = new Date(activeData.start_time);
             const now = new Date();
 
-            // กันเคสข้ามวัน → นับตั้งแต่เที่ยงคืนวันนี้
+            // Prevent cases from crossing over → Starting from midnight tonight
             const midnight = new Date(now);
             midnight.setHours(0, 0, 0, 0);
 
@@ -360,9 +359,9 @@ export default function UserProfile() {
       }
     };
 
-    // sync ครั้งแรกตอนเข้า
+    // First sync when entering
     syncFromServer();
-    // sync ทุก 1 วิ → ได้ทั้งตอนวิ่ง & ตอนหยุด
+    // Sync every 1 sec → both while running & while stopping
     const id = setInterval(syncFromServer, 1000);
 
     return () => {
@@ -391,7 +390,7 @@ export default function UserProfile() {
 
     try {
       if (isFollowing) {
-        // ❌ unfollow
+        // unfollow
         const res = await fetch(`${API_URL}/follow/${userId}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${authData.token}` },
@@ -399,10 +398,10 @@ export default function UserProfile() {
 
         if (res.ok) {
           setIsFollowing(false);
-          setIsRequested(false); // กรณียกเลิก follow
+          setIsRequested(false); // In case of cancelling follow
         }
       } else {
-        // ✅ send follow request OR follow immediately
+        // send follow request OR follow immediately
         const res = await fetch(`${API_URL}/users/${userId}/follow`, {
           method: "POST",
           headers: { Authorization: `Bearer ${authData.token}` },
@@ -411,10 +410,10 @@ export default function UserProfile() {
         const data = await res.json();
 
         if (data.mode === "request") {
-          setIsRequested(true);     // ส่งคำขอแล้ว
+          setIsRequested(true);     // Request sent
           setIsFollowing(false);
         } else if (data.mode === "follow") {
-          setIsFollowing(true);      // follow ทันที (public)
+          setIsFollowing(true);      // Follow immediately (public)
           setIsRequested(false);
         }
       }
@@ -427,7 +426,7 @@ export default function UserProfile() {
     if (!authData?.token) return;
 
     try {
-      // ถ้าบล็อกอยู่ → ปลดบล็อก
+      // If blocked → Unblock
       if (isBlocked) {
         const res = await fetch(`${API_URL}/block/${userId}`, {
           method: "DELETE",
@@ -439,7 +438,7 @@ export default function UserProfile() {
           alert("User unblocked.");
         }
       } 
-      // ถ้ายังไม่บล็อก → เปิด modal confirm
+      // If not blocked → Open the confirm modal.
       else {
         setBlockOpen(true);
       }
@@ -465,16 +464,10 @@ export default function UserProfile() {
     }
   };
 
-  // const fetchStudyTime = async () => {
-  //   const res = await fetch(`${API_URL}/study/today/${userId}`, {
-  //     headers: { Authorization: `Bearer ${authData.token}` },
-  //   });
-  //   if (res.ok) setStudyTime(await res.json());
-  // };
 
   return (
     <div className="flex flex-col items-center bg-white min-h-[calc(100vh-64px)] py-10 relative">
-      {/* กล่องโปรไฟล์ */}
+      {/* Profile box */}
       <div className="bg-white shadow-lg rounded-[24px] w-[90%] max-w-6xl px-12 py-12 text-center">
       <div className="flex justify-center gap-5 mb-6">
         <motion.button
@@ -546,7 +539,7 @@ export default function UserProfile() {
         </div>
       </div>
 
-      {/* ส่วนล่าง */}
+      {/* Lower part */}
       {!user.can_view ? (
         <div className="mt-10 flex flex-col items-center justify-center bg-[#efecec] p-14 rounded-[22px] text-gray-700 shadow-inner w-[92%] max-w-6xl min-h-[200px]">
           <Lock size={56} className="text-gray-500 mb-3" />
@@ -588,7 +581,7 @@ export default function UserProfile() {
                   </div>
                 </div>
 
-                    {/* แสดงรูปหรือไฟล์แนบ */}
+                    {/* Show images or attachments */}
                     {p.images && p.images.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-3">
                         {p.images.map((img, idx) =>
@@ -618,7 +611,7 @@ export default function UserProfile() {
                         )}
                       </div>
                     )}
-                    {/* แสดงคอมเมนต์ใต้โพสต์ */}
+                    {/* Show comments under the post */}
                     {p.comments && p.comments.length > 0 && (
                       <div className="mt-3 border-t border-[#f0e0c8] pt-3">
                         <h4 className="text-sm font-semibold text-gray-800 mb-2">{t("userProfile.comments")}</h4>
@@ -629,7 +622,7 @@ export default function UserProfile() {
                               key={idx}
                               className="flex items-start gap-3 bg-white/80 rounded-lg p-3 border border-[#f7e8c2] shadow-sm"
                             >
-                              {/* โปรไฟล์คอมเมนต์ */}
+                              {/* Profile Comments */}
                               <img
                                 src={
                                   c.profile_image
@@ -641,7 +634,7 @@ export default function UserProfile() {
                                 onClick={() => navigate(`/user/${c.user_id}`)}
                               />
 
-                              {/* เนื้อหาคอมเมนต์ */}
+                              {/* Comment content */}
                               <div className="flex-1">
                                 <p className="text-sm text-gray-800">
                                   <span
@@ -653,7 +646,7 @@ export default function UserProfile() {
                                   {c.content}
                                 </p>
 
-                                {/* แสดงไฟล์แนบในคอมเมนต์ */}
+                                {/* Show attachments in comments */}
                                 {c.files && c.files.length > 0 && (
                                   <div className="mt-2 flex flex-wrap gap-2">
                                     {c.files.map((f, i) =>
@@ -717,7 +710,7 @@ export default function UserProfile() {
         </div>
       )}
 
-      {/* Modal ขยายรูปโปรไฟล์ */}
+      {/* Modal Expand Profile Picture */}
       <AnimatePresence>
         {showModal && (
           <motion.div
@@ -755,7 +748,7 @@ export default function UserProfile() {
         )}
       </AnimatePresence>
 
-      {/* Modal แสดงรายละเอียดโพสต์ */}
+      {/* Modal shows post details */}
       <AnimatePresence>
         {selectedPost && (
           <motion.div
@@ -780,12 +773,12 @@ export default function UserProfile() {
                   {t("userProfile.postDetail")}
                 </h3>
 
-                {/* เนื้อหาโพสต์ */}
+                {/* Post content */}
                 <p className="text-gray-800 leading-relaxed text-base bg-white/70 rounded-xl px-4 py-3 border border-[#f0e8d8]/70 shadow-inner">
                   {selectedPost.post_content}
                 </p>
 
-                {/* รูปภาพ / ไฟล์แนบ */}
+                {/* Image / Attachment */}
                 {selectedPost.images && selectedPost.images.length > 0 && (
                   <div className="mt-4 flex flex-wrap justify-center gap-3">
                     {selectedPost.images.map((img, i) =>
@@ -812,7 +805,7 @@ export default function UserProfile() {
                   </div>
                 )}
 
-                {/* คอมเมนต์ */}
+                {/* Comments */}
                 {selectedPost.comments && selectedPost.comments.length > 0 && (
                   <div className="mt-6 text-left">
                     <h4 className="text-sm font-semibold text-gray-800 mb-3">{t("userProfile.comments")}</h4>
@@ -840,7 +833,7 @@ export default function UserProfile() {
                               {c.content}
                             </p>
 
-                            {/* ไฟล์แนบในคอมเมนต์ */}
+                            {/* Attachments in comments */}
                             {c.files && c.files.length > 0 && (
                               <div className="mt-2 flex flex-wrap gap-2">
                                 {c.files.map((f, i) =>
@@ -880,7 +873,7 @@ export default function UserProfile() {
                   </div>
                 )}
 
-                {/* เวลาโพสต์ */}
+                {/* Post time */}
                 <p className="text-xs text-gray-500 mt-4 italic">
                   {formatTimeAgo(selectedPost.created_at)}
                 </p>
@@ -905,7 +898,7 @@ export default function UserProfile() {
         )}
       </AnimatePresence>
 
-      {/* Modal Zoom รูปภาพ */}
+      {/* Modal Zoom Image */}
       <AnimatePresence>
         {previewImage && (
           <motion.div

@@ -14,16 +14,16 @@ const formatTime = (iso) => {
   }); // 20:29
 };
 
-// ฟังก์ชันสำหรับแปลงปี
+// Function for converting years
 const getYearInLocalLanguage = (year, lang) => {
   if (lang === "th") {
-    return year + 543; // ถ้าเป็นภาษาไทยแสดงปี พ.ศ.
+    return year + 543; // If it's in Thai, it will show the year B.E.
   }
-  return year; // ถ้าไม่ใช่ภาษาไทยแสดงปี ค.ศ.
+  return year; // If it is not in Thai, show the year AD.
 };
 
 export default function Chat() {
-  const { t, i18n } = useTranslation();  // ใช้ i18next
+  const { t, i18n } = useTranslation();  // Use i18next
   // auth
   const { meId, token } = useMemo(() => {
     const currentKey = localStorage.getItem("currentUserKey");
@@ -54,7 +54,7 @@ export default function Chat() {
 
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
-  const wsRef = useRef(null);           // 🆕 WebSocket ref
+  const wsRef = useRef(null);           // WebSocket ref
 
   const makeId = (f) => `${f.name}-${f.size}-${f.lastModified}`;
 
@@ -75,7 +75,7 @@ export default function Chat() {
     };
   }, []);
 
-  // ----------------- messages loader -----------------
+  // messages loader
   const loadMessages = async (chatId) => {
     const res = await fetch(`${API_URL}/chats/${chatId}/messages?me_id=${meId}`, {
       headers: { ...authHeaders },
@@ -96,7 +96,7 @@ export default function Chat() {
     );
   };
 
-  // ----------------- chat list loader -----------------
+  // chat list loader
   const loadChats = async () => {
     const res = await fetch(`${API_URL}/chats?me_id=${meId}`, {
       headers: { ...authHeaders },
@@ -119,7 +119,6 @@ export default function Chat() {
     const lastId = Number(localStorage.getItem("lastChatId") || 0);
     const initial = mapped.find((x) => x.id === lastId) || mapped[0];
     if (initial) {
-      // ถ้ากำลังเปิดอันเดิมอยู่แล้ว ไม่ต้อง overwrite messages
       setSelected((prev) =>
         prev && prev.id === initial.id ? prev : initial
       );
@@ -127,7 +126,7 @@ export default function Chat() {
     }
   };
 
-  // load chat list ครั้งแรก
+  // Load chat list for the first time
   useEffect(() => {
     if (!meId) return;
     loadChats().catch(console.error);
@@ -138,14 +137,14 @@ export default function Chat() {
     scrollToBottom();
   }, [selected?.id, selected?.messages?.length]);
 
-  // unique by username (กันรายชื่อเพื่อนซ้ำจากชื่อที่เหมือนกัน)
+  // unique by username (prevent duplicate friend lists from having the same name)
   const uniqueFriendsAll = React.useMemo(() => {
     const map = new Map(); // username -> item
     for (const f of friends) if (!map.has(f.username)) map.set(f.username, f);
     return [...map.values()];
   }, [friends]);
 
-  // ----------------- 🆕 WebSocket สำหรับ real-time -----------------
+  // WebSocket for real-time
   useEffect(() => {
     if (!meId) return;
 
@@ -165,10 +164,10 @@ export default function Chat() {
         if (data.type === "new_message") {
           const chatId = data.chat_id;
 
-          // 1) อัปเดตรายชื่อห้อง + preview + unread
+          // 1) Update room list + preview + unread
           loadChats().catch(console.error);
 
-          // 2) ถ้าเรากำลังเปิดห้องนี้อยู่ → load messages ให้เอง
+          // 2) If we are opening this room → load messages for you
           loadMessages(chatId).catch(console.error);
         }
       } catch (e) {
@@ -187,22 +186,20 @@ export default function Chat() {
     return () => {
       ws.close();
     };
-  }, [meId]); // ไม่ต้องผูกกับ selected / friends เดี๋ยว reconnect บ่อยเกิน
-
-  // ❌ ลบ auto-refresh ทุก 3 วิ ออกไปแล้ว (ไม่ต้องใช้แล้ว)
+  }, [meId]);
 
   const handleSelectFriend = async (f) => {
     setSelected(f);
     localStorage.setItem("lastChatId", String(f.id));
     await loadMessages(f.id);
 
-    // mark as read ที่ backend
+    // mark as read at backend
     await fetch(`${API_URL}/chats/${f.id}/read?me_id=${meId}`, {
       method: "POST",
       headers: { ...authHeaders },
     });
 
-    // เคลียร์ unread ใน frontend ทันที
+    // Clear unread in frontend immediately
     setFriends((prev) =>
       prev.map((c) => (c.id === f.id ? { ...c, unread: 0 } : c))
     );
@@ -258,7 +255,7 @@ export default function Chat() {
       );
       if (!res.ok) throw new Error("delete failed");
 
-      // ถ้าข้อความที่ลบคือ “ตัวล่าสุดในห้อง” → อัปเดต preview ฝั่งซ้าย
+      // If the deleted message is the “most recent in the room” → Update the preview on the left.
       const lastMsg = prevMsgs[prevMsgs.length - 1];
       const isDeletingLast =
         lastMsg && String(lastMsg.id).split(":")[0] === String(baseId);
@@ -492,21 +489,20 @@ export default function Chat() {
     }
   };
 
-  // ฟังก์ชันในการแสดงปีให้เป็น พ.ศ. หรือ ค.ศ.
+  // Function to display the year as B.E. or A.D.
   const formatYear = (isoDate) => {
     const d = new Date(isoDate);
     const year = d.getFullYear();
-    return getYearInLocalLanguage(year, i18n.language);  // แปลงปีตามภาษาที่เลือก
+    return getYearInLocalLanguage(year, i18n.language);  // Convert year to selected language
   };
 
-  // ปรับการใช้งาน formatDate ให้แสดงแค่วันที่ (ไม่รวมปี)
+  // Adjust the formatDate usage to display only the date (not the year).
   const formatDateWithoutYear = (iso) => {
     if (!iso) return "";
     const d = new Date(iso);
     return d.toLocaleDateString("th-TH", {
       day: "2-digit",
       month: "2-digit",
-      // ไม่รวมปี
     });
   };
 
@@ -520,7 +516,7 @@ export default function Chat() {
             <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
             <input
               type="text"
-              placeholder={t('chat.findFriend')}  // แปลข้อความจาก JSON
+              placeholder={t('chat.findFriend')}  // Translate text from JSON
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full border rounded-full py-2 pl-10 pr-4 focus:ring-2 focus:ring-[#e0ebe2] bg-white text-gray-700"
@@ -592,19 +588,19 @@ export default function Chat() {
 
             <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-3">
               {(() => {
-                let lastDate = null; // ใช้จำว่า วันที่ล่าสุดคืออะไร
+                let lastDate = null; // Use it to remember what the latest date is.
 
                 return selected?.messages?.map((msg) => {
                   const isMe = msg.sender === "me";
                   const url = toAbs(msg.url);
 
-                  // ฟังก์ชันที่ใช้แสดงข้อมูลใน chat
+                  // Function used to display information in chat
                   const formattedYear = getYearInLocalLanguage(new Date(msg.createdAt).getFullYear(), i18n.language); // แปลงปี
 
-                  // ใช้ createdAt จาก frontend (ต้องมีในแต่ละ message)
-                  const dateLabel = msg.createdAt ? formatDateWithoutYear(msg.createdAt) : ""; // แสดงแค่วันที่ ไม่มีปี
+                  // Use createdAt from the frontend (required for each message)
+                  const dateLabel = msg.createdAt ? formatDateWithoutYear(msg.createdAt) : ""; // Show only the date, no year
                   const timeLabel = msg.createdAt ? formatTime(msg.createdAt) : "";
-                  const dateKey = dateLabel;  // แสดงแค่วันที่
+                  const dateKey = dateLabel;  // show onlt day
 
                   const showDateHeader = dateKey && dateKey !== lastDate;
                   if (showDateHeader) {
@@ -613,10 +609,10 @@ export default function Chat() {
 
                   return (
                     <React.Fragment key={msg.id}>
-                      {/* header แสดงวันที่ 1 ครั้งต่อวัน */}
+                      {/* The header displays the date once per day. */}
                       {showDateHeader && (
                         <div className="text-center text-xs text-gray-400 my-2">
-                          {dateLabel}/{formattedYear}{/* แสดงวัน/เดือน/ปี */}
+                          {dateLabel}/{formattedYear}{/* Show day/month/year */}
                         </div>
                       )}
 
@@ -644,7 +640,7 @@ export default function Chat() {
                           </button>
                         )}
 
-                        {/* bubble + เวลาใต้ bubble */}
+                        {/* bubble + time under bubble */}
                         <div className="max-w-[70%] flex flex-col items-end">
                           <div
                             className={`px-3 py-2 rounded-2xl w-full ${
@@ -684,7 +680,7 @@ export default function Chat() {
                             )}
                           </div>
 
-                          {/* เวลาใต้ข้อความ */}
+                          {/* Time under text */}
                           {timeLabel && (
                             <div className="mt-1 text-[10px] text-gray-400">
                               {timeLabel}
@@ -807,7 +803,7 @@ export default function Chat() {
                         key={p.id}
                         className="border rounded-xl px-2 py-2 flex flex-col gap-1 max-w-[190px] bg-white"
                       >
-                        {/* แถวบน: รูป/วิดีโอ/ชื่อไฟล์ */}
+                        {/* Top row: Photo/Video/Filename */}
                         <div className="flex items-center gap-2">
                           {p.isImage ? (
                             <img
@@ -830,7 +826,7 @@ export default function Chat() {
                           )}
                         </div>
 
-                        {/* แถวล่าง: ปุ่ม remove อยู่ในกรอบเสมอ */}
+                        {/* Bottom row: The remove button is always in the frame. */}
                         <button
                           type="button"
                           className="self-end text-[11px] text-red-600"

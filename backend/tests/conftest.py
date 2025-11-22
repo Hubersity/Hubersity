@@ -1,4 +1,5 @@
 import os
+import sys
 import pytest
 from sqlalchemy import create_engine, event
 from sqlalchemy.pool import StaticPool
@@ -9,6 +10,9 @@ from datetime import timezone
 import shutil
 import glob
 
+# Add parent directory to path so app can be imported
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 # Ensure app import doesn't attempt DB init during tests
 os.environ.setdefault("SKIP_DB_INIT", "1")
 
@@ -17,7 +21,6 @@ from app.database import Base, get_db
 from app import models  # noqa: F401
 from app.main import app
 from fastapi.testclient import TestClient
-
 
 # Use an in-memory SQLite database for fast, isolated tests
 TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -28,7 +31,6 @@ engine = create_engine(
     poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
 
 @pytest.fixture(scope="session", autouse=True)
 def create_test_db():
@@ -48,7 +50,6 @@ def create_test_db():
     yield
     Base.metadata.drop_all(bind=engine)
 
-
 @pytest.fixture()
 def db_session():
     session = TestingSessionLocal()
@@ -56,7 +57,6 @@ def db_session():
         yield session
     finally:
         session.close()
-
 
 @pytest.fixture()
 def client(db_session):
@@ -71,7 +71,6 @@ def client(db_session):
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
-
 
 @pytest.fixture(autouse=True)
 def cleanup_uploads():

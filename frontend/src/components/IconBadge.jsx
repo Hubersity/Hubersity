@@ -1,6 +1,7 @@
 // src/components/IconBadge.jsx
 import React from "react";
 
+
 export default function IconBadge({ type = "chat", size = 176 }) {
 
   const inner = Math.round(size * 0.68);
@@ -24,7 +25,7 @@ export default function IconBadge({ type = "chat", size = 176 }) {
   );
 }
 
-/* ---------------- SVGs ---------------- */
+/* SVGs */
 
 function ChatSVG({ size = 120 }) {
   return (
@@ -35,17 +36,18 @@ function ChatSVG({ size = 120 }) {
       xmlns="http://www.w3.org/2000/svg"
       className="drop-shadow-[0_6px_12px_rgba(0,0,0,0.25)]"
     >
-      {/* กล่องข้อความ */}
+      {/* Message box */}
       <rect x="6" y="6" width="52" height="30" rx="9" fill="#2EAC47" />
-      {/* หาง */}
+      {/* tail */}
       <path d="M18 36 L26 36 L18 46 Z" fill="#2EAC47" />
-      {/* เส้นข้อความ */}
+      {/* Text lines */}
       <rect x="14" y="13" width="36" height="4" rx="2" fill="white" opacity="0.95" />
       <rect x="14" y="20" width="30" height="4" rx="2" fill="white" opacity="0.95" />
       <rect x="14" y="27" width="22" height="4" rx="2" fill="white" opacity="0.95" />
     </svg>
   );
 }
+
 
 function ClockSVG({ size = 120 }) {
   return (
@@ -78,6 +80,7 @@ function ClockSVG({ size = 120 }) {
     </svg>
   );
 }
+
 
 function HeartCommentSVG({ size = 120 }) {
   const s = size * 1.1;

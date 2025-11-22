@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-
 from .. import models, schemas, oauth2
 from ..database import get_db
 
@@ -9,6 +8,7 @@ router = APIRouter(
     prefix="/news",
     tags=["News"],
 )
+
 
 # helper: check admin
 def require_admin(current_user: models.User = Depends(oauth2.get_current_user)):
@@ -21,11 +21,10 @@ def require_admin(current_user: models.User = Depends(oauth2.get_current_user)):
     return current_user
 
 
-# ------------------ USER: PUBLIC NEWS ------------------ #
-
+# USER: PUBLIC NEWS
 @router.get("/", response_model=List[schemas.NewsResponse])
 def list_news(db: Session = Depends(get_db)):
-    """ให้ user ทั่วไปเห็นเฉพาะข่าวที่ publish แล้ว"""
+    """Allow general users to see only published news."""
     items = (
         db.query(models.News)
         .filter(models.News.is_published == True)
@@ -39,13 +38,11 @@ def list_news(db: Session = Depends(get_db)):
 def get_news(news_id: int, db: Session = Depends(get_db)):
     news = db.query(models.News).filter(models.News.id == news_id).first()
     if not news or not news.is_published:
-        # ถ้าอยากให้ admin ดู draft ได้ อาจต้องเช็ค role เพิ่ม
         raise HTTPException(status_code=404, detail="News not found")
     return news
 
 
-# ------------------ ADMIN: MANAGE NEWS ------------------ #
-
+# ADMIN: MANAGE NEWS
 @router.get("/admin/all", response_model=List[schemas.NewsResponse])
 def admin_list_news(
     db: Session = Depends(get_db),

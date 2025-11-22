@@ -1,6 +1,6 @@
-// src/components/Footer.jsx
 import React from "react";
 import { FiGithub } from "react-icons/fi";
+
 
 export default function Footer() {
   return (

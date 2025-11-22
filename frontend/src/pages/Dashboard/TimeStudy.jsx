@@ -8,7 +8,7 @@ const API_URL = `${import.meta.env.VITE_API_URL}`;
 // const currentDate = new Date();
 
 function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
-  const { t, i18n } = useTranslation();  // ใช้ i18next
+  const { t, i18n } = useTranslation();  // use i18next
   const [time, setTime] = useState(0); 
   const [running, setrunning] = useState(false);
   const [activeButton, setActiveButton] = useState(null);
@@ -24,7 +24,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
       const m = String(now.getMonth() + 1).padStart(2, "0");
       const d = String(now.getDate()).padStart(2, "0");
   
-      // 1) ดึงเวลาที่ commit แล้วของวันนี้
+      // 1) Pull today's commit time
       const res1 = await fetch(
         `${API_URL}/study/progress/${userObj.uid}/${y}/${m}/${d}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -32,7 +32,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
       const prog = await res1.json();
       const savedSecs = prog.total_seconds ?? (prog.total_minutes || 0) * 60;
   
-      // 2) ดึง session ที่กำลังวิ่งอยู่ (ถ้ามี)
+      // 2) Fetch the currently running session (if any)
       const res2 = await fetch(
         `${API_URL}/study/active/${userObj.uid}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -44,7 +44,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
         const serverNow = new Date(active.server_now);
         const start = new Date(active.start_time);
   
-        // กันข้ามเที่ยงคืน: นับเฉพาะส่วนที่อยู่ในวันนี้
+        // Beyond midnight: Only count the portion that is on this day.
         const todayStart = new Date(serverNow);
         todayStart.setHours(0, 0, 0, 0);
         const overlapStart = start > todayStart ? start : todayStart;
@@ -58,13 +58,13 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
         setTime(show);
         setrunning(true);
   
-        // เคลียร์ interval เก่า แล้วเริ่มใหม่
+        // Clear the old interval and start over.
         if (timerRef.current) clearInterval(timerRef.current);
         timerRef.current = setInterval(() => {
           setTime((prev) => prev + 1);
         }, 1000);
       } else {
-        // ไม่มี session กำลังวิ่ง → ใช้แค่ savedSecs
+        // No sessions running → Use only savedSecs
         setTime(savedSecs);
         setrunning(false);
         if (timerRef.current) clearInterval(timerRef.current);
@@ -74,12 +74,12 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     }
   }, [userObj?.uid, token]);
 
-  // ส่งเวลาให้ parent
+  // Send time to parent
   useEffect(() => {
     if (typeof onSyncSeconds === "function") onSyncSeconds(time);
   }, [time, onSyncSeconds]);
 
-  // load เวลา + sync จาก server ตอน mount
+  // Load time + sync from server when mounting
   useEffect(() => {
     if (!userObj?.uid || !token) return;
     syncFromServer();
@@ -89,7 +89,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     };
   }, [userObj?.uid, token, syncFromServer]);
 
-  // ถ้า user สลับ tab ออกไป → กลับมาใหม่ มันจะเช็คเวลาใหม่จาก server ทันที เพื่อกันเวลาเพี้ยน
+  // If the user switches tabs and returns, it will immediately check the new time from the server to prevent incorrect time.
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
@@ -103,7 +103,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     };
   }, [syncFromServer]);
 
-  // new: ข้ามเที่ยงคืนแล้ว "รีซิงก์" อย่างเดียว (ไม่ stop/start)
+  // It's past midnight, just "resync" (no stop/start).
   useEffect(() => {
     if (!running) return;
 
@@ -113,17 +113,17 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
       nextMidnight.setHours(24, 0, 0, 0);
       const ms = nextMidnight.getTime() - now.getTime();
 
-      // กันเคสเวลาเพี้ยน
+      // Prevent case from going wrong
       if (ms <= 0 || ms > 24 * 60 * 60 * 1000) return null;
 
       return setTimeout(async () => {
         try {
-          // ดึงเวลาของ "วันใหม่" + session ที่ยัง active อยู่
+          // Pull the time of "new day" + active session
           await syncFromServer(); 
         } catch (e) {
           console.error("midnight resync failed:", e);
         }
-        // ตั้งรอบเที่ยงคืนถัดไปต่อ
+        // Set the next round at midnight.
         scheduleNextMidnight();
       }, ms);
     };
@@ -151,10 +151,10 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     await startSession();
     setrunning(true);
   
-    // เคลียร์ interval เก่าก่อนกันซ้อน
+    // Clear the old interval before overlapping.
     if (timerRef.current) clearInterval(timerRef.current);
   
-    // เพิ่มแค่ time; effect ด้านบนจะ sync ให้ parent เอง
+    // Just add time; the above effect will sync to the parent.
     timerRef.current = setInterval(() => {
       setTime(prev => prev + 1);
     }, 1000);
@@ -172,15 +172,15 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
       });
   
       if (!res.ok) {
-        const txt = await res.text(); // เผื่อดู error
+        const txt = await res.text(); // In case of errors
         console.error("Stop failed", res.status, txt);
         return;
       }
   
-      const data = await res.json();                       // ← ยอดที่ commit แล้ว
+      const data = await res.json();                       // Total committed
       const secs = data.total_seconds ?? (data.total_minutes || 0) * 60;
-      setTime(secs);                                      // ← time ใหม่จะยิง onSyncSeconds ให้อัตโนมัติ
-      await onAfterStop?.();                              // ← เรียกให้ parent รีโหลด calendar ทันที
+      setTime(secs);                                      // New time will automatically fire onSyncSeconds.
+      await onAfterStop?.();                              // Call the parent to reload the calendar immediately.
     } catch (e) {
       console.error("Pause error:", e);
     }
@@ -252,7 +252,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
 }
 
 function Text_InfoHour() {
-  const { t, i18n } = useTranslation();  // ใช้ i18next
+  const { t, i18n } = useTranslation();  // use i18next
   const items = [
     { color: "bg-[#a6a6a6]", label: t("calendar.studyHours.study0") },
     { color: "bg-[#38b6ff]", label: t("calendar.studyHours.study1") },
@@ -283,10 +283,8 @@ const getTodayStr = () => {
 };
 
 function Calendar() {
-  const { t, i18n } = useTranslation();  // ใช้ i18next
+  const { t, i18n } = useTranslation();  // use i18next
   const currentDate = new Date();
-  // const [month, setMonth] = useState(currentDate.getMonth() + 1);
-  // const [year, setYear] = useState(currentDate.getFullYear());
   const now = new Date();
   const [dateState, setDateState] = useState({
     month: now.getMonth() + 1,
@@ -294,13 +292,9 @@ function Calendar() {
   });
   const { month, year } = dateState;
   const [studyData, setStudyData] = useState({});
-
-  // โหลด user/token จาก localStorage ใน parent (ครั้งเดียว)
+  // Load user/token from localStorage in parent (once)
   const [userObj, setUserObj] = useState(null);
   const [token, setToken] = useState(null);
-
-  // const [todaySeconds, setTodaySeconds] = useState(0);
-
   const [todayStr, setTodayStr] = useState(getTodayStr());
   const [todaySeconds, setTodaySeconds] = useState(0);
 
@@ -312,14 +306,14 @@ function Calendar() {
   
     const auth = JSON.parse(localStorage.getItem(currentKey) || "{}");
   
-    // แค่ต้องการ uid กับ token ให้ timer ใช้
+    // Just need a uid and token for the timer to use.
     if (auth?.uid && auth?.token) {
       setUserObj({ uid: auth.uid, username: auth.username });
       setToken(auth.token);
     }
   }, []);
 
-  const monthNames = t('calendar.monthNames', { returnObjects: true }); // ดึงเดือนจากไฟล์แปล
+  const monthNames = t('calendar.monthNames', { returnObjects: true }); // Pull the month from the translation file
 
   const fetchCalendar = async () => {
     if (!userObj?.uid || !token) return;
@@ -350,7 +344,7 @@ function Calendar() {
     return () => clearTimeout(t);
   }, [userObj?.uid, token, month, year]);
 
-  // กันเครื่องนอน/แท็บแช่ยาว: sync todayStr ทุก ๆ 1 นาที
+  // Prevent bedding/long-term soaking: sync todayStr every 1 minute
   useEffect(() => {
     const id = setInterval(() => setTodayStr(getTodayStr()), 60_000);
     return () => clearInterval(id);
@@ -360,18 +354,16 @@ function Calendar() {
     fetchCalendar();
   }, [month, year, userObj?.uid, token]);
 
-  // --- สีของแต่ละวัน ---
+  // Color of the day
   const currentDayStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth()+1).padStart(2,'0')}-${String(currentDate.getDate()).padStart(2,'0')}`;
-
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDay = new Date(year, month - 1, 1).getDay();
 
-
-  // ใช้ todayStr ในการระบายสี
+  // Use todayStr to color.
   const getColorForDay = (day) => {
     const dayStr = `${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
 
-    if (dayStr > todayStr) return "bg-transparent"; // อนาคต
+    if (dayStr > todayStr) return "bg-transparent"; // future
 
     if (dayStr === todayStr) {
       const hoursLive = todaySeconds / 3600;
@@ -435,14 +427,15 @@ function Calendar() {
 
   const getYearInLocalLanguage = (year, lang) => {
     if (lang === "th") {
-      return year + 543; // ถ้าเป็นภาษาไทยแสดงปี พ.ศ.
+      return year + 543; // If it's in Thai, it will show the year B.E.
     }
-    return year; // ถ้าไม่ใช่ภาษาไทยแสดงปี ค.ศ.
+    return year; //If it is not in Thai, show the year AD.
   };
-  // แปลงปีให้เป็น พ.ศ. หรือ ค.ศ.
+  // Convert year to B.E. or A.D.
   const formattedYear = getYearInLocalLanguage(year, i18n.language);
-  // ใช้คำแปลจาก JSON
+  // Use translation from JSON
   const daysOfWeek = t('calendar.daysOfWeek', { returnObjects: true });
+
 
   return (
     <>
@@ -467,7 +460,7 @@ function Calendar() {
             <div className="grid grid-cols-7 gap-4">
               {["sun", "mon", "tue", "wed", "thu", "fri", "sat"].map((day, index) => (
                 <div key={index} className="font-bold text-center">
-                  {daysOfWeek[day]} {/* แสดงชื่อวันตามภาษาที่เลือก */}
+                  {daysOfWeek[day]} {/* Display day name in selected language*/}
                 </div>
               ))}
               {renderCalendar()}
@@ -479,12 +472,11 @@ function Calendar() {
         </div>
         <div className="w-1/2 h-[87vh] sticky top-0 bg-[#fffbf5] rounded-xl shadow-2xl p-4 overflow-auto">
           {userObj?.uid && token ? (
-            // <CountTime onAfterStop={fetchCalendar} onSyncSeconds={setTodaySeconds} userObj={userObj} token={token} />
             <CountTime
               userObj={userObj}
               token={token}
-              onSyncSeconds={(s) => setTodaySeconds(s)}   // ให้สีของ “วันนี้” เปลี่ยนแบบเรียลไทม์
-              onAfterStop={fetchCalendar}                 // ← ให้รีโหลดสีทั้งเดือนหลัง stop
+              onSyncSeconds={(s) => setTodaySeconds(s)}   // Let the color of “Today” change in real time.
+              onAfterStop={fetchCalendar}                 // Let the colors reload for the whole month after stop.
             />
           ) : (
             <div className="text-sm text-gray-500">{t('time_study.loadingUser')}</div>

@@ -1,36 +1,34 @@
-# app/routers/follow.py
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
-
 from ..database import get_db
 from .. import models , oauth2
 from ..oauth2 import get_current_user
-from .notification import create_notification_template  # มีใช้ในโปรเจกต์อยู่แล้ว
+from .notification import create_notification_template
 
 router = APIRouter(prefix="/follow", tags=["follow"])
 
+
 # ---------------------------
 #  POST /follow/{user_id}
-#  - ถ้า user เป็น public → follow ทันที
-#  - ถ้าเป็น private → สร้าง follow request
+#  - If the user is public → follow immediately
+#  - If it is private → create a follow request
 @router.post("/{user_id}")
 def follow_user(
     user_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    # ❌ ห้าม follow ตัวเอง
+    # Do not follow yourself
     if user_id == current_user.uid:
         raise HTTPException(status_code=400, detail="You cannot follow yourself")
 
-    # ✔ หา target user
+    # Find target users
     target_user = db.query(models.User).filter(models.User.uid == user_id).first()
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # ❌ เช็คว่ามี follow แล้วหรือยัง
+    # Check if you are already followed
     already_follow = (
         db.query(models.Follow)
         .filter_by(follower_id=current_user.uid, following_id=user_id)
@@ -39,7 +37,7 @@ def follow_user(
     if already_follow:
         raise HTTPException(status_code=400, detail="Already following")
 
-    # ❌ เช็คว่ามี request ค้างอยู่หรือยัง (กันกดซ้ำ)
+    # Check if there are any pending requests (to prevent duplicate clicks)
     existing_req = (
         db.query(models.FollowRequest)
         .filter(
@@ -53,7 +51,7 @@ def follow_user(
         raise HTTPException(status_code=400, detail="Follow request already sent")
 
     # =====================================================================
-    #                     🔒 PRIVATE ACCOUNT → SEND REQUEST
+    #                     PRIVATE ACCOUNT → SEND REQUEST
     # =====================================================================
     if target_user.is_private:
 
@@ -64,7 +62,7 @@ def follow_user(
         )
         db.add(follow_req)
 
-        # ทำแจ้งเตือน
+        # Make a notification
         try:
             create_notification_template(
                 db=db,
@@ -89,7 +87,7 @@ def follow_user(
         }
 
     # =====================================================================
-    #              🌍 PUBLIC ACCOUNT → FOLLOW ทันที
+    #              PUBLIC ACCOUNT → FOLLOW ทันที
     # =====================================================================
     new_follow = models.Follow(
         follower_id=current_user.uid,
@@ -125,10 +123,10 @@ def follow_user(
         "message": "Followed successfully",
     }
 
+
 # ---------------------------
 #  DELETE /follow/{user_id}
 # ---------------------------
-
 @router.delete("/{user_id}")
 def unfollow_user(
     user_id: int,
@@ -163,9 +161,8 @@ def unfollow_user(
 
 # ---------------------------
 #  GET /follow/following
-#  → คนที่เราไป follow เขา (เหมือนเดิม)
+#  → The person we follow (as usual)
 # ---------------------------
-
 @router.get("/following")
 def get_following(
     db: Session = Depends(get_db),
@@ -189,10 +186,9 @@ def get_following(
 
 
 # ---------------------------
-#  🔥 ใหม่: GET /follow/followers
-#  → ใช้กับแท็บ Follower (ใคร follow เรา)
+#  GET /follow/followers
+#  → Use with the Follower tab (who follows us)
 # ---------------------------
-
 @router.get("/followers")
 def get_followers(
     db: Session = Depends(get_db),
@@ -216,10 +212,9 @@ def get_followers(
 
 
 # ---------------------------
-#  🔥 ใหม่: คำขอติดตาม (เหมือน IG)
+#  Follow request (like IG)
 # ---------------------------
-
-# list คำขอที่ "เข้ามาหาเรา"
+# List of requests that "come to us"
 @router.get("/requests")
 def get_follow_requests(
     db: Session = Depends(get_db),
@@ -229,7 +224,7 @@ def get_follow_requests(
         db.query(models.FollowRequest, models.User)
         .join(models.User, models.FollowRequest.requester_id == models.User.uid)
         .filter(
-            models.FollowRequest.receiver_id == current_user.uid,  # ✅ แก้ตรงนี้
+            models.FollowRequest.receiver_id == current_user.uid, 
             models.FollowRequest.status == "pending",
         )
         .all()
@@ -239,7 +234,7 @@ def get_follow_requests(
     for fr, user in reqs:
         result.append(
             {
-                "id": fr.id,  # แนะนำใช้ key "id" ให้ตรงกับ frontend
+                "id": fr.id,  # It is recommended to use the key "id" to match the frontend.
                 "uid": user.uid,
                 "username": user.username,
                 "name": user.name,
@@ -250,14 +245,14 @@ def get_follow_requests(
     return result
 
 
-# อนุมัติคำขอ
+# Approve the request
 @router.post("/requests/{request_id}/approve")
 def approve_follow_request(
     request_id: int,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user)
 ):
-    # หาคำขอ
+    # Find a request
     follow_req = db.query(models.FollowRequest).filter(
         models.FollowRequest.id == request_id,
         models.FollowRequest.receiver_id == current_user.uid
@@ -266,7 +261,7 @@ def approve_follow_request(
     if not follow_req:
         raise HTTPException(status_code=404, detail="Follow request not found")
 
-    # อนุมัติ → create follow
+    # Approve → create follow
     new_follow = models.Follow(
         follower_id=follow_req.requester_id,
         following_id=current_user.uid,
@@ -274,7 +269,7 @@ def approve_follow_request(
 
     db.add(new_follow)
 
-    # update status ของ request
+    # Update request status
     follow_req.status = "approved"
 
     db.commit()
@@ -282,7 +277,8 @@ def approve_follow_request(
 
     return {"message": "Follow request approved"}
 
-# ปฏิเสธคำขอ
+
+# Reject the request
 @router.post("/requests/{request_id}/reject")
 def reject_follow_request(
     request_id: int,
@@ -301,4 +297,3 @@ def reject_follow_request(
     db.commit()
 
     return {"message": "Follow request rejected"}
-

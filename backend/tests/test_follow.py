@@ -130,3 +130,4 @@ def test_get_following_list(client):
 
     res = client.post(f"/users/{user2['uid']}/follow", headers=headers)
     assert res.status_code in (200, 201)
+    
