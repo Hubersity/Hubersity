@@ -68,7 +68,7 @@ def google_callback(code: str, db: Session = Depends(database.get_db)):
     g_user = userinfo_res.json()
     google_id = g_user["sub"]
     email = g_user["email"]
-    name = g_user.get("name", "")
+    name = email.split("@")[0]
     picture = g_user.get("picture")
 
     # 3. Check if user exists

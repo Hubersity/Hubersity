@@ -15,7 +15,7 @@ class UserCreate(BaseModel):
     name: Optional[str] = None
     birthdate: Optional[date] = None
     university: Optional[str] = None
-    is_private: Optional[bool] = True
+    is_private: Optional[bool] = False
     description: Optional[str] = None
     profile_image: Optional[str] = None
 
@@ -69,7 +69,7 @@ class UserResponse(BaseModel):
     name: Optional[str] = None
     birthdate: Optional[date] = None
     university: Optional[str] = None
-    is_private: Optional[bool] = None
+    is_private: bool
     description: Optional[str] = None
     profile_image: Optional[str] = None
     created_at: datetime
@@ -87,6 +87,8 @@ class UserUpdate(BaseModel):
     description: Optional[str] = None
     profile_image: Optional[str] = None
 
+    class Config:
+        orm_mode = True
 
 
 class UserLogin(BaseModel):

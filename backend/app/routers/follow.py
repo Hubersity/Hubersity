@@ -15,7 +15,7 @@ router = APIRouter(prefix="/follow", tags=["follow"])
 #  POST /follow/{user_id}
 #  - ถ้า user เป็น public → follow ทันที
 #  - ถ้าเป็น private → สร้าง follow request
-# ---------------------------@router.post("/{user_id}")
+@router.post("/{user_id}")
 def follow_user(
     user_id: int,
     db: Session = Depends(get_db),
@@ -44,7 +44,7 @@ def follow_user(
         db.query(models.FollowRequest)
         .filter(
             models.FollowRequest.requester_id == current_user.uid,
-            models.FollowRequest.target_id == user_id,
+            models.FollowRequest.receiver_id == user_id,
             models.FollowRequest.status == "pending",
         )
         .first()
@@ -59,7 +59,7 @@ def follow_user(
 
         follow_req = models.FollowRequest(
             requester_id=current_user.uid,
-            target_id=user_id,
+            receiver_id=user_id,
             status="pending",
         )
         db.add(follow_req)
