@@ -1,4 +1,5 @@
 import os
+import sys
 import pytest
 from sqlalchemy import create_engine, event
 from sqlalchemy.pool import StaticPool
@@ -8,6 +9,9 @@ import datetime as _dt
 from datetime import timezone
 import shutil
 import glob
+
+# Add parent directory to path so app can be imported
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Ensure app import doesn't attempt DB init during tests
 os.environ.setdefault("SKIP_DB_INIT", "1")
