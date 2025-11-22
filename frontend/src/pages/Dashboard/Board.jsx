@@ -27,12 +27,6 @@ const userProfiles = {
 };
 
 
-const initialPosts = [
-  { id: 1, username: "aong", text: "Has anyone ever taken the ISP course?", minutes: 10, likes: 48, liked: false, comments: [], category: "university" },
-  { id: 2, username: "Skibidi", text: "Looking for a single woman.", minutes: 2, likes: 9, liked: false, comments: [], category: "university" },
-  { id: 3, username: "Pysart", text: "Share the summary file for English 2, course code 01355102-64", minutes: 32, likes: 102, liked: false, comments: [], category: "university" },
-];
-
 // Edit Modal
 function EditPostModal({ open, onClose, text, setText, onSubmit }) {
   const { t } = useTranslation(); 
@@ -457,7 +451,7 @@ function formatTimeAgo(createdAt) {
 
 // Main Board
 export default function Board() {
-  const [posts, setPosts] = useState(initialPosts);
+  const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState("");
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("university");
