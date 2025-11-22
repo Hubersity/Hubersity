@@ -277,5 +277,28 @@
     "minutesAgo": "Il y a {{count}} min",
     "hoursAgo": "Il y a {{count}} h",
     "yesterday": "Hier"
+  },
+  "Followers": {
+    "followers": "Abonnés",
+    "FollowRequests": "Demandes d’abonnement",
+    "NoFollowRequests": "Aucune demande d’abonnement",
+    "YourFollowers": "Vos abonnés",
+    "NoFollowersYet": "Pas encore d’abonnés",
+    "RemoveFollower": "Supprimer le follower",
+    "AreYouSureRemove": "Êtes-vous sûr de vouloir supprimer",
+    "RemoveDetail": "Ils ne pourront plus vous suivre ni voir vos publications.",
+    "Cancel": "Annuler",
+    "ConfirmRemove": "Confirmer la suppression",
+    "Accept": "Accepter",
+    "Delete": "Supprimer"
+  },
+  "NewsDetail": {
+    "Loading": "Chargement...",
+    "NoNewsFound": "Aucune actualité trouvée."
+  },
+  "News": {
+    "Loading": "Chargement...",
+    "NewsInformation": "Informations",
+    "ReadMore": "Lire la suite"
   }
 }

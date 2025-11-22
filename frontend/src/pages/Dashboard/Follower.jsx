@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { UserCheck, UserX } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 
@@ -8,6 +9,7 @@ const API_URL = "http://localhost:8000";
 /* =================== DELETE CONFIRM MODAL ================= */
 /* ========================================================= */
 function DeleteFollowerModal({ open, user, onCancel, onConfirm }) {
+  const { t } = useTranslation();
   if (!open) return null;
 
   return (
@@ -17,30 +19,30 @@ function DeleteFollowerModal({ open, user, onCancel, onConfirm }) {
       <div className="relative bg-white rounded-2xl shadow-xl border w-full max-w-md mx-4 animate-fadeIn overflow-hidden">
         <div className="px-6 py-4 border-b bg-gradient-to-r from-red-50 to-rose-50">
           <h3 className="text-xl font-semibold text-red-600 flex items-center gap-2">
-            <UserX size={20} /> Remove Follower
+            <UserX size={20} /> {t('Followers.RemoveFollower')}
           </h3>
         </div>
 
         <div className="px-6 py-6 space-y-4 text-gray-700">
           <p className="text-lg font-medium">
-            Are you sure you want to remove{" "}
+            {t('Followers.AreYouSureRemove')}{" "}
             <span className="font-semibold text-gray-900">@{user?.username}</span>?
           </p>
           <p className="text-sm text-gray-500 leading-relaxed">
-            They will no longer be able to follow you or see your posts.
+            {t('Followers.RemoveDetail')}
           </p>
         </div>
 
         <div className="px-6 py-4 flex justify-end gap-3 bg-gray-50 border-t">
           <button onClick={onCancel} className="px-4 py-2 text-sm rounded-lg border">
-            Cancel
+            {t('Followers.Cancel')}
           </button>
 
           <button
             onClick={onConfirm}
             className="px-4 py-2 text-sm rounded-lg bg-red-600 text-white hover:bg-red-700"
           >
-            Confirm Remove
+            {t('Followers.ConfirmRemove')}
           </button>
         </div>
       </div>
@@ -65,6 +67,7 @@ export default function FollowerPage() {
   const currentKey = localStorage.getItem("currentUserKey");
   const authData = currentKey ? JSON.parse(localStorage.getItem(currentKey)) : {};
   const token = authData?.token;
+  const { t } = useTranslation();
 
   /* load user */
   useEffect(() => {
@@ -166,19 +169,19 @@ export default function FollowerPage() {
 
   return (
     <div className="p-10 w-full h-full">
-      <h1 className="text-2xl font-bold text-gray-800 mb-8">Followers</h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-8">{t('Followers.followers')}</h1>
 
       {/* ==================== FOLLOW REQUESTS ==================== */}
       {isPrivate && (
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
             <UserCheck className="w-5 h-5 text-emerald-600" />
-            <h2 className="text-lg font-semibold text-gray-800">Follow Requests</h2>
+            <h2 className="text-lg font-semibold text-gray-800">{t('Followers.FollowRequests')}</h2>
           </div>
 
           <div className="space-y-4">
             {requests.length === 0 ? (
-              <p className="text-sm text-gray-500">No follow requests</p>
+              <p className="text-sm text-gray-500">{t('Followers.NoFollowRequests')}</p>
             ) : (
               requests.map((req) => {
                 const u = req.from_user || req;
@@ -203,13 +206,13 @@ export default function FollowerPage() {
                         onClick={() => approveRequest(req)}
                         className="px-4 py-1.5 rounded-full text-sm font-medium bg-[#6dbf74] text-white hover:bg-[#5aa862]"
                       >
-                        Accept
+                        {t('Followers.Accept')}
                       </button>
                       <button
                         onClick={() => rejectRequest(req)}
                         className="px-4 py-1.5 rounded-full text-sm font-medium bg-red-600 text-white hover:bg-red-700"
                       >
-                        Delete
+                        {t('Followers.Delete')}
                       </button>
                     </div>
                   </div>
@@ -224,12 +227,12 @@ export default function FollowerPage() {
       <section>
         <div className="flex items-center gap-2 mb-4">
           <UserX className="w-5 h-5 text-rose-500" />
-          <h2 className="text-lg font-semibold text-gray-800">Your Followers</h2>
+          <h2 className="text-lg font-semibold text-gray-800">{t('Followers.YourFollowers')}</h2>
         </div>
 
         <div className="space-y-4">
           {followers.length === 0 ? (
-            <p className="text-sm text-gray-500">No followers yet</p>
+            <p className="text-sm text-gray-500">{t('Followers.NoFollowersYet')}</p>
           ) : (
             followers.map((u) => (
               <div
@@ -255,7 +258,7 @@ export default function FollowerPage() {
                   }}
                   className="px-5 py-1.5 rounded-full text-sm bg-red-600 text-white hover:bg-red-700"
                 >
-                  Delete
+                  {t('Followers.Delete')}
                 </button>
               </div>
             ))

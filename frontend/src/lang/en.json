@@ -277,5 +277,28 @@
     "minutesAgo": "{{count}} mins ago",
     "hoursAgo": "{{count}} hours ago",
     "yesterday": "Yesterday"
+  },
+  "Followers": {
+    "followers": "Followers",
+    "FollowRequests": "Follow Requests",
+    "NoFollowRequests": "No follow requests",
+    "YourFollowers": "Your Followers",
+    "NoFollowersYet": "No followers yet",
+    "RemoveFollower": "Remove Follower",
+    "AreYouSureRemove": "Are you sure you want to remove",
+    "RemoveDetail": "They will no longer be able to follow you or see your posts.",
+    "Cancel": "Cancel",
+    "ConfirmRemove": "Confirm Remove",
+    "Accept": "Accept",
+    "Delete": "Delete"
+  },
+  "NewsDetail": {
+    "Loading": "Loading...",
+    "NoNewsFound": "No news found."
+  },
+  "News": {
+    "Loading": "Loading...",
+    "NewsInformation": "News Information",
+    "ReadMore": "Read more"
   }
 }

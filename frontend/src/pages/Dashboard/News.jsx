@@ -1,46 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 const toAbs = (u) => (u?.startsWith?.("http") ? u : `${API_URL}${u || ""}`);
 
 export default function News() {
-  // const [newsList] = useState([
-  //   {
-  //     id: 1,
-  //     image: "/images/New1.jpg",
-  //     title: "Google Releases Gemini for KU Students",
-  //     summary: "Google announces free Gemini access for KU students.",
-  //   },
-  //   {
-  //     id: 2,
-  //     image: "/images/New2.jpg",
-  //     title: "New Engineering Upskill Project",
-  //     summary: "Apply to join the new engineering upskill project.",
-  //   },
-  //   {
-  //     id: 3,
-  //     image: "/images/New3.jpg",
-  //     title: "AI Tools for Academic Assistants",
-  //     summary: "Explore new tools for students and researchers.",
-  //   },
-  //   {
-  //     id: 4,
-  //     image: "/images/New4.jpg",
-  //     title: "Adobe Creative Cloud Update",
-  //     summary: "Adobe services updated exclusively for KU students.",
-  //   },
-  //   {
-  //     id: 5,
-  //     image: "/images/New5.jpg",
-  //     title: "Research Square & KULC Studio Program",
-  //     summary: "Join training for research & academic writing.",
-  //   },
-  // ]);
-
   const [newsList, setNewsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errMsg, setErrMsg] = useState("");
+  const { t } = useTranslation();
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -60,13 +29,13 @@ export default function News() {
     fetchNews();
   }, []);
 
-  if (loading) return <div className="p-6">Loading...</div>;
+  if (loading) return <div className="p-6">{t('News.Loading')}</div>;
   if (errMsg) return <div className="p-6 text-red-500">{errMsg}</div>;
 
   return (
     <div className="w-full">
       <h1 className="text-2xl font-semibold text-gray-700 mb-6">
-        News Information
+        {t('News.NewsInformation')}
       </h1>
 
       <div className="grid grid-cols-3 gap-6">
@@ -117,7 +86,7 @@ export default function News() {
                   hover:shadow-lg hover:-translate-y-1
                 "
               >
-                Read more
+                {t('News.ReadMore')}
               </Link>
 
               {/* Summary (text fade in) */}

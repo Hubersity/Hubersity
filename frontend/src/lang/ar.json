@@ -277,5 +277,28 @@
     "minutesAgo": "قبل {{count}} دقيقة",
     "hoursAgo": "قبل {{count}} ساعة",
     "yesterday": "أمس"
+  },
+  "Followers": {
+    "followers": "المتابعون",
+    "FollowRequests": "طلبات المتابعة",
+    "NoFollowRequests": "لا توجد طلبات متابعة",
+    "YourFollowers": "متابعوك",
+    "NoFollowersYet": "لا يوجد متابعون بعد",
+    "RemoveFollower": "إزالة المتابع",
+    "AreYouSureRemove": "هل أنت متأكد أنك تريد إزالة",
+    "RemoveDetail": "لن يتمكنوا من متابعتك أو رؤية منشوراتك بعد الآن.",
+    "Cancel": "إلغاء",
+    "ConfirmRemove": "تأكيد الإزالة",
+    "Accept": "قبول",
+    "Delete": "حذف"
+  },
+  "NewsDetail": {
+    "Loading": "جاري التحميل...",
+    "NoNewsFound": "لم يتم العثور على أخبار."
+  },
+  "News": {
+    "Loading": "جاري التحميل...",
+    "NewsInformation": "معلومات الأخبار",
+    "ReadMore": "اقرأ المزيد"
   }
 }
