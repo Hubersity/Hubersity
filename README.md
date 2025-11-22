@@ -36,7 +36,7 @@ git clone https://github.com/Hubersity/Hubersity.git
 cd Hubersity
 ```
 3. Setup the .env file 
-Follow instruction in the next section ## Environment Setup
+Follow instructions in the next section ## Environment Setup
 
 3. Build and start the server with Docker Compose
 ```
@@ -112,9 +112,9 @@ VITE_FRONTEND_URL=http://localhost:5173
 - Frontend (Home Page):  
   http://localhost:5173
 
-- Frontend (Admin Page)
-  http://localhost:5173/app-admin
-
+- Frontend (Admin Page):
+  http://localhost:5173/app_admin
+  
 - Backend API Docs (FastAPI Swagger UI):  
   http://localhost:8000/docs
 
