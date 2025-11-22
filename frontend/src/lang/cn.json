@@ -277,5 +277,28 @@
     "minutesAgo": "{{count}} 分钟前",
     "hoursAgo": "{{count}} 小时前",
     "yesterday": "昨天"
+  },
+  "Followers": {
+    "followers": "关注者",
+    "FollowRequests": "关注请求",
+    "NoFollowRequests": "暂无关注请求",
+    "YourFollowers": "你的关注者",
+    "NoFollowersYet": "还没有关注者",
+    "RemoveFollower": "移除关注者",
+    "AreYouSureRemove": "你确定要移除",
+    "RemoveDetail": "他们将无法再关注你或查看你的帖子。",
+    "Cancel": "取消",
+    "ConfirmRemove": "确认移除",
+    "Accept": "接受",
+    "Delete": "删除"
+  },
+  "NewsDetail": {
+    "Loading": "加载中...",
+    "NoNewsFound": "未找到新闻。"
+  },
+  "News": {
+    "Loading": "加载中...",
+    "NewsInformation": "新闻资讯",
+    "ReadMore": "查看更多"
   }
 }

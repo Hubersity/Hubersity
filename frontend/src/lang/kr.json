@@ -277,5 +277,28 @@
     "minutesAgo": "{{count}}분 전",
     "hoursAgo": "{{count}}시간 전",
     "yesterday": "어제"
+  },
+  "Followers": {
+    "followers": "팔로워",
+    "FollowRequests": "팔로우 요청",
+    "NoFollowRequests": "팔로우 요청이 없습니다",
+    "YourFollowers": "내 팔로워",
+    "NoFollowersYet": "아직 팔로워가 없습니다",
+    "RemoveFollower": "팔로워 제거",
+    "AreYouSureRemove": "정말로 제거하시겠습니까",
+    "RemoveDetail": "상대는 더 이상 당신을 팔로우하거나 게시물을 볼 수 없습니다.",
+    "Cancel": "취소",
+    "ConfirmRemove": "제거 확인",
+    "Accept": "수락",
+    "Delete": "삭제"
+  },
+  "NewsDetail": {
+    "Loading": "로딩 중...",
+    "NoNewsFound": "뉴스를 찾을 수 없습니다."
+  },
+  "News": {
+    "Loading": "로딩 중...",
+    "NewsInformation": "뉴스 정보",
+    "ReadMore": "자세히 보기"
   }
 }
