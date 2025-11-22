@@ -113,7 +113,11 @@
     "thisWeek": "本周",
     "followBack": "回关",
     "following": "关注中",
-    "noNotification": "暂无通知"
+    "noNotification": "暂无通知",
+    "startedFollowingYou": "{{username}} 开始关注你",
+    "requestedToFollowYou": "{{username}} 请求关注你",
+    "likedYourPost": "{{username}} 点赞了你的帖子",
+    "commentedOnYourPost": "{{username}} 评论了你的帖子"
   },
   "userProfile": {
     "follow": "关注",
@@ -274,6 +278,7 @@
   },
   "time": {
     "justNow": "刚刚",
+    "secondsAgo": "{{count}} 秒前",
     "minutesAgo": "{{count}} 分钟前",
     "hoursAgo": "{{count}} 小时前",
     "yesterday": "昨天"

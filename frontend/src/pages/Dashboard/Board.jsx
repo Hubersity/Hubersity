@@ -27,12 +27,6 @@ const userProfiles = {
 };
 
 
-const initialPosts = [
-  { id: 1, username: "aong", text: "Has anyone ever taken the ISP course?", minutes: 10, likes: 48, liked: false, comments: [], category: "university" },
-  { id: 2, username: "Skibidi", text: "Looking for a single woman.", minutes: 2, likes: 9, liked: false, comments: [], category: "university" },
-  { id: 3, username: "Pysart", text: "Share the summary file for English 2, course code 01355102-64", minutes: 32, likes: 102, liked: false, comments: [], category: "university" },
-];
-
 // Edit Modal
 function EditPostModal({ open, onClose, text, setText, onSubmit }) {
   const { t } = useTranslation(); 
@@ -429,7 +423,7 @@ function ReportModal({ open, onClose, postId, onSubmit }) {
 }
 
 // Post time calculation function
-function formatTimeAgo(createdAt) {
+function formatTimeAgo(createdAt, t) {
   if (!createdAt) return "--";
 
   const now = new Date();
@@ -440,9 +434,10 @@ function formatTimeAgo(createdAt) {
   const diffHr = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHr / 24);
 
-  if (diffSec < 60) return `${diffSec} sec ago`;
-  if (diffMin < 60) return `${diffMin} min ago`;
-  if (diffHr < 24) return `${diffHr} hr ago`;
+  if (diffSec < 5) return t("time.justNow");
+  if (diffSec < 60) return t("time.secondsAgo", { count: diffSec });
+  if (diffMin < 60) return t("time.minutesAgo", { count: diffMin });
+  if (diffHr < 24) return t("time.hoursAgo", { count: diffHr });
 
   // If it is more than 1 day → Show as the actual date.
   return postTime.toLocaleString("en-GB", {
@@ -457,7 +452,7 @@ function formatTimeAgo(createdAt) {
 
 // Main Board
 export default function Board() {
-  const [posts, setPosts] = useState(initialPosts);
+  const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState("");
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("university");
@@ -539,6 +534,7 @@ export default function Board() {
               minutes: Math.floor(
                 (Date.now() - new Date(c.created_at)) / 60000
               ),
+              created_at: c.created_at,
               files: c.files || [],
             })) || [],
           images: p.images || [],
@@ -1252,7 +1248,7 @@ const handlePost = async () => {
                   </button>
                 </div>
                 <div className="text-slate-400 text-xs">
-                  {formatTimeAgo(p.created_at)}
+                  {formatTimeAgo(p.created_at, t)}
                 </div>
               </div>
 
@@ -1348,7 +1344,7 @@ const handlePost = async () => {
                         )}
 
                         <span className="absolute bottom-1 right-2 text-xs text-gray-400">
-                          {c.minutes} min ago
+                          {formatTimeAgo(c.created_at, t)}
                         </span>
                       </div>
                     </div>
