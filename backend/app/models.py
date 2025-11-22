@@ -40,7 +40,7 @@ class User(Base):
     progress = relationship("DailyProgress", back_populates="user", cascade="all, delete-orphan")
     following = relationship("Follow", foreign_keys="[Follow.follower_id]", backref="follower", cascade="all, delete-orphan")
     followers = relationship("Follow", foreign_keys="[Follow.following_id]", backref="following", cascade="all, delete-orphan")
-    reports = relationship("Report", back_populates="reporter", foreign_keys="[Report.reporter_id]")
+    reports = relationship("Report", back_populates="reporter", foreign_keys="[Report.reporter_id]", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="user", cascade="all, delete-orphan")
 
     @hybrid_property
@@ -62,8 +62,8 @@ forum_tags = Table(
 
 class Follow(Base):
     __tablename__ = "follows"
-    follower_id = Column(Integer, ForeignKey("users.uid"), primary_key=True)
-    following_id = Column(Integer, ForeignKey("users.uid"), primary_key=True)
+    follower_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), primary_key=True)
+    following_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), primary_key=True)
     created_at = Column(
         TIMESTAMP(timezone=True),
         nullable=False,
@@ -109,7 +109,7 @@ class Post(Base):
     pid = Column(Integer, primary_key=True, nullable=False)
     post_content = Column(String, nullable=False)
     forum_id = Column(Integer, ForeignKey("forum.fid"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)  # new column
+    user_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)  # new column
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     user = relationship("User", back_populates="posts")
@@ -144,7 +144,7 @@ class StudySession(Base):
     __tablename__ = "study_sessions"
 
     sid = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
     start_time = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text("now()"))
     end_time = Column(TIMESTAMP(timezone=True))
     duration_minutes = Column(Integer)
@@ -159,7 +159,7 @@ class DailyProgress(Base):
     __tablename__ = "daily_progress"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
     date = Column(TIMESTAMP(timezone=True), nullable=False)
     total_minutes = Column(Integer, default=0, nullable=False)
     badge_level = Column(Integer, default=0, nullable=False)
@@ -176,7 +176,7 @@ class DailyProgress(Base):
 class Like(Base):
     __tablename__ = "likes"
 
-    user_id = Column(Integer, ForeignKey("users.uid"), primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), primary_key=True)
     post_id = Column(Integer, ForeignKey("post.pid"), primary_key=True)
 
     user = relationship("User", back_populates="likes")
@@ -190,7 +190,7 @@ class Comment(Base):
     content = Column(Text, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
     
-    user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
     post_id = Column(Integer, ForeignKey("post.pid", ondelete="CASCADE"), nullable=False)
     username = Column(String, nullable=False)
     user = relationship("User", back_populates="comments")
@@ -205,10 +205,10 @@ class Report(Base):
     rid = Column(Integer, primary_key=True, index=True)
 
     post_id = Column(Integer, ForeignKey("post.pid"), nullable=True)
-    user_id = Column(Integer, ForeignKey("users.uid"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=True)
     comment_id = Column(Integer, ForeignKey("comments.cid"), nullable=True)
 
-    reporter_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
+    reporter_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
     report_type = Column(String, nullable=False)
     reason = Column(String, nullable=False)
     status = Column(String, default="pending")
@@ -292,7 +292,7 @@ class Notification(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
     message = Column(Text, nullable=False)
-    sender_id = Column(Integer, ForeignKey("users.uid"), nullable=True)
+    sender_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=True)
     receiver_id = Column(Integer, nullable=True)
     target_role = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
@@ -304,7 +304,7 @@ class NotificationRead(Base):
 
     id = Column(Integer, primary_key=True)
     notification_id = Column(Integer, ForeignKey("notifications.id"))
-    user_id = Column(Integer, ForeignKey("users.uid"))
+    user_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"))
     read_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
 
     notification = relationship("Notification", backref="reads")
@@ -315,8 +315,8 @@ class Block(Base):
     __tablename__ = "blocks"
 
     id = Column(Integer, primary_key=True, index=True)
-    blocker_id = Column(Integer, ForeignKey("users.uid"))
-    blocked_id = Column(Integer, ForeignKey("users.uid"))
+    blocker_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"))
+    blocked_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"))
 
     __table_args__ = (
         UniqueConstraint("blocker_id", "blocked_id", name="unique_block"),
@@ -330,7 +330,7 @@ class HelpReport(Base):
     __tablename__ = "help_reports"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.uid"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
     message = Column(String, nullable=False)
     file_path = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -362,7 +362,7 @@ class News(Base):
         onupdate=func.now(),
     )
 
-    created_by = Column(Integer, ForeignKey("users.uid"), nullable=True)
+    created_by = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=True)
     creator = relationship("User", backref="news_items")
 
 
@@ -370,8 +370,8 @@ class FollowRequest(Base):
     __tablename__ = "follow_requests"
 
     id = Column(Integer, primary_key=True, index=True)
-    requester_id = Column(Integer, ForeignKey("users.uid"))
-    receiver_id = Column(Integer, ForeignKey("users.uid"))
+    requester_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"))
+    receiver_id = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"))
     status = Column(String, default="pending") 
 
     status = Column(
