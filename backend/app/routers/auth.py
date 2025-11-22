@@ -6,7 +6,8 @@ from fastapi.responses import RedirectResponse
 from ..config import (
     GOOGLE_AUTH_URL, GOOGLE_TOKEN_URL,
     GOOGLE_USERINFO_URL, GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI
+    GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI,
+    FRONTEND_URL, FULL_GOOGLE_AUTH_URL
 )
 
 router = APIRouter(tags=["Authentication"])
@@ -36,7 +37,7 @@ def login(user_cred: schemas.UserLogin, db: Session = Depends(database.get_db)):
 
 @router.get("/login/google")
 def google_login():
-    return RedirectResponse(GOOGLE_AUTH_URL)
+    return RedirectResponse(FULL_GOOGLE_AUTH_URL)
 
 
 @router.get("/auth/google/callback")
@@ -102,8 +103,9 @@ def google_callback(code: str, db: Session = Depends(database.get_db)):
 
     # 5. Redirect to frontend with query params
     return RedirectResponse(
-        url=f"http://localhost:5173/google-callback?"
-            f"token={jwt_token}&new_user={str(new_user).lower()}&"
-            f"uid={user.uid}&email={user.email}&name={user.username}&picture={picture or ''}"
+    url=f"{FRONTEND_URL}/google-callback?"
+        f"token={jwt_token}&new_user={str(new_user).lower()}&"
+        f"uid={user.uid}&email={user.email}&name={user.username}&picture={picture or ''}"
 )
+
 
