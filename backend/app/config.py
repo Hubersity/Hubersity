@@ -9,7 +9,7 @@ DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
 DB_NAME = os.getenv("DB_NAME", "hubersity")
 
-SECRET_KEY = os.getenv("JWT_SECRET", "a01bab3de81800ab87a642dfd99209674697704a8eb35e4cd95f78f38f10ee1e")
+SECRET_KEY = os.getenv("SECRET_KEY", "a01bab3de81800ab87a642dfd99209674697704a8eb35e4cd95f78f38f10ee1e")
 API_PORT = os.getenv("API_PORT", "8000")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
