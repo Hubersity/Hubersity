@@ -277,5 +277,28 @@
     "minutesAgo": "{{count}} นาทีที่แล้ว",
     "hoursAgo": "{{count}} ชั่วโมงที่แล้ว",
     "yesterday": "เมื่อวาน"
+  },
+  "Followers": {
+    "followers": "ผู้ติดตาม",
+    "FollowRequests": "คำขอติดตาม",
+    "NoFollowRequests": "ไม่มีคำขอติดตาม",
+    "YourFollowers": "ผู้ติดตามของคุณ",
+    "NoFollowersYet": "ยังไม่มีผู้ติดตาม",
+    "RemoveFollower": "ลบผู้ติดตาม",
+    "AreYouSureRemove": "คุณแน่ใจหรือไม่ว่าต้องการลบ",
+    "RemoveDetail": "เขาจะไม่สามารถติดตามคุณหรือเห็นโพสต์ของคุณได้อีก",
+    "Cancel": "ยกเลิก",
+    "ConfirmRemove": "ยืนยันการลบ",
+    "Accept": "ยอมรับ",
+    "Delete": "ลบ"
+  },
+  "NewsDetail": {
+    "Loading": "กำลังโหลด...",
+    "NoNewsFound": "ไม่พบข่าว"
+  },
+  "News": {
+    "Loading": "กำลังโหลด...",
+    "NewsInformation": "ข้อมูลข่าว",
+    "ReadMore": "อ่านเพิ่มเติม"
   }
 }

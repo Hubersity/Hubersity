@@ -1,18 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 const API_URL = "http://localhost:8000";
 const toAbs = (u) => (u?.startsWith?.("http") ? u : `${API_URL}${u || ""}`);
-
-// const MOCK_NEW = [
-//     {
-//         id: 1,
-//         image: "/images/New1.jpg",
-//         title: "Google Releases Gemini for KU Students",
-//         summary: "Google is offering free one-year Gemini access to Google AI Pro for Kasetsart University students and staff.\nApply for your rights by December 9, 2025.",
-//         detail: "See details and apply for eligibility at https://gemini.google/students/\nClaim Procedure\n1. Go to https://gemini.google/students/ \n2. Click “Get Offer”\n3. Select your @gmail account first and fill in your student details. Select “Kasetsart University (Chatuchak Campus)” only and enter your @ku.th email address.\n4. Fill in your payment information (for subscriptions exceeding one year).\n5. Cancel your subscription immediately after signing up to prevent it from exceeding one year. Go to https://myaccount.google.com/subscriptions and click Cancel. (Even if you cancel, your subscription will remain valid for one year.)"
-//     },
-//   ];
 
 export default function NewDetail() {
     const { id } = useParams();
@@ -20,6 +11,7 @@ export default function NewDetail() {
     const [loading, setLoading] = useState(true);
     const [errMsg, setErrMsg] = useState("");
     const [news, setNews] = useState(null);
+    const { t } = useTranslation();
   
     useEffect(() => {
         const fetchNews = async () => {
@@ -39,9 +31,9 @@ export default function NewDetail() {
         fetchNews();
     }, [id]);
 
-    if (loading) return <div className="p-6">Loading...</div>;
+    if (loading) return <div className="p-6">{t('NewsDetail.Loading')}</div>;
     if (errMsg) return <div className="p-6 text-red-500">{errMsg}</div>;
-    if (!news) return <div className="p-6">No news found.</div>;
+    if (!news) return <div className="p-6">{t('NewsDetail.NoNewsFound')}</div>;
 
     function renderWithLinks(text) {
         const urlRegex = /(https?:\/\/[^\s]+)/g;

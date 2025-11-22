@@ -277,5 +277,28 @@
     "minutesAgo": "{{count}} 分前",
     "hoursAgo": "{{count}} 時間前",
     "yesterday": "昨日"
+  },
+  "Followers": {
+    "followers": "フォロワー",
+    "FollowRequests": "フォローリクエスト",
+    "NoFollowRequests": "フォローリクエストはありません",
+    "YourFollowers": "あなたのフォロワー",
+    "NoFollowersYet": "まだフォロワーがいません",
+    "RemoveFollower": "フォロワーを削除",
+    "AreYouSureRemove": "本当に削除しますか",
+    "RemoveDetail": "相手はもうあなたをフォローしたり、投稿を見ることができません。",
+    "Cancel": "キャンセル",
+    "ConfirmRemove": "削除を確認",
+    "Accept": "承認",
+    "Delete": "削除"
+  },
+  "NewsDetail": {
+    "Loading": "読み込み中...",
+    "NoNewsFound": "ニュースが見つかりません。"
+  },
+  "News": {
+    "Loading": "読み込み中...",
+    "NewsInformation": "ニュース情報",
+    "ReadMore": "もっと読む"
   }
 }
