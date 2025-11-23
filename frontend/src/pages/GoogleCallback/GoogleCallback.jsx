@@ -45,7 +45,7 @@ export default function GoogleCallback() {
           });
         } else {
           // Existing user
-          const meRes = await fetch("http://localhost:8000/users/me", {
+          const meRes = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
             headers: { Authorization: `Bearer ${token}` },
           });
 

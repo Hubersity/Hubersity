@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 from sqlalchemy.orm import Session
 from .. import models, schemas
+from ..config import UPLOAD_ROOT, BACKEND_URL
 from ..database import get_db
 from ..oauth2 import get_current_user
 import os
@@ -22,7 +23,7 @@ async def create_help_report(
 
     # Save file if uploaded
     if file:
-        save_root = "uploads"                    # static mount root
+        save_root = UPLOAD_ROOT                    # static mount root
         save_dir = f"{save_root}/help"           # folder inside uploads/help
         os.makedirs(save_dir, exist_ok=True)
 
@@ -78,12 +79,12 @@ def get_reports(db: Session = Depends(get_db)):
         avatar_url = None
         if r.avatar:
             clean_avatar = r.avatar.lstrip("/")
-            avatar_url = f"http://localhost:8000/{clean_avatar}"
+            avatar_url = f"{BACKEND_URL}/{clean_avatar}"
 
         file_url = None
         if r.file_path:
             file_clean = r.file_path.lstrip("/")      # "help/a.pdf"
-            file_url = f"http://localhost:8000/uploads/{file_clean}"
+            file_url = f"{BACKEND_URL}/uploads/{file_clean}"
 
         response.append({
             "id": r.id,

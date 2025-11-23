@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Flag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const API_URL = "http://localhost:8000";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 // Board time display function
 function formatTimeAgo(createdAt) {

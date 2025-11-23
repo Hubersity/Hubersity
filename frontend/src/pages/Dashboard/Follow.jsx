@@ -3,7 +3,7 @@ import { Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-const API_URL = "http://localhost:8000";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 /* Modal */
 function UnfollowConfirmModal({ open, onClose, onConfirm, user }) {
@@ -253,8 +253,26 @@ export default function Follow() {
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         user={targetUser}
-        onConfirm={() => setConfirmOpen(false)}
+        onConfirm={async () => {
+          if (!targetUser) return;
+
+          const res = await fetch(`${API_URL}/follow/${targetUser.uid}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+          if (res.ok) {
+            // remove from local state
+            setUsers((prev) => prev.filter((x) => x.uid !== targetUser.uid));
+          } else {
+            console.error("Failed to unfollow:", await res.text());
+            alert("Could not unfollow. Please try again.");
+          }
+
+          setConfirmOpen(false);
+        }}
       />
+
     </div>
   );
 }

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { AlertCircle, FileUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const API_URL = "http://localhost:8000";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 
 export default function ForHelp() {

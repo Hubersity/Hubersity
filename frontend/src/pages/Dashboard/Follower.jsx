@@ -3,7 +3,7 @@ import { UserCheck, UserX } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-const API_URL = "http://localhost:8000";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 
 /* DELETE CONFIRM MODAL */

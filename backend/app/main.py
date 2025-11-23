@@ -4,23 +4,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from . import models, database
+from . import models, database, config
 from .database import engine
-from .routers import users, auth, study_calendar, posts, chat, admin, notification, follow, news, news_upload, block, help, user_public
-from fastapi.staticfiles import StaticFiles
+from .routers import (
+    users, auth, study_calendar, posts, chat, admin,
+    notification, follow, news, news_upload, block, help, user_public
+)
 import os
-from fastapi.middleware.cors import CORSMiddleware
 
-# Create all tables in the database
 # Allow tests to skip DB init by setting SKIP_DB_INIT=1 in the environment.
 SKIP_DB_INIT = os.getenv("SKIP_DB_INIT", "") == "1"
 if not SKIP_DB_INIT:
     models.Base.metadata.create_all(bind=engine)
 
-
 @asynccontextmanager
 async def lifespan(app):
-    # Seed forum data on startup when DB initialization is enabled
     if not SKIP_DB_INIT:
         db: Session = next(database.get_db())
         try:
@@ -34,67 +32,43 @@ async def lifespan(app):
                 db.commit()
                 print("Forum table seeded with default data.")
             else:
-                print("ℹForum table already has data.")
+                print("ℹ Forum table already has data.")
         finally:
             db.close()
     yield
 
-
 app = FastAPI(lifespan=lifespan)
 
+# CORS
 origins = [
     "http://localhost:5173",
-    "http://127.0.0.1:5173",  
+    "http://127.0.0.1:5173",
 ]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # The frontend is open
+    allow_origins=origins,  # The frontend is open
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Uploads
 os.makedirs("uploads/post", exist_ok=True)
 os.makedirs("uploads/comments", exist_ok=True)
 os.makedirs("uploads/user", exist_ok=True)
-
-# Allows you to download files from the uploads folder.
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-# Database connection check (skippable in tests)
+# DB connection check
 if not SKIP_DB_INIT:
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        print("Database connection OK ")
+        print("Database connection OK")
     except Exception as e:
-        print("Database connection failed :", e)
+        print("Database connection failed:", e)
 
-
-@asynccontextmanager
-async def lifespan(app):
-    # Seed forum data on startup when DB initialization is enabled
-    if not SKIP_DB_INIT:
-        db: Session = next(database.get_db())
-        try:
-            existing = db.query(models.Forum).all()
-            if len(existing) == 0:
-                forums = [
-                    models.Forum(fid=1, forum_name="University Talk"),
-                    models.Forum(fid=2, forum_name="Follow Talk"),
-                ]
-                db.add_all(forums)
-                db.commit()
-                print("Forum table seeded with default data.")
-            else:
-                print("ℹForum table already has data.")
-        finally:
-            db.close()
-    yield
-
-# All routers included
-app.include_router(user_public.router) 
+# Routers
+app.include_router(user_public.router)
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(study_calendar.router)
@@ -102,13 +76,11 @@ app.include_router(posts.router)
 app.include_router(admin.router)
 app.include_router(chat.router)
 app.include_router(notification.router)
-app.include_router(follow.router) 
+app.include_router(follow.router)
 app.include_router(news.router)
-app.include_router(news_upload.router) 
-app.include_router(follow.router)  
+app.include_router(news_upload.router)
 app.include_router(block.router)
 app.include_router(help.router)
-
 
 @app.get("/")
 def root():

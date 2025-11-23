@@ -3,6 +3,10 @@ import { PlayIcon, PauseIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 
+const API_URL = `${import.meta.env.VITE_API_URL}`;
+// สร้างวันที่ปัจจุบัน
+// const currentDate = new Date();
+
 function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
   const { t, i18n } = useTranslation();  // use i18next
   const [time, setTime] = useState(0); 
@@ -22,7 +26,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
   
       // 1) Pull today's commit time
       const res1 = await fetch(
-        `http://localhost:8000/study/progress/${userObj.uid}/${y}/${m}/${d}`,
+        `${API_URL}/study/progress/${userObj.uid}/${y}/${m}/${d}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const prog = await res1.json();
@@ -30,7 +34,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
   
       // 2) Fetch the currently running session (if any)
       const res2 = await fetch(
-        `http://localhost:8000/study/active/${userObj.uid}`,
+        `${API_URL}/study/active/${userObj.uid}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const active = await res2.json();
@@ -131,7 +135,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
   const startSession = async () => {
     if (!userObj?.uid || !token) return;
     try {
-      const res = await fetch(`http://localhost:8000/study/start?user_id=${userObj.uid}`, {
+      const res = await fetch(`${API_URL}/study/start?user_id=${userObj.uid}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -162,7 +166,7 @@ function CountTime({ onAfterStop, onSyncSeconds, userObj, token }) {
     if (!sessionId || !token) return;
   
     try {
-      const res = await fetch(`http://localhost:8000/study/stop/${sessionId}`, {
+      const res = await fetch(`${API_URL}/study/stop/${sessionId}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -314,7 +318,7 @@ function Calendar() {
   const fetchCalendar = async () => {
     if (!userObj?.uid || !token) return;
     try {
-      const res = await fetch(`http://localhost:8000/study/calendar/${userObj.uid}/${year}/${month}`, {
+      const res = await fetch(`${API_URL}/study/calendar/${userObj.uid}/${year}/${month}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(`calendar ${res.status}`);

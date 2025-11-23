@@ -30,7 +30,11 @@ const navItems = [
 ];
 
 
-// Topbar Component
+const API_URL = `${import.meta.env.VITE_API_URL}`;
+// =========================
+// 🔹 Topbar Component
+// =========================
+
 function Topbar() {
   const [user, setUser] = useState({});
   const [openMenu, setOpenMenu] = useState(false);
@@ -63,10 +67,10 @@ function Topbar() {
     const img = user.profile_image;
 
     if (img.startsWith("http")) return img;
-    if (img.startsWith("/uploads/")) return `http://localhost:8000${img}`;
-    if (img.startsWith("uploads/")) return `http://localhost:8000/${img}`;
-    if (img.startsWith("user/")) return `http://localhost:8000/uploads/${img}`;
-    return `http://localhost:8000/uploads/user/${img}`;
+    if (img.startsWith("/uploads/")) return `${API_URL}${img}`;
+    if (img.startsWith("uploads/")) return `${API_URL}/${img}`;
+    if (img.startsWith("user/")) return `${API_URL}/uploads/${img}`;
+    return `${API_URL}/uploads/user/${img}`;
   };
 
   return (
