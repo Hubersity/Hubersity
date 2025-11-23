@@ -112,7 +112,7 @@ VITE_FRONTEND_URL=http://localhost:5173
 - Frontend (Home Page):  
   http://localhost:5173
 
-- Frontend (Admin Page):
+- Frontend (Admin Page): (FOR SOME METHOD IT REQUIRED USER TO BE ADMIN, USE PGADMIN TO CHANGE is_admin to true)
   http://localhost:5173/app_admin
   
 - Backend API Docs (FastAPI Swagger UI):  
