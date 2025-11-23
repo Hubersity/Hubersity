@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 
-const API_URL = "http://localhost:8000";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 // If image_url is not http, add base url.
 const toAbs = (u) => (u?.startsWith("http") ? u : `${API_URL}${u || ""}`);
 

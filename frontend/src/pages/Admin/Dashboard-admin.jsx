@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { ChartNoAxesColumn, Flag, Megaphone, Bell, User , AlertTriangle} from "lucide-react";
 import { getCurrentUser } from "../../api/user"; 
 
-const API_URL = `http://localhost:8000`; 
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 const navItems = [
   { to: "/app_admin/overview", label: "Overview", icon: ChartNoAxesColumn },

@@ -1,15 +1,15 @@
 import React, { useState, useEffect} from "react";
 import { Search, User} from "lucide-react";
 
-const API_URL = `http://localhost:8000`; 
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 export default function SearchAccount() {
     // Status for storing search terms from users
     const [searchTerm, setSearchTerm] = useState("");
     const [allUsers, setAllUsers] = useState([]);
     // State for storing the resulting result (Array of user objects)
-    // const [results, setResults] = useState([]);
-    const [results, setResults] = useState(MOCK_USERS);
+    const [results, setResults] = useState([]);
+    // const [results, setResults] = useState(MOCK_USERS);
     // Status for Loading and Error
     const [isLoading, setIsLoading] = useState(false); // Defaults to true to load the first data.
     const [error, setError] = useState(null);

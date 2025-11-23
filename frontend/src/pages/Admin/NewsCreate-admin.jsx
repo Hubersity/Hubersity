@@ -13,7 +13,7 @@ export default function NewsCreateAdmin() {
   const [imageFile, setImageFile] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  const API_URL = "http://localhost:8000";
+  const API_URL = `${import.meta.env.VITE_API_URL}`;
 
   // Get the same token as the login page (example)
   const navigate = useNavigate();

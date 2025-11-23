@@ -38,7 +38,7 @@ cd Hubersity
 3. Setup the .env file 
 Follow instructions in the next section ## Environment Setup
 
-3. Build and start the server with Docker Compose
+4. Build and start the server with Docker Compose
 ```
 docker-compose up -d --build
 ```
@@ -149,9 +149,14 @@ docker compose down
 **Iteration5**
 - https://youtu.be/C7fhBJq8zYM
 
+**Final Iteration**
+- https://youtu.be/09uBAdjjqFY (Software Development Presentation)
+- https://youtu.be/M98IQNVMLyQ (Demo)
 
 ## Planning & Tracking
 - **Project Document** – https://docs.google.com/document/d/1shQYve-ymTHfc__mhLfEjZmU7iCq36rVfYSqH0JG084/edit?tab=t.0#heading=h.c508vnuhfzms
 - **Jira Board** – https://hubersity.atlassian.net/jira/software/projects/HUB/boards/1/backlog
+- **DockerHub** – https://hub.docker.com/r/watcharapatp/hubersity-frontend
+                - https://hub.docker.com/r/watcharapatp/hubersity-backend
 
   
