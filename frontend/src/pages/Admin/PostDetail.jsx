@@ -2,7 +2,7 @@ import React, { useState, useEffect} from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 // useNavigate go back to before page, useParamsอ่านค่าพารามิเตอร์จาก URL
-const API_URL = `http://localhost:8000`; 
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 const MOCK_POSTS = [
     {
         id: "203",

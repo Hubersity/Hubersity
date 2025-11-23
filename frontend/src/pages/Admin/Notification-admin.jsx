@@ -1,69 +1,86 @@
 import React, { useState, useEffect } from "react";
 
-const API_URL = "http://localhost:8000";
+const API_URL = `${import.meta.env.VITE_API_URL}`;
 
 export default function NotificationsAdmin() {
-  function groupByDate(notifications) {
+  const [notifications, setNotifications] = useState([]);
+  const [grouped, setGrouped] = useState({});
+  const [sections, setSections] = useState([]);
+
+  function groupByDate(notifs) {
+    if (!notifs || notifs.length === 0) return {};
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
-    const formatDate = (date) => date.toISOString().split("T")[0];
-    const grouped = {};
 
+    const groupedData = {};
 
-    notifications.forEach((n) => {
+    notifs.forEach((n) => {
+      if (!n.created_at) return; // guard against null created_at
+
       const created = new Date(n.created_at);
-      const dateStr = formatDate(created);
+      if (isNaN(created)) return; // guard against invalid date
 
-      if (created >= today && created < new Date(today.getTime() + 86400000)) {
-        grouped["today"] = grouped["today"] ? [...grouped["today"], n] : [n];
+      const dateStr = created.toISOString().split("T")[0];
+
+      if (created >= today) {
+        groupedData.today = [...(groupedData.today || []), n];
       } else if (created >= yesterday && created < today) {
-        grouped["yesterday"] = grouped["yesterday"] ? [...grouped["yesterday"], n] : [n];
-      } else if (created >= startOfWeek && created <= endOfWeek) {
-        grouped["this week"] = grouped["this week"] ? [...grouped["this week"], n] : [n];
+        groupedData.yesterday = [...(groupedData.yesterday || []), n];
       } else {
-        grouped[dateStr] = grouped[dateStr] ? [...grouped[dateStr], n] : [n];
+        groupedData[dateStr] = [...(groupedData[dateStr] || []), n];
       }
     });
 
-    return grouped;
+    return groupedData;
   }
-
-  // Group by time
-  const grouped = groupByDate(notifications);
-  const order = ["today", "yesterday", "this week"];
-  const sections = order
-    .filter((k) => grouped[k])
-    .concat(Object.keys(grouped).filter((k) => !order.includes(k)).sort().reverse());
-
 
   useEffect(() => {
     async function fetchAdminNotifications() {
       try {
-        const response = await fetch(`${API_URL}/notification/admin`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+        const key = localStorage.getItem("currentUserKey");
+        const auth = key ? JSON.parse(localStorage.getItem(key)) : null;
+
+        if (!auth?.token) {
+          console.error("No auth token found");
+          return;
         }
+
+        const response = await fetch(`${API_URL}/notification/admin`, {
+          headers: { Authorization: `Bearer ${auth.token}` },
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch notifications");
 
         const raw = await response.json();
 
         const formatted = raw.map((n) => ({
           id: n.id,
           name: n.sender_username,
-          avatar: n.sender_avatar ? `${API_URL}${n.sender_avatar}` : "/images/default-avatar.png",
+          avatar: n.sender_avatar
+            ? `${API_URL}${n.sender_avatar}`
+            : "/images/default-avatar.png",
           created_at: n.created_at,
           text: n.message,
-          is_read: n.is_read || false
+          is_read: n.is_read || false,
         }));
 
         setNotifications(formatted);
+
+        const groupedData = groupByDate(formatted);
+        setGrouped(groupedData);
+
+        const order = ["today", "yesterday"];
+        const extra = Object.keys(groupedData)
+          .filter((k) => !order.includes(k))
+          .sort()
+          .reverse();
+
+        setSections(order.filter((k) => groupedData[k]).concat(extra));
       } catch (err) {
-        console.error("Error fetching notifications:", err);
+        console.error("Fetch error:", err);
       }
     }
 
@@ -72,19 +89,18 @@ export default function NotificationsAdmin() {
 
   return (
     <div className="flex flex-col w-full h-[calc(100vh-64px)] bg-white overflow-hidden">
-      {/* Header */}
       <div className="p-6 border-b bg-white">
         <h1 className="text-2xl font-semibold text-gray-800">Notification</h1>
       </div>
 
-      {/* Notification list */}
       <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-white">
         {sections.map((section) => (
           <div key={section}>
-            <h2 className="text-gray-500 font-medium mb-4 capitalize">{section}</h2>
-
+            <h2 className="text-gray-500 font-medium mb-4 capitalize">
+              {section}
+            </h2>
             <div className="flex flex-col gap-4">
-              {grouped[section].map((n) => (
+              {grouped[section]?.map((n) => (
                 <div
                   key={n.id}
                   className="flex items-center justify-between border-b pb-4 last:border-b-0"
@@ -98,7 +114,9 @@ export default function NotificationsAdmin() {
                     <div>
                       <p className="text-gray-800 font-medium">
                         {n.name}{" "}
-                        <span className="text-gray-600 font-normal">{n.text}</span>
+                        <span className="text-gray-600 font-normal">
+                          {n.text}
+                        </span>
                       </p>
                     </div>
                   </div>
